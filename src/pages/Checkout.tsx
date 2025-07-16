@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
 import { loadStripe } from '@stripe/stripe-js';
+import { env } from '../config/env';
 import { 
   CheckIcon, 
   CreditCardIcon, 
@@ -11,8 +12,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-// Initialize Stripe (using test key for demo)
-const stripePromise = loadStripe('pk_test_51234567890abcdef'); // Demo key
+// Initialize Stripe with environment variable
+const stripePromise = loadStripe(env.stripe.publishableKey);
 
 const Checkout: React.FC = () => {
   const location = useLocation();
