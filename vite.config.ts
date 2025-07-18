@@ -1,13 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const PORT = parseInt(process.env.PORT || '8080', 10);
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: PORT,
+    port: 5173,
+    host: '0.0.0.0',
+  },
+  preview: {
+    port: 8080,
     host: '0.0.0.0',
   },
   optimizeDeps: {
