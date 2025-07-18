@@ -83,7 +83,7 @@ const Home: React.FC = () => {
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
               <Link
-                to="/create"
+                to={currentUser ? "/create" : "/create-guest"}
                 className="text-sm font-inter font-semibold leading-6 text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
               >
                 Create QR now <span aria-hidden="true">→</span>

@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
-import QRExpirationTimer from '../components/QRExpirationTimer';
-import { useQRExpiration } from '../hooks/useQRExpiration';
 import { HexColorPicker } from 'react-colorful';
 import { 
   PhotoIcon, 
   ArrowDownTrayIcon, 
   AdjustmentsHorizontalIcon,
-  SwatchIcon,
   EyeIcon,
-  UserPlusIcon,
   ShieldExclamationIcon
 } from '@heroicons/react/24/outline';
 
 const Create: React.FC = () => {
   const { currentUser, subscription, qrCounts, canCreateQR } = useAuth();
+  
+  // Redirect non-logged-in users to guest creation page
+  if (!currentUser) {
+    return <Navigate to="/create-guest" replace />;
+  }
+  
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
   const [isDynamic, setIsDynamic] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -63,12 +65,11 @@ const Create: React.FC = () => {
   };
 
   const qrData = generateQRData();
-  const { isExpired, timeRemaining, resetExpiration } = useQRExpiration(qrData);
 
   // Check if user can create this type of QR code
-  const canCreate = currentUser ? canCreateQR(isDynamic ? 'dynamic' : 'static') : true;
+  const canCreate = canCreateQR(isDynamic ? 'dynamic' : 'static');
   const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
-  const hasCustomization = currentUser ? (currentPlan?.limits.customization ?? false) : false;
+  const hasCustomization = currentPlan?.limits.customization ?? false;
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
@@ -85,13 +86,8 @@ const Create: React.FC = () => {
   };
 
   const handleDownload = () => {
-    if (!currentUser && isExpired) {
-      alert('El código QR ha expirado. Genera uno nuevo o regístrate para códigos permanentes.');
-      return;
-    }
-    
-    if (!currentUser) {
-      alert('Sign up to download permanent QR codes.');
+    if (!canCreate) {
+      alert('Has alcanzado el límite de códigos QR para tu plan actual.');
       return;
     }
     
@@ -154,33 +150,14 @@ const Create: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">
-            Create QR Code
+            Create Professional QR Code
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Customize your QR code with 15+ different types
+            Create permanent QR codes with full customization and analytics
           </p>
-          {!currentUser && (
-            <div className="mt-4 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 rounded-lg p-4 max-w-2xl mx-auto">
-              <div className="flex items-center space-x-3">
-                <ShieldExclamationIcon className="h-6 w-6 text-warning-600 dark:text-warning-400 flex-shrink-0" />
-                <div className="text-left">
-                  <h3 className="text-sm font-medium text-warning-800 dark:text-warning-300">
-                    Temporary Codes
-                  </h3>
-                  <p className="text-sm text-warning-600 dark:text-warning-400 mt-1">
-                    QR codes generated without an account expire in 24 hours.{' '}
-                    <Link to="/register" className="font-medium underline hover:no-underline">
-                      Sign up free
-                    </Link>
-                    {' '}for permanent codes.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
           
           {/* Plan Limitations Warning */}
-          {currentUser && !canCreate && (
+          {!canCreate && (
             <div className="mt-4 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 rounded-lg p-4 max-w-2xl mx-auto">
               <div className="flex items-center space-x-3">
                 <ShieldExclamationIcon className="h-6 w-6 text-error-600 dark:text-error-400 flex-shrink-0" />
@@ -234,39 +211,37 @@ const Create: React.FC = () => {
             </div>
 
             {/* Static/Dynamic Selection */}
-            {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && selectedType !== 'vcard' && (
+            {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Code Type
                 </h3>
-                {currentUser && (
-                  <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-                    <div className="text-sm text-primary-700 dark:text-primary-300">
-                      <strong>Your current plan:</strong> {currentPlan?.name} - 
-                      Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} | 
-                      Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
-                    </div>
+                <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+                  <div className="text-sm text-primary-700 dark:text-primary-300">
+                    <strong>Your current plan:</strong> {currentPlan?.name} - 
+                    Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} | 
+                    Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
                   </div>
-                )}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setIsDynamic(false)}
-                    disabled={currentUser && !canCreateQR('static')}
+                    disabled={!canCreateQR('static')}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                      !isDynamic && (!currentUser || canCreateQR('static'))
+                      !isDynamic && canCreateQR('static')
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : currentUser && !canCreateQR('static')
+                        : !canCreateQR('static')
                         ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <div className={`font-medium ${currentUser && !canCreateQR('static') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                    <div className={`font-medium ${!canCreateQR('static') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                       Static
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Cannot be edited after creation
                     </div>
-                    {currentUser && !canCreateQR('static') && (
+                    {!canCreateQR('static') && (
                       <div className="text-xs text-error-600 dark:text-error-400 mt-1">
                         Limit reached
                       </div>
@@ -274,22 +249,22 @@ const Create: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setIsDynamic(true)}
-                    disabled={currentUser && !canCreateQR('dynamic')}
+                    disabled={!canCreateQR('dynamic')}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                      isDynamic && (!currentUser || canCreateQR('dynamic'))
+                      isDynamic && canCreateQR('dynamic')
                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : currentUser && !canCreateQR('dynamic')
+                        : !canCreateQR('dynamic')
                         ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <div className={`font-medium ${currentUser && !canCreateQR('dynamic') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                    <div className={`font-medium ${!canCreateQR('dynamic') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                       Dynamic
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Editable with analytics
                     </div>
-                    {currentUser && !canCreateQR('dynamic') && (
+                    {!canCreateQR('dynamic') && (
                       <div className="text-xs text-error-600 dark:text-error-400 mt-1">
                         Limit reached
                       </div>
@@ -328,14 +303,14 @@ const Create: React.FC = () => {
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
                   Customization
                 </h3>
-                {!hasCustomization && currentUser && (
+                {!hasCustomization && (
                   <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                     Not available on {currentPlan?.name} plan
                   </div>
                 )}
                 <button
                   onClick={() => setShowCustomization(!showCustomization)}
-                  disabled={currentUser && !hasCustomization}
+                  disabled={!hasCustomization}
                   className="flex items-center space-x-2 text-primary-600 hover:text-primary-700"
                 >
                   <AdjustmentsHorizontalIcon className="h-5 w-5" />
@@ -343,19 +318,7 @@ const Create: React.FC = () => {
                 </button>
               </div>
               
-              {!currentUser && (
-                <div className="mb-4 p-3 bg-warning-50 dark:bg-warning-900/20 rounded-lg border border-warning-200 dark:border-warning-700">
-                  <p className="text-sm text-warning-700 dark:text-warning-300">
-                    <strong>Customization not available:</strong> Unregistered users cannot customize QR codes.{' '}
-                    <Link to="/register" className="font-medium underline hover:no-underline">
-                      Sign up free
-                    </Link>
-                    {' '}to access customization.
-                  </p>
-                </div>
-              )}
-              
-              {currentUser && !hasCustomization && (
+              {!hasCustomization && (
                 <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     <strong>Customization not included:</strong> Your {currentPlan?.name} plan doesn't include customization options.{' '}
@@ -460,17 +423,6 @@ const Create: React.FC = () => {
                   Preview
                 </h3>
                 
-                {/* Expiration Timer for non-logged users */}
-                {!currentUser && qrData && (
-                  <div className="mb-6">
-                    <QRExpirationTimer
-                      timeRemaining={timeRemaining}
-                      isExpired={isExpired}
-                      onReset={resetExpiration}
-                    />
-                  </div>
-                )}
-                
                 <div className="flex justify-center mb-6">
                   <QRPreview 
                     data={qrData}
@@ -482,25 +434,22 @@ const Create: React.FC = () => {
                       dotsStyle: 'square'
                     }}
                     size={250}
-                    isExpired={!currentUser && isExpired}
                   />
                 </div>
 
                 <div className="space-y-3">
                   <button 
                     onClick={handleDownload}
-                    disabled={(!currentUser && isExpired) || (currentUser && !canCreate) || !qrData}
+                    disabled={!canCreate || !qrData}
                     className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                      (!currentUser && isExpired) || (currentUser && !canCreate) || !qrData
+                      !canCreate || !qrData
                         ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                         : 'bg-primary-600 hover:bg-primary-700 text-white'
                     }`}
                   >
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     <span>
-                      {!currentUser && isExpired 
-                        ? 'QR Code Expired' 
-                        : currentUser && !canCreate
+                      {!canCreate
                         ? 'Limit Reached'
                         : !qrData
                         ? 'Enter Data First'
@@ -509,31 +458,13 @@ const Create: React.FC = () => {
                     </span>
                   </button>
                   
-                  {!currentUser ? (
-                    <Link
-                      to="/register"
-                      className="w-full flex items-center justify-center space-x-2 bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-md transition-colors"
-                    >
-                      <UserPlusIcon className="h-5 w-5" />
-                      <span>Sign Up for Permanent Codes</span>
-                    </Link>
-                  ) : (
-                    <button className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md transition-colors">
-                      <PhotoIcon className="h-5 w-5" />
-                      <span>More formats</span>
-                    </button>
-                  )}
+                  <button className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md transition-colors">
+                    <PhotoIcon className="h-5 w-5" />
+                    <span>More formats</span>
+                  </button>
                 </div>
 
-                {!currentUser && (
-                  <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-                    <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
-                      💡 <strong>Tip:</strong> Sign up for permanent codes, customization, analytics and more download formats.
-                    </p>
-                  </div>
-                )}
-                
-                {currentUser && currentPlan?.id === 'gratis' && (
+                {currentPlan?.id === 'gratis' && (
                   <div className="mt-4 p-3 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-700">
                     <p className="text-xs text-accent-700 dark:text-accent-300 text-center">
                       🚀 <strong>Enhance your experience:</strong>{' '}
@@ -553,6 +484,7 @@ const Create: React.FC = () => {
                     <div>Type: {selectedTypeConfig?.name}</div>
                     <div>Mode: {isDynamic ? 'Dynamic' : 'Static'}</div>
                     <div>Size: 250x250 px</div>
+                    <div>Status: Permanent</div>
                   </div>
                 </div>
               </div>

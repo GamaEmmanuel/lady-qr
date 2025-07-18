@@ -14,6 +14,7 @@ import Features from './pages/Features';
 import Profile from './pages/Profile';
 import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
+import CreateGuest from './pages/CreateGuest';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/create" element={<Create />} />
+                <Route path="/create-guest" element={<CreateGuest />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/features" element={<Features />} />
