@@ -22,7 +22,7 @@ const Header: React.FC = () => {
 
   const navigation = [
     { name: 'Home', href: '/' },
-    { name: 'Create QR', href: '/create' },
+    { name: 'Create QR', href: currentUser ? '/create' : '/create-guest' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'Features', href: '/features' },
   ];
