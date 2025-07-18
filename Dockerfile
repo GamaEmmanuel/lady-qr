@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -16,11 +16,15 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Remove dev dependencies after build
+RUN npm prune --production
+
 # Expose port
 EXPOSE 8080
 
 # Set environment variable
 ENV PORT=8080
+ENV NODE_ENV=production
 
 # Start the server
 CMD ["npm", "start"]
