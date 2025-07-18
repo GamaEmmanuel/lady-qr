@@ -1,8 +1,13 @@
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Replicate __dirname functionality in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = parseInt(process.env.PORT, 10) || 8080;
+const PORT = process.env.PORT || 8080;
 
 // Add basic middleware
 app.use(express.json());
