@@ -234,7 +234,7 @@ const Create: React.FC = () => {
             </div>
 
             {/* Static/Dynamic Selection */}
-            {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
+            {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && selectedType !== 'vcard' && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Code Type
