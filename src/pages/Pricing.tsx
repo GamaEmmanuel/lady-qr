@@ -4,6 +4,9 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { plans } from '../data/plans';
 
 const Pricing: React.FC = () => {
+  const { currentUser, subscription } = useAuth();
+  const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+  
   return (
     <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -16,6 +19,30 @@ const Pricing: React.FC = () => {
             Start free and upgrade as your business grows. All plans include professional support and multiple payment methods.
           </p>
         </div>
+        
+        {/* Current Plan Notification */}
+        {currentUser && (
+          <div className="isolate mx-auto mt-8 max-w-md">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">✓</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-primary-800 dark:text-primary-300">
+                    Current Plan
+                  </h3>
+                  <p className="text-sm text-primary-700 dark:text-primary-400">
+                    You are currently subscribed to the <strong>{currentPlan?.name}</strong> plan
+                    {currentPlan?.price && ` ($${currentPlan.price}/month)`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-8">
           {plans.map((plan, index) => (
