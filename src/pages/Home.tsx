@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { testFirestoreWrite } from '../utils/testFirestore';
 import { 
   QrCodeIcon, 
   ChartBarIcon, 
@@ -13,24 +12,6 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
-
-  // Test Firestore write functionality
-  const handleTestFirestore = async () => {
-    const result = await testFirestoreWrite();
-    
-    if (result.success) {
-      console.log('✅ Firestore Test Successful:', result);
-      // Show success message in a non-blocking way
-      const message = `✅ Firestore working! Test ID: ${result.testId}`;
-      console.log(message);
-    } else if (result.offline) {
-      console.log('🔌 WebContainer offline mode - this is normal in embedded environments');
-    } else {
-      console.error('❌ Firestore Test Failed:', result.error);
-      // Show specific error guidance
-      console.log('💡 Check the console above for specific error details and fixes');
-    }
-  };
 
   const features = [
     {
@@ -107,16 +88,6 @@ const Home: React.FC = () => {
               >
                 {currentUser ? 'Create QR Code' : 'Try Demo'} <span aria-hidden="true">→</span>
               </Link>
-            </div>
-            
-            {/* Test Firestore Button - Remove this after testing */}
-            <div className="mt-6">
-              <button
-                onClick={handleTestFirestore}
-                className="rounded-md bg-accent-600 px-4 py-2 text-sm font-inter font-medium text-white shadow-sm hover:bg-accent-700 transition-colors"
-              >
-                🧪 Test Firestore Write
-              </button>
             </div>
           </div>
         </div>
