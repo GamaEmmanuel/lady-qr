@@ -320,24 +320,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Check Firebase connection before making Firestore calls
-      const isConnected = await checkFirebaseConnection();
-      if (!isConnected) {
-        console.warn('Firebase is offline, using cached data only');
-      }
-      
       if (user) {
         setCurrentUser(user);
+        
+        // Check Firebase connection before making Firestore calls
+        const isConnected = await checkFirebaseConnection();
+        if (!isConnected) {
+          console.warn('Firebase is offline, using cached/default data only');
+          // Set default values when offline
+          setUserData({
+            uid: user.uid,
+            email: user.email || '',
+            fullName: user.displayName || 'User',
+            createdAt: new Date()
+          });
+          setSubscription({
+            id: 'offline-free',
+            planType: 'gratis',
+            status: 'active',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
+          setLoading(false);
+          return;
+        }
         
         // Fetch user data with error handling
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             setUserData(userDoc.data() as User);
+          } else {
+            // Create default user data if document doesn't exist
+            setUserData({
+              uid: user.uid,
+              email: user.email || '',
+              fullName: user.displayName || 'User',
+              createdAt: new Date()
+            });
           }
         } catch (error) {
-          console.warn('Failed to fetch user data:', error);
-          // Continue with cached data or defaults
+          console.error('Failed to fetch user data:', error);
+          // Set default user data on error
+          setUserData({
+            uid: user.uid,
+            email: user.email || '',
+            fullName: user.displayName || 'User',
+            createdAt: new Date()
+          });
         }
         
         // Fetch subscription with error handling
@@ -345,12 +376,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const subscriptionDoc = await getDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'));
           if (subscriptionDoc.exists()) {
             setSubscription(subscriptionDoc.data() as Subscription);
+          } else {
+            // Create default free subscription if document doesn't exist
+            setSubscription({
+              id: 'default-free',
+              planType: 'gratis',
+              status: 'active',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
           }
         } catch (error) {
-          console.warn('Failed to fetch subscription data:', error);
+          console.error('Failed to fetch subscription data:', error);
           // Set default free subscription if offline
           setSubscription({
-            id: 'offline-free',
+            id: 'error-free',
             planType: 'gratis',
             status: 'active',
             createdAt: new Date(),
@@ -363,7 +403,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const counts = await getUserQRCounts(user.uid);
           setQrCounts(counts);
         } catch (error) {
-          console.warn('Failed to fetch QR counts:', error);
+          console.error('Failed to fetch QR counts:', error);
           // Set default counts if offline
           setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
         }
