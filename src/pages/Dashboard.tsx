@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
-  const { userData, subscription } = useAuth();
+  const { userData, subscription, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created');
   const [filterType, setFilterType] = useState('all');
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
     { name: 'Total QR Codes', value: mockQRCodes.length, icon: QrCodeIcon },
     { name: 'Total Scans', value: mockQRCodes.reduce((sum, qr) => sum + qr.scanCount, 0), icon: ChartBarIcon },
     { name: 'Active QRs', value: mockQRCodes.filter(qr => qr.isActive).length, icon: EyeIcon },
-    { name: 'Current Plan', value: subscription?.planType || 'Free', icon: ChartBarIcon }
+    { name: 'Current Plan', value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
   ];
 
   const getTypeIcon = (type: string) => {

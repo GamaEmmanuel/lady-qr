@@ -225,14 +225,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Create free subscription for new users
         const freeSubscription: Subscription = {
-          id: 'free',
+          id: result.user.uid,
+          userId: result.user.uid,
+          userId: result.user.uid,
           planType: 'gratis',
           status: 'active',
+          stripeSubscriptionId: null,
+          trialEndsAt: null,
+          currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          cancelAtPeriodEnd: false,
+          stripeSubscriptionId: null,
+          trialEndsAt: null,
+          currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          cancelAtPeriodEnd: false,
           createdAt: new Date(),
           updatedAt: new Date()
         };
         
-        await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+        await setDoc(doc(db, 'suscriptions', result.user.uid), freeSubscription);
         
         // Track sign up event for new users
         try {
@@ -321,20 +331,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Fetch subscription with error handling
         try {
-          const subscriptionDoc = await getDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'));
+          const subscriptionDoc = await getDoc(doc(db, 'suscriptions', user.uid));
           if (subscriptionDoc.exists()) {
             setSubscription(subscriptionDoc.data() as Subscription);
           } else {
             // Create free subscription if document doesn't exist
             const freeSubscription = {
-              id: 'free',
+              id: user.uid,
+              id: result.user.uid,
+              userId: result.user.uid,
               planType: 'gratis',
               status: 'active',
+              stripeSubscriptionId: null,
+              trialEndsAt: null,
+              currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+              cancelAtPeriodEnd: false,
+              stripeSubscriptionId: null,
+              trialEndsAt: null,
+              currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+              cancelAtPeriodEnd: false,
               createdAt: new Date(),
               updatedAt: new Date()
             };
-            await setDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'), freeSubscription);
-            setSubscription(freeSubscription);
+            await setDoc(doc(db, 'suscriptions', user.uid), freeSubscription);
+            await setDoc(doc(db, 'suscriptions', result.user.uid), freeSubscription);
           }
         } catch (error) {
           console.error('Failed to fetch subscription data:', error);
