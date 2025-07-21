@@ -105,7 +105,7 @@ if (app && !FORCE_OFFLINE_MODE) {
     storage = undefined;
   }
 } else {
-  console.warn('⚠️ Firebase app not initialized - running in offline mode');
+  console.log('🔌 Firebase not configured - running in offline mode');
   FORCE_OFFLINE_MODE = true;
 }
 

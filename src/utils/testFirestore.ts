@@ -5,10 +5,10 @@ import { isOfflineMode } from '../config/firebase';
 // Test function to write to Firestore
 export const testFirestoreWrite = async () => {
   if (isOfflineMode() || !db) {
-    console.log('🔌 Firestore write test skipped - offline mode enabled');
+    console.log('🔌 App running in offline mode - Firebase features disabled');
     return {
       success: false,
-      error: 'Firebase is in offline mode. This is expected if Firebase project is not properly configured.',
+      error: 'Offline mode enabled',
       offline: true
     };
   }
