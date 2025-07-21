@@ -1,8 +1,18 @@
 import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { isOfflineMode } from '../config/firebase';
 
 // Test function to write to Firestore
 export const testFirestoreWrite = async () => {
+  if (isOfflineMode() || !db) {
+    console.log('🔌 Firestore write test skipped - offline mode enabled');
+    return {
+      success: false,
+      error: 'Firebase is in offline mode. This is expected if Firebase project is not properly configured.',
+      offline: true
+    };
+  }
+  
   try {
     console.log('Testing Firestore write...');
     
@@ -65,7 +75,8 @@ export const testFirestoreWrite = async () => {
     console.error('❌ Firestore write test failed:', error);
     return {
       success: false,
-      error: error
+      error: error,
+      offline: false
     };
   }
 };

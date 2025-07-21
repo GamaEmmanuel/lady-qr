@@ -19,6 +19,8 @@ const Home: React.FC = () => {
     const result = await testFirestoreWrite();
     if (result.success) {
       alert('✅ Firestore write test successful! Check console for details.');
+    } else if (result.offline) {
+      alert('🔌 App is running in offline mode. This is normal if Firebase is not configured.\n\nThe app will work without Firebase - you can still:\n• Navigate all pages\n• Use the test login (test@ladyqr.com / password123)\n• Create QR codes in guest mode');
     } else {
       alert('❌ Firestore write test failed. Check console for error details.');
     }
