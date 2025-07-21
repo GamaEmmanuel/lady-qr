@@ -1,5 +1,8 @@
 // Environment configuration with type safety and validation
 
+// NOTE: This file reads from .env.local (for actual values) or .env.example (for templates)
+// Make sure you have a .env.local file with your real Firebase credentials
+
 interface EnvConfig {
   // Firebase
   firebase: {
