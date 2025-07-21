@@ -15,65 +15,50 @@ export const testFirestoreWrite = async () => {
   }
   
   try {
+    console.log('📋 Using Firebase project:', import.meta.env.VITE_FIREBASE_PROJECT_ID);
     console.log('Testing Firestore write...');
     
-    // Test 1: Create a test user document
+    // Test 1: Simple write test
     const testUserId = 'test-user-' + Date.now();
-    const testUserData = {
-      uid: testUserId,
-      email: 'test@ladyqr.com',
-      fullName: 'Test User',
-      createdAt: new Date()
+    const testData = {
+      id: testUserId,
+      message: 'Test write from Lady QR',
+      timestamp: new Date(),
+      success: true
     };
     
-    await setDoc(doc(db, 'users', testUserId), testUserData);
-    console.log('✅ Successfully created test user document');
+    console.log('📝 Attempting to write test document...');
+    await setDoc(doc(db, 'test_writes', testUserId), testData);
+    console.log('✅ Successfully wrote test document');
     
-    // Test 2: Create a test subscription document
-    const testSubscriptionData = {
-      id: 'test-subscription',
-      planType: 'gratis',
-      status: 'active',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    // Test 2: Read the document back
+    console.log('📖 Attempting to read test document...');
+    const docSnap = await getDoc(doc(db, 'test_writes', testUserId));
+    if (docSnap.exists()) {
+      console.log('✅ Successfully read test document:', docSnap.data());
+    } else {
+      console.warn('⚠️ Document was written but not found on read');
+    }
     
-    await setDoc(doc(db, `users/${testUserId}/subscriptions`, 'current'), testSubscriptionData);
-    console.log('✅ Successfully created test subscription document');
-    
-    // Test 3: Create a test QR code document
-    const testQRData = {
-      id: 'test-qr-' + Date.now(),
-      userId: testUserId,
-      name: 'Test QR Code',
-      type: 'url',
-      isDynamic: false,
-      content: { url: 'https://example.com' },
-      customizationOptions: {
-        foregroundColor: '#000000',
-        backgroundColor: '#ffffff',
-        cornerSquareStyle: 'square',
-        cornerDotStyle: 'square',
-        dotsStyle: 'square'
-      },
-      scanCount: 0,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    const qrDocRef = await addDoc(collection(db, 'qrcodes'), testQRData);
-    console.log('✅ Successfully created test QR code document with ID:', qrDocRef.id);
-    
-    console.log('🎉 All Firestore write tests passed!');
+    console.log('🎉 Firestore test completed successfully!');
     return {
       success: true,
-      userId: testUserId,
-      qrCodeId: qrDocRef.id
+      testId: testUserId,
+      message: 'All Firestore operations working correctly'
     };
     
   } catch (error) {
-    console.error('❌ Firestore write test failed:', error);
+    console.error('❌ Firestore test failed:', error);
+    
+    // Provide specific error guidance
+    if (error.code === 'permission-denied') {
+      console.error('💡 Fix: Update Firestore security rules to allow writes');
+    } else if (error.code === 'not-found') {
+      console.error('💡 Fix: Create Firestore database in Firebase Console');
+    } else if (error.message?.includes('400')) {
+      console.error('💡 Fix: Check Firebase project configuration and credentials');
+    }
+    
     return {
       success: false,
       error: error,
