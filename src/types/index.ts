@@ -7,11 +7,13 @@ export interface User {
 
 export interface Subscription {
   id: string;
+  userId: string;
   planType: 'gratis' | 'basico' | 'profesional' | 'negocios';
   status: 'active' | 'payment_pending' | 'cancelled' | 'expired';
   stripeSubscriptionId?: string;
   trialEndsAt?: Date;
   currentPeriodEndsAt?: Date;
+  cancelAtPeriodEnd?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -16,7 +16,7 @@ import {
 import { Link } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { currentUser, userData, subscription, updateUserProfile } = useAuth();
+  const { currentUser, userData, subscription, updateUserProfile, loading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: userData?.fullName || '',
@@ -27,6 +27,15 @@ const Profile: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+
+  // Show loading state while fetching subscription data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   const handleSaveProfile = async () => {
     setLoading(true);
