@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   QrCodeIcon, 
@@ -12,6 +12,11 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
+
+  // Redirect logged in users to dashboard
+  if (currentUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const features = [
     {
