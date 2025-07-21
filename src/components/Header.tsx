@@ -16,7 +16,7 @@ import { Fragment } from 'react';
 
 const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, userData } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
 
