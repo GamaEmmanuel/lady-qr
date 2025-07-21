@@ -6,10 +6,10 @@ import { isOfflineMode } from '../config/firebase';
 export const testFirestoreWrite = async () => {
   if (isOfflineMode() || !db) {
     // Don't use alert() in embedded environments - it gets blocked
-    console.log('🔌 App running in offline mode - Firebase features disabled');
+    console.log('🔌 WebContainer offline mode - Firebase features disabled (this is normal)');
     return {
       success: false,
-      error: 'Offline mode enabled',
+      error: 'WebContainer offline mode - Firebase not available',
       offline: true
     };
   }

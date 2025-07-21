@@ -56,19 +56,24 @@ console.log('🔧 Firebase Config Check:', {
 // Force offline mode flag
 let FORCE_OFFLINE_MODE = false;
 
-// Check if running in embedded environment (like WebContainer)
+// Check if running in embedded environment (like WebContainer) 
 const isEmbeddedEnvironment = () => {
   try {
-    return window.self !== window.top;
+    // Check for WebContainer specific indicators
+    const isWebContainer = window.location.hostname.includes('webcontainer-api.io') ||
+                          window.location.hostname.includes('local-credentialless') ||
+                          window.location.hostname.includes('stackblitz') ||
+                          window.self !== window.top;
+    return isWebContainer;
   } catch (e) {
     return true; // If we can't access window.top, we're probably embedded
   }
 };
 
-// Force offline mode immediately in embedded environments to prevent connection timeouts
+// Force offline mode immediately in WebContainer to prevent connection timeouts
 if (typeof window !== 'undefined' && isEmbeddedEnvironment()) {
   FORCE_OFFLINE_MODE = true;
-  console.log('🔌 Embedded environment detected - forcing offline mode to prevent connection timeouts');
+  console.log('🔌 WebContainer environment detected - Firebase disabled to prevent timeouts');
 }
 
 // Only proceed if configuration is valid
@@ -142,20 +147,20 @@ if (app && !FORCE_OFFLINE_MODE) {
 // Enhanced helper function to check Firebase connection status
 export const checkFirebaseConnection = async (): Promise<boolean> => {
   if (FORCE_OFFLINE_MODE) {
-    console.log('🔌 Firebase connection check skipped - offline mode enabled');
+    console.log('🔌 Firebase connection skipped - running in WebContainer offline mode');
     return false;
   }
   
   try {
     if (!db) {
-      console.warn('⚠️ Firestore not initialized');
+      console.log('🔌 Firestore not initialized - offline mode');
       return false;
     }
-    // Try a simple read operation first (less likely to fail)
+    // Try a simple read operation with shorter timeout for WebContainer
     const testDoc = doc(db, '__connection_test__', 'ping');
     const result = await Promise.race([
       getDoc(testDoc),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 2000))
     ]);
     
     console.log('✅ Firebase connection test successful');
@@ -205,16 +210,19 @@ export const handleOfflineMode = async () => {
 // Test Firebase connection on initialization
 if (typeof window !== 'undefined' && db && validateFirebaseConfig(firebaseConfig) && !FORCE_OFFLINE_MODE) {
   // Run connection test after a short delay to allow initialization
-  setTimeout(async () => {
-    console.log('🚀 Running initial Firebase connection test...');
-    const isConnected = await checkFirebaseConnection();
-    if (!isConnected) {
-      console.warn('⚠️ Initial Firebase connection failed - enabling offline mode');
-      FORCE_OFFLINE_MODE = true;
-    }
-  }, 2000);
+  // Skip connection test in WebContainer to avoid timeouts
+  if (!isEmbeddedEnvironment()) {
+    setTimeout(async () => {
+      console.log('🚀 Running initial Firebase connection test...');
+      const isConnected = await checkFirebaseConnection();
+      if (!isConnected) {
+        console.log('🔌 Firebase connection failed - enabling offline mode');
+        FORCE_OFFLINE_MODE = true;
+      }
+    }, 1000);
+  }
 } else if (FORCE_OFFLINE_MODE) {
-  console.log('🔌 App running in offline mode - Firebase features disabled');
+  console.log('🔌 WebContainer offline mode - Firebase features disabled (this is normal)');
 }
 
 export { auth, db, storage };
