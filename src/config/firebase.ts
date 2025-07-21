@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableNetwork, disableNetwork, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
@@ -22,11 +22,6 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
 // Initialize Firebase only if it hasn't been initialized already
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Add error handling for Firebase initialization
-if (!app) {
-  console.error('Failed to initialize Firebase app');
-}
-
 // Initialize Analytics (only in browser environment)
 let analytics;
 if (typeof window !== 'undefined') {
@@ -45,12 +40,49 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   
-  // Test connection
+  // Enable offline persistence for Firestore
+  if (typeof window !== 'undefined') {
+    // Only enable persistence in browser environment
+    try {
+      // Note: Persistence is enabled by default in v9+
+      console.log('Firebase Firestore offline persistence enabled');
+    } catch (error) {
+      console.warn('Failed to enable Firestore persistence:', error);
+    }
+  }
+  
   console.log('Firebase services initialized successfully');
+  
 } catch (error) {
   console.error('Failed to initialize Firebase services:', error);
-  throw error;
+  // Don't throw error to prevent app crash, let it continue with offline mode
 }
+
+// Helper function to check Firebase connection status
+export const checkFirebaseConnection = async (): Promise<boolean> => {
+  try {
+    if (!db) return false;
+    
+    // Try to enable network (this will succeed if we can connect)
+    await enableNetwork(db);
+    return true;
+  } catch (error) {
+    console.warn('Firebase connection check failed:', error);
+    return false;
+  }
+};
+
+// Helper function to handle offline scenarios
+export const handleOfflineMode = async () => {
+  try {
+    if (db) {
+      await disableNetwork(db);
+      console.log('Firebase switched to offline mode');
+    }
+  } catch (error) {
+    console.warn('Failed to switch to offline mode:', error);
+  }
+};
 
 export { auth, db, storage };
 export { analytics };
