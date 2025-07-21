@@ -28,6 +28,18 @@ const validateFirebaseConfig = (config: any) => {
     return false;
   }
   
+  // Validate storage bucket format
+  if (!config.storageBucket.includes('.appspot.com') && !config.storageBucket.includes('.firebasestorage.app')) {
+    console.error('❌ Invalid storageBucket format:', config.storageBucket);
+    return false;
+  }
+  
+  // Validate API key format
+  if (!config.apiKey.startsWith('AIza')) {
+    console.error('❌ Invalid API key format');
+    return false;
+  }
+  
   return true;
 };
 
@@ -133,12 +145,9 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
       console.warn('⚠️ Firestore not initialized');
       return false;
     }
-    
-    console.log('🔍 Testing Firebase connection...');
-    
-    // Simple connection test with shorter timeout
+    // Try a simple read operation first (less likely to fail)
     const testDoc = doc(db, '__connection_test__', 'ping');
-    await Promise.race([
+    const result = await Promise.race([
       getDoc(testDoc),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
     ]);
@@ -146,12 +155,18 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
     console.log('✅ Firebase connection test successful');
     return true;
   } catch (error: any) {
-    console.warn('❌ Firebase connection test failed:', error.message);
+    console.error('❌ Firebase connection test failed:', error);
     
-    // Force offline mode on repeated failures
-    if (error.message.includes('400') || error.message.includes('Bad Request')) {
-      console.warn('🚫 Persistent 400 errors detected - forcing offline mode');
+    // Check for specific error types
+    if (error.code === 'permission-denied') {
+      console.error('🚫 Firestore rules are blocking access');
+    } else if (error.code === 'not-found') {
+      console.error('🚫 Firestore database not found - create it in Firebase Console');
+    } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
+      console.error('🚫 Invalid Firebase configuration - check your credentials');
       FORCE_OFFLINE_MODE = true;
+    } else if (error.code === 'unavailable') {
+      console.error('🚫 Firestore service unavailable');
     }
     
     return false;
