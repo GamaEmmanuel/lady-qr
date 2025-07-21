@@ -17,8 +17,15 @@ const Home: React.FC = () => {
   // Test Firestore write functionality
   const handleTestFirestore = async () => {
     const result = await testFirestoreWrite();
-    // Just log the result to console instead of showing alerts
-    console.log('🧪 Firestore Test Result:', result);
+    
+    // Show result in a non-blocking way since alerts are blocked in embedded pages
+    if (result.success) {
+      console.log('✅ Firestore Test Successful:', result);
+    } else if (result.offline) {
+      console.log('🔌 App running in offline mode - this is normal if Firebase is not configured');
+    } else {
+      console.error('❌ Firestore Test Failed:', result.error);
+    }
   };
 
   const features = [
