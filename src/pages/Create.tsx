@@ -11,7 +11,8 @@ import {
   ArrowDownTrayIcon, 
   AdjustmentsHorizontalIcon,
   EyeIcon,
-  ShieldExclamationIcon
+  ShieldExclamationIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const Create: React.FC = () => {
@@ -35,6 +36,8 @@ const Create: React.FC = () => {
   });
   const [showCustomization, setShowCustomization] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState<'foreground' | 'background' | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
@@ -85,6 +88,40 @@ const Create: React.FC = () => {
     }));
   };
 
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a PNG, JPG, or SVG image.');
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Please upload an image smaller than 2MB.');
+        return;
+      }
+      
+      setLogoFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setLogoPreview(result);
+        handleCustomizationChange('logoUrl', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview('');
+    handleCustomizationChange('logoUrl', undefined);
+  };
   const handleDownload = () => {
     if (!canCreate) {
       alert('Has alcanzado el límite de códigos QR para tu plan actual.');
@@ -393,6 +430,74 @@ const Create: React.FC = () => {
                           )}
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Logo Upload */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Logo
+                    </h4>
+                    <div className="space-y-4">
+                      {!logoPreview ? (
+                        <div>
+                          <label className="block">
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary-500 dark:hover:border-primary-400 cursor-pointer transition-colors">
+                              <PhotoIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Click to upload logo
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                PNG, JPG, SVG up to 2MB
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <img
+                              src={logoPreview}
+                              alt="Logo preview"
+                              className="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {logoFile?.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {logoFile && (logoFile.size / 1024).toFixed(1)} KB
+                              </p>
+                            </div>
+                            <button
+                              onClick={removeLogo}
+                              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <label className="block">
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              className="w-full text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 py-2 px-3 border border-primary-300 dark:border-primary-600 rounded-md hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                            >
+                              Change Logo
+                            </button>
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
 

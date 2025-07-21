@@ -47,18 +47,26 @@ const QRPreview: React.FC<QRPreviewProps> = ({
           const logo = new Image();
           logo.crossOrigin = 'anonymous';
           logo.onload = () => {
-            const logoSize = size * 0.2;
+            const logoSize = size * 0.15; // Slightly smaller for better readability
             const logoX = (size - logoSize) / 2;
             const logoY = (size - logoSize) / 2;
             
             // Draw white background circle for logo
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(size / 2, size / 2, logoSize / 2 + 4, 0, 2 * Math.PI);
+            ctx.arc(size / 2, size / 2, logoSize / 2 + 6, 0, 2 * Math.PI);
             ctx.fill();
             
-            // Draw logo
+            // Draw logo with rounded corners
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, logoSize / 2, 0, 2 * Math.PI);
+            ctx.clip();
             ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+            ctx.restore();
+          };
+          logo.onerror = () => {
+            console.warn('Failed to load logo image:', customization.logoUrl);
           };
           logo.src = customization.logoUrl;
         }
