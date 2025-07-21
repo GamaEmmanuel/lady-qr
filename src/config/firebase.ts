@@ -1,51 +1,20 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enableNetwork, disableNetwork, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
 
-// Use your actual Firebase credentials directly
-const firebaseConfig = {
-  apiKey: "AIzaSyBkW-CAlGjRClcL5-AbJRI7c3hQ5wwhWDs",
-  authDomain: "lady-qr.firebaseapp.com",
-  projectId: "lady-qr",
-  storageBucket: "lady-qr.firebasestorage.app",
-  messagingSenderId: "534631817946",
-  appId: "1:534631817946:web:9d15524fa569ed13c93be3",
-  measurementId: "G-WKDZZLF91G"
-};
+// Use environment variables from env.ts
+const firebaseConfig = env.firebase;
 
-// Validate Firebase configuration more thoroughly
+// Validate Firebase configuration
 const validateFirebaseConfig = (config: any) => {
   const required = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
   const missing = required.filter(field => !config[field] || config[field].trim() === '');
   
   if (missing.length > 0) {
     console.error('❌ Missing required Firebase config fields:', missing);
-    return false;
-  }
-  
-  // Validate format of key fields
-  if (!config.projectId.match(/^[a-z0-9-]+$/)) {
-    console.error('❌ Invalid projectId format:', config.projectId);
-    return false;
-  }
-  
-  if (!config.authDomain.includes('.firebaseapp.com')) {
-    console.error('❌ Invalid authDomain format:', config.authDomain);
-    return false;
-  }
-  
-  // Validate storage bucket format
-  if (!config.storageBucket.includes('.appspot.com') && !config.storageBucket.includes('.firebasestorage.app')) {
-    console.error('❌ Invalid storageBucket format:', config.storageBucket);
-    return false;
-  }
-  
-  // Validate API key format
-  if (!config.apiKey.startsWith('AIza')) {
-    console.error('❌ Invalid API key format');
     return false;
   }
   
@@ -62,15 +31,10 @@ console.log('🔧 Firebase Config Check:', {
   isValid: validateFirebaseConfig(firebaseConfig)
 });
 
-// Force Firebase to work - no offline mode bullshit
-let FORCE_OFFLINE_MODE = false;
-
 // Only proceed if configuration is valid
-if (validateFirebaseConfig(firebaseConfig)) {
-  console.log('✅ All Firebase configuration fields present');
-} else {
+if (!validateFirebaseConfig(firebaseConfig)) {
   console.error('❌ Firebase configuration validation failed');
-  FORCE_OFFLINE_MODE = true;
+  throw new Error('Invalid Firebase configuration');
 }
 
 // Initialize Firebase only if it hasn't been initialized already
@@ -140,7 +104,6 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
       console.error('🚫 Firestore database not found - create it in Firebase Console');
     } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
       console.error('🚫 Invalid Firebase configuration - check your credentials');
-      FORCE_OFFLINE_MODE = true;
     } else if (error.code === 'unavailable') {
       console.error('🚫 Firestore service unavailable');
     }
@@ -148,11 +111,6 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
     throw error;
   }
 };
-
-// Helper functions for compatibility
-export const isOfflineMode = (): boolean => false;
-export const enableOfflineMode = (): void => {};
-export const handleOfflineMode = async () => {};
 
 export { auth, db, storage };
 export { analytics };
