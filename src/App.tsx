@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import CreateGuest from './pages/CreateGuest';
+import AuthComplete from './pages/AuthComplete';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/auth/complete" element={<AuthComplete />} />
               </Routes>
             </main>
             <Footer />
