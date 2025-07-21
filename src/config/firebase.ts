@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
@@ -66,7 +66,7 @@ if (app) {
     auth = getAuth(app);
     console.log('✅ Firebase Auth initialized');
     
-    db = getFirestore(app);
+    db = getFirestore(app, 'main-database');
     console.log('✅ Firebase Firestore initialized');
     
     storage = getStorage(app);
