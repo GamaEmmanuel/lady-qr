@@ -113,30 +113,6 @@ const Header: React.FC = () => {
                     </Menu.Item>
                     <Menu.Item>
                       <Link
-                        to="/create"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Create QR
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
-                        to="/pricing"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Pricing
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
-                        to="/features"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Features
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
@@ -234,63 +210,6 @@ const Header: React.FC = () => {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         My Profile
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Link
-                        to="/login"
-                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Sign In
-                      </Link>
-                      <Link
-                        to="/register"
-                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Sign Up
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
-  );
-};
-
-export default Header;
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-                <div className="py-6">
-                  {currentUser ? (
-                    <div className="space-y-2">
-                      <Link
-                        to="/dashboard"
-                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Dashboard
                       </Link>
                       <button
                         onClick={handleLogout}
