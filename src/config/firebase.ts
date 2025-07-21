@@ -44,8 +44,20 @@ console.log('🔧 Firebase Config Check:', {
 // Force offline mode flag
 let FORCE_OFFLINE_MODE = false;
 
+// Check if running in embedded environment (like WebContainer)
+const isEmbeddedEnvironment = () => {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true; // If we can't access window.top, we're probably embedded
+  }
+};
+
 // Only proceed if configuration is valid
 if (validateFirebaseConfig(firebaseConfig)) {
+  if (isEmbeddedEnvironment()) {
+    console.log('🔧 Running in embedded environment (WebContainer)');
+  }
   console.log('✅ All Firebase configuration fields present');
 } else {
   console.error('❌ Firebase configuration validation failed');

@@ -84,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     // Test credentials for demo
     if (email === 'test@ladyqr.com' && password === 'password123') {
+      console.log('🧪 Using test credentials for demo');
       // Simulate successful login with test user
       const testUser = {
         uid: 'test-user-123',

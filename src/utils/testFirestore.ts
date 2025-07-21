@@ -5,6 +5,7 @@ import { isOfflineMode } from '../config/firebase';
 // Test function to write to Firestore
 export const testFirestoreWrite = async () => {
   if (isOfflineMode() || !db) {
+    // Don't use alert() in embedded environments - it gets blocked
     console.log('🔌 App running in offline mode - Firebase features disabled');
     return {
       success: false,
