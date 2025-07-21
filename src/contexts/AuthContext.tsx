@@ -169,6 +169,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    // Add additional scopes if needed
+    provider.addScope('profile');
+    provider.addScope('email');
+    
     const result = await signInWithPopup(auth, provider);
     
     const userDoc = await getDoc(doc(db, 'users', result.user.uid));
