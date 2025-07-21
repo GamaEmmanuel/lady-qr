@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { checkFirebaseConnection } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
 import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserProperties } from '../utils/analytics';
@@ -319,24 +320,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Check Firebase connection before making Firestore calls
+      const isConnected = await checkFirebaseConnection();
+      if (!isConnected) {
+        console.warn('Firebase is offline, using cached data only');
+      }
+      
       if (user) {
         setCurrentUser(user);
         
-        // Fetch user data
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as User);
+        // Fetch user data with error handling
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserData(userDoc.data() as User);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch user data:', error);
+          // Continue with cached data or defaults
         }
         
-        // Fetch subscription
-        const subscriptionDoc = await getDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'));
-        if (subscriptionDoc.exists()) {
-          setSubscription(subscriptionDoc.data() as Subscription);
+        // Fetch subscription with error handling
+        try {
+          const subscriptionDoc = await getDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'));
+          if (subscriptionDoc.exists()) {
+            setSubscription(subscriptionDoc.data() as Subscription);
+          }
+        } catch (error) {
+          console.warn('Failed to fetch subscription data:', error);
+          // Set default free subscription if offline
+          setSubscription({
+            id: 'offline-free',
+            planType: 'gratis',
+            status: 'active',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
         }
         
-        // Fetch QR counts
-        const counts = await getUserQRCounts(user.uid);
-        setQrCounts(counts);
+        // Fetch QR counts with error handling
+        try {
+          const counts = await getUserQRCounts(user.uid);
+          setQrCounts(counts);
+        } catch (error) {
+          console.warn('Failed to fetch QR counts:', error);
+          // Set default counts if offline
+          setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
+        }
       } else {
         setCurrentUser(null);
         setUserData(null);
