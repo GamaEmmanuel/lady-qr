@@ -22,7 +22,7 @@ const Profile: React.FC = () => {
     fullName: userData?.fullName || '',
     email: userData?.email || ''
   });
-  const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -38,7 +38,7 @@ const Profile: React.FC = () => {
   }
 
   const handleSaveProfile = async () => {
-    setLoading(true);
+    setIsSaving(true);
     setMessage(null);
 
     try {
@@ -51,7 +51,7 @@ const Profile: React.FC = () => {
     } catch (error) {
       setMessage({ type: 'error', text: 'Error al actualizar el perfil' });
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -172,11 +172,11 @@ const Profile: React.FC = () => {
                   <div className="flex space-x-3 pt-4">
                     <button
                       onClick={handleSaveProfile}
-                      disabled={loading}
+                      disabled={isSaving}
                       className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
                     >
                       <CheckIcon className="h-4 w-4" />
-                      <span>{loading ? 'Guardando...' : 'Guardar'}</span>
+                      <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
                     </button>
                     <button
                       onClick={handleCancelEdit}
