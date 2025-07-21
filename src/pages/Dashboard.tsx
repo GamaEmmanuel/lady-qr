@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { plans } from '../data/plans';
 import { 
   PlusIcon, 
   QrCodeIcon, 
