@@ -7,7 +7,10 @@ import {
   signOut, 
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -34,6 +37,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  sendPasswordlessLink: (email: string) => Promise<void>;
+  completePasswordlessSignIn: (email: string) => Promise<void>;
+  isPasswordlessSignIn: () => boolean;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   canCreateQR: (type: 'static' | 'dynamic') => boolean;
@@ -55,6 +61,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [qrCounts, setQrCounts] = useState<{ staticCodes: number; dynamicCodes: number } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Action code settings for passwordless authentication
+  const actionCodeSettings = {
+    // URL to redirect back to after email verification
+    url: window.location.origin + '/auth/complete',
+    // This must be true for email link authentication
+    handleCodeInApp: true,
+    iOS: {
+      bundleId: 'com.ladyqr.ios' // Replace with your iOS bundle ID
+    },
+    android: {
+      packageName: 'com.ladyqr.android', // Replace with your Android package name
+      installApp: true,
+      minimumVersion: '12'
+    },
+    // Use your custom domain if you have one configured in Firebase Hosting
+    dynamicLinkDomain: 'lady-qr.firebaseapp.com' // Replace with your custom domain if available
+  };
 
   const login = async (email: string, password: string) => {
     // Test credentials for demo
@@ -183,6 +207,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const sendPasswordlessLink = async (email: string) => {
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      // Store the email locally so we can complete the sign-in process
+      localStorage.setItem('emailForSignIn', email);
+      
+      // Track passwordless authentication attempt
+      trackUserLogin('email_link_sent');
+    } catch (error: any) {
+      console.error('Error sending passwordless link:', error);
+      throw new Error('Error sending authentication link. Please try again.');
+    }
+  };
+
+  const completePasswordlessSignIn = async (email?: string) => {
+    try {
+      // Get the email from parameter or localStorage
+      const emailForSignIn = email || localStorage.getItem('emailForSignIn');
+      
+      if (!emailForSignIn) {
+        throw new Error('Email not found. Please try the sign-in process again.');
+      }
+
+      // Confirm the link is a sign-in with email link
+      if (!isSignInWithEmailLink(auth, window.location.href)) {
+        throw new Error('Invalid authentication link.');
+      }
+
+      // Complete the sign-in process
+      const result = await signInWithEmailLink(auth, emailForSignIn, window.location.href);
+      
+      // Clear the email from localStorage
+      localStorage.removeItem('emailForSignIn');
+      
+      // Check if this is a new user and create profile if needed
+      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (!userDoc.exists()) {
+        const userData: User = {
+          uid: result.user.uid,
+          email: result.user.email!,
+          fullName: result.user.displayName || '',
+          createdAt: new Date()
+        };
+        
+        await setDoc(doc(db, 'users', result.user.uid), userData);
+        
+        // Create free subscription for new users
+        const freeSubscription: Subscription = {
+          id: 'free',
+          planType: 'gratis',
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+        
+        // Track sign up event for new users
+        trackUserSignUp('email_link');
+        setAnalyticsUserId(result.user.uid);
+        setAnalyticsUserProperties({
+          plan_type: 'gratis',
+          user_type: 'new_user',
+          auth_method: 'email_link'
+        });
+      } else {
+        // Track login event for existing users
+        trackUserLogin('email_link');
+        setAnalyticsUserId(result.user.uid);
+        setAnalyticsUserProperties({
+          auth_method: 'email_link'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error completing passwordless sign-in:', error);
+      throw new Error('Error completing authentication. Please try again.');
+    }
+  };
+
+  const isPasswordlessSignIn = (): boolean => {
+    return isSignInWithEmailLink(auth, window.location.href);
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
@@ -290,6 +397,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     loginWithGoogle,
+    sendPasswordlessLink,
+    completePasswordlessSignIn,
+    isPasswordlessSignIn,
     logout,
     updateUserProfile,
     canCreateQR

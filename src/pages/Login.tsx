@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,8 +9,10 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordlessLoading, setPasswordlessLoading] = useState(false);
+  const [passwordlessSuccess, setPasswordlessSuccess] = useState(false);
   
-  const { login, loginWithGoogle, currentUser } = useAuth();
+  const { login, loginWithGoogle, sendPasswordlessLink, currentUser } = useAuth();
 
   if (currentUser) {
     return <Navigate to="/dashboard" replace />;
@@ -43,6 +45,26 @@ const Login: React.FC = () => {
     }
   };
 
+  const handlePasswordlessLogin = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setPasswordlessLoading(true);
+    setError('');
+    setPasswordlessSuccess(false);
+
+    try {
+      await sendPasswordlessLink(email);
+      setPasswordlessSuccess(true);
+    } catch (error: any) {
+      setError('Error sending authentication link. Please try again.');
+    } finally {
+      setPasswordlessLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -63,6 +85,18 @@ const Login: React.FC = () => {
             {error && (
               <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 text-error-700 dark:text-error-300 px-4 py-3 rounded-md">
                 {error}
+              </div>
+            )}
+
+            {passwordlessSuccess && (
+              <div className="bg-success-50 dark:bg-success-900 border border-success-200 dark:border-success-700 text-success-700 dark:text-success-300 px-4 py-3 rounded-md">
+                <div className="flex items-center">
+                  <EnvelopeIcon className="h-5 w-5 mr-2" />
+                  <div>
+                    <p className="font-medium">Check your email!</p>
+                    <p className="text-sm mt-1">We've sent you a sign-in link at {email}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -144,7 +178,16 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={handlePasswordlessLogin}
+                disabled={passwordlessLoading || !email}
+                className="w-full inline-flex justify-center py-2 px-4 border border-primary-300 dark:border-primary-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <EnvelopeIcon className="w-5 h-5 mr-2" />
+                {passwordlessLoading ? 'Sending link...' : 'Send sign-in link'}
+              </button>
+              
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
