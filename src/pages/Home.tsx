@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { testFirestoreWrite } from '../utils/testFirestore';
 import { 
   QrCodeIcon, 
   ChartBarIcon, 
@@ -12,6 +13,16 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
+
+  // Test Firestore write functionality
+  const handleTestFirestore = async () => {
+    const result = await testFirestoreWrite();
+    if (result.success) {
+      alert('✅ Firestore write test successful! Check console for details.');
+    } else {
+      alert('❌ Firestore write test failed. Check console for error details.');
+    }
+  };
 
   const features = [
     {
@@ -88,6 +99,16 @@ const Home: React.FC = () => {
               >
                 {currentUser ? 'Create QR Code' : 'Try Demo'} <span aria-hidden="true">→</span>
               </Link>
+            </div>
+            
+            {/* Test Firestore Button - Remove this after testing */}
+            <div className="mt-6">
+              <button
+                onClick={handleTestFirestore}
+                className="rounded-md bg-accent-600 px-4 py-2 text-sm font-inter font-medium text-white shadow-sm hover:bg-accent-700 transition-colors"
+              >
+                🧪 Test Firestore Write
+              </button>
             </div>
           </div>
         </div>
