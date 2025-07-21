@@ -5,7 +5,16 @@ import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
 
-const firebaseConfig = env.firebase;
+// Use your actual Firebase credentials directly
+const firebaseConfig = {
+  apiKey: "AIzaSyBkW-CAlGjRClcL5-AbJRI7c3hQ5wwhWDs",
+  authDomain: "lady-qr.firebaseapp.com",
+  projectId: "lady-qr",
+  storageBucket: "lady-qr.firebasestorage.app",
+  messagingSenderId: "534631817946",
+  appId: "1:534631817946:web:9d15524fa569ed13c93be3",
+  measurementId: "G-WKDZZLF91G"
+};
 
 // Validate Firebase configuration more thoroughly
 const validateFirebaseConfig = (config: any) => {
@@ -53,34 +62,11 @@ console.log('🔧 Firebase Config Check:', {
   isValid: validateFirebaseConfig(firebaseConfig)
 });
 
-// Force offline mode flag
+// Force Firebase to work - no offline mode bullshit
 let FORCE_OFFLINE_MODE = false;
-
-// Check if running in embedded environment (like WebContainer) 
-const isEmbeddedEnvironment = () => {
-  try {
-    // Check for WebContainer specific indicators
-    const isWebContainer = window.location.hostname.includes('webcontainer-api.io') ||
-                          window.location.hostname.includes('local-credentialless') ||
-                          window.location.hostname.includes('stackblitz') ||
-                          window.self !== window.top;
-    return isWebContainer;
-  } catch (e) {
-    return true; // If we can't access window.top, we're probably embedded
-  }
-};
-
-// Force offline mode immediately in WebContainer to prevent connection timeouts
-if (typeof window !== 'undefined' && isEmbeddedEnvironment()) {
-  FORCE_OFFLINE_MODE = true;
-  console.log('🔌 WebContainer environment detected - Firebase disabled to prevent timeouts');
-}
 
 // Only proceed if configuration is valid
 if (validateFirebaseConfig(firebaseConfig)) {
-  if (isEmbeddedEnvironment()) {
-    console.log('🔧 Running in embedded environment (WebContainer)');
-  }
   console.log('✅ All Firebase configuration fields present');
 } else {
   console.error('❌ Firebase configuration validation failed');
@@ -90,22 +76,16 @@ if (validateFirebaseConfig(firebaseConfig)) {
 // Initialize Firebase only if it hasn't been initialized already
 let app;
 try {
-  if (validateFirebaseConfig(firebaseConfig) && !FORCE_OFFLINE_MODE) {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    console.log('✅ Firebase app initialized successfully');
-  } else {
-    console.warn('⚠️ Firebase initialization skipped - running in offline mode');
-    FORCE_OFFLINE_MODE = true;
-  }
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  console.log('✅ Firebase app initialized successfully');
 } catch (error) {
   console.error('❌ Firebase app initialization failed:', error);
-  console.warn('🔄 Switching to offline mode');
-  FORCE_OFFLINE_MODE = true;
+  throw error;
 }
 
 // Initialize Analytics (only in browser environment)
 let analytics;
-if (typeof window !== 'undefined' && app && !FORCE_OFFLINE_MODE) {
+if (typeof window !== 'undefined' && app) {
   try {
     analytics = getAnalytics(app);
     console.log('✅ Firebase Analytics initialized');
@@ -117,7 +97,7 @@ if (typeof window !== 'undefined' && app && !FORCE_OFFLINE_MODE) {
 // Initialize services with error handling
 let auth, db, storage;
 
-if (app && !FORCE_OFFLINE_MODE) {
+if (app) {
   try {
     auth = getAuth(app);
     console.log('✅ Firebase Auth initialized');
@@ -132,36 +112,21 @@ if (app && !FORCE_OFFLINE_MODE) {
     
   } catch (error) {
     console.error('❌ Failed to initialize Firebase services:', error);
-    console.warn('🔄 Switching to offline mode due to service initialization failure');
-    FORCE_OFFLINE_MODE = true;
-    // Clear services to prevent partial initialization
-    auth = undefined;
-    db = undefined;
-    storage = undefined;
+    throw error;
   }
 } else {
-  console.log('🔌 Firebase not configured - running in offline mode');
-  FORCE_OFFLINE_MODE = true;
+  throw new Error('Firebase app not initialized');
 }
 
 // Enhanced helper function to check Firebase connection status
 export const checkFirebaseConnection = async (): Promise<boolean> => {
-  if (FORCE_OFFLINE_MODE) {
-    console.log('🔌 Firebase connection skipped - running in WebContainer offline mode');
-    return false;
-  }
-  
   try {
     if (!db) {
-      console.log('🔌 Firestore not initialized - offline mode');
-      return false;
+      throw new Error('Firestore not initialized');
     }
-    // Try a simple read operation with shorter timeout for WebContainer
+    // Try a simple read operation
     const testDoc = doc(db, '__connection_test__', 'ping');
-    const result = await Promise.race([
-      getDoc(testDoc),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 2000))
-    ]);
+    const result = await getDoc(testDoc);
     
     console.log('✅ Firebase connection test successful');
     return true;
@@ -180,50 +145,14 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
       console.error('🚫 Firestore service unavailable');
     }
     
-    return false;
+    throw error;
   }
 };
 
-// Helper to check if we're in forced offline mode
-export const isOfflineMode = (): boolean => {
-  return FORCE_OFFLINE_MODE;
-};
-
-// Helper to enable offline mode manually
-export const enableOfflineMode = (): void => {
-  FORCE_OFFLINE_MODE = true;
-  console.log('🔌 Offline mode manually enabled');
-};
-
-// Helper function to handle offline scenarios
-export const handleOfflineMode = async () => {
-  try {
-    if (db && !FORCE_OFFLINE_MODE) {
-      await disableNetwork(db);
-      console.log('🔌 Firebase switched to offline mode');
-    }
-  } catch (error) {
-    console.warn('⚠️ Failed to switch to offline mode:', error);
-  }
-};
-
-// Test Firebase connection on initialization
-if (typeof window !== 'undefined' && db && validateFirebaseConfig(firebaseConfig) && !FORCE_OFFLINE_MODE) {
-  // Run connection test after a short delay to allow initialization
-  // Skip connection test in WebContainer to avoid timeouts
-  if (!isEmbeddedEnvironment()) {
-    setTimeout(async () => {
-      console.log('🚀 Running initial Firebase connection test...');
-      const isConnected = await checkFirebaseConnection();
-      if (!isConnected) {
-        console.log('🔌 Firebase connection failed - enabling offline mode');
-        FORCE_OFFLINE_MODE = true;
-      }
-    }, 1000);
-  }
-} else if (FORCE_OFFLINE_MODE) {
-  console.log('🔌 WebContainer offline mode - Firebase features disabled (this is normal)');
-}
+// Helper functions for compatibility
+export const isOfflineMode = (): boolean => false;
+export const enableOfflineMode = (): void => {};
+export const handleOfflineMode = async () => {};
 
 export { auth, db, storage };
 export { analytics };

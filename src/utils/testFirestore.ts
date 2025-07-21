@@ -1,17 +1,10 @@
 import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { isOfflineMode } from '../config/firebase';
 
 // Test function to write to Firestore
 export const testFirestoreWrite = async () => {
-  if (isOfflineMode() || !db) {
-    // Don't use alert() in embedded environments - it gets blocked
-    console.log('🔌 WebContainer offline mode - Firebase features disabled (this is normal)');
-    return {
-      success: false,
-      error: 'WebContainer offline mode - Firebase not available',
-      offline: true
-    };
+  if (!db) {
+    throw new Error('Firestore not initialized');
   }
   
   try {
@@ -62,7 +55,6 @@ export const testFirestoreWrite = async () => {
     return {
       success: false,
       error: error,
-      offline: false
     };
   }
 };
