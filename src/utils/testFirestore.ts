@@ -138,11 +138,92 @@ export const testFirestoreWrite = async () => {
     await setDoc(doc(db, 'settings', settingsData.id), settingsData);
     console.log('✅ Created settings document');
     
+    // 8. Scans collection (for individual scan events)
+    console.log('📝 Creating scan document...');
+    const scanData = {
+      id: 'scan-' + Date.now(),
+      qrCodeId: qrCodeData.id,
+      userId: testUserId,
+      scannedAt: timestamp,
+      ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0 (Test Browser)',
+      location: {
+        city: 'Test City',
+        country: 'Test Country',
+        lat: 40.7128,
+        lng: -74.0060
+      },
+      deviceType: 'mobile',
+      referrer: 'direct'
+    };
+    await setDoc(doc(db, 'scans', scanData.id), scanData);
+    console.log('✅ Created scan document');
+    
+    // 9. Payments collection (for payment records)
+    console.log('📝 Creating payment document...');
+    const paymentData = {
+      id: 'pay-' + Date.now(),
+      userId: testUserId,
+      subscriptionId: subscriptionData.id,
+      stripePaymentIntentId: 'pi_test_123456',
+      amount: 700, // $7.00 in cents
+      currency: 'usd',
+      status: 'succeeded',
+      planType: 'basico',
+      billingCycle: 'monthly',
+      paymentMethod: 'card',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+    await setDoc(doc(db, 'payments', paymentData.id), paymentData);
+    console.log('✅ Created payment document');
+    
+    // 10. Templates collection (for QR code templates)
+    console.log('📝 Creating template document...');
+    const templateData = {
+      id: 'template-' + Date.now(),
+      name: 'Business Card Template',
+      description: 'Professional business card QR code template',
+      type: 'vcard',
+      category: 'business',
+      customizationOptions: {
+        foregroundColor: '#1f2937',
+        backgroundColor: '#ffffff',
+        cornerSquareStyle: 'rounded',
+        cornerDotStyle: 'rounded',
+        dotsStyle: 'rounded',
+        frameText: 'SCAN FOR CONTACT'
+      },
+      isPublic: true,
+      createdBy: 'system',
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+    await setDoc(doc(db, 'templates', templateData.id), templateData);
+    console.log('✅ Created template document');
+    
+    // 11. Suscriptions collection (alternative spelling for subscriptions)
+    console.log('📝 Creating suscription document...');
+    const suscriptionData = {
+      id: 'sus-' + Date.now(),
+      userId: testUserId,
+      planType: 'gratis',
+      status: 'active',
+      stripeSubscriptionId: null,
+      trialEndsAt: null,
+      currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      cancelAtPeriodEnd: false,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+    await setDoc(doc(db, 'suscriptions', suscriptionData.id), suscriptionData);
+    console.log('✅ Created suscription document');
+    
     console.log('🎉 All collection documents created successfully!');
     return {
       success: true,
       testId: testUserId,
-      message: 'Created documents in all collections: users, qrcodes, subscriptions, analytics, short_urls, plans, settings'
+      message: 'Created documents in all collections: users, qrcodes, subscriptions, analytics, short_urls, plans, settings, scans, payments, templates, suscriptions'
     };
     
   } catch (error) {
