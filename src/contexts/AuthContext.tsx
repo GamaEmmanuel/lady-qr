@@ -318,48 +318,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   useEffect(() => {
-    // Auto-login for demo purposes
-    const autoLogin = () => {
-      const testUser = {
-        uid: 'test-user-123',
-        email: 'test@ladyqr.com',
-        displayName: 'Usuario de Prueba',
-        emailVerified: true
-      } as FirebaseUser;
-
-      const testUserData: User = {
-        uid: 'test-user-123',
-        email: 'test@ladyqr.com',
-        fullName: 'Usuario de Prueba',
-        createdAt: new Date('2024-01-15')
-      };
-
-      const testSubscription: Subscription = {
-        id: 'test-sub',
-        planType: 'profesional',
-        status: 'active',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-01-15')
-      };
-
-      const testQrCounts = {
-        staticCodes: 5,
-        dynamicCodes: 8
-      };
-
-      setCurrentUser(testUser);
-      setUserData(testUserData);
-      setSubscription(testSubscription);
-      setQrCounts(testQrCounts);
-      setLoading(false);
-    };
-
-    // Auto-login immediately
-    autoLogin();
-    return () => {};
-
-    // Original Firebase auth code (commented out for demo)
-    /*
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
@@ -389,7 +347,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return unsubscribe;
-    */
   }, []);
 
   const value: AuthContextType = {

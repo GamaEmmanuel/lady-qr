@@ -76,7 +76,7 @@ const Home: React.FC = () => {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
-                to={currentUser ? "/dashboard" : "/register"}
+                to={currentUser ? "/dashboard" : "/login"}
                 className="rounded-md bg-primary-600 px-6 py-3 text-sm font-inter font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 transition-all duration-200 flex items-center space-x-2"
               >
                 <span>{currentUser ? 'Go to Dashboard' : 'Start Free'}</span>
@@ -86,7 +86,7 @@ const Home: React.FC = () => {
                 to={currentUser ? "/create" : "/create-guest"}
                 className="text-sm font-inter font-semibold leading-6 text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
               >
-                Create QR now <span aria-hidden="true">→</span>
+                {currentUser ? 'Create QR Code' : 'Try Demo'} <span aria-hidden="true">→</span>
               </Link>
             </div>
           </div>
@@ -172,10 +172,10 @@ const Home: React.FC = () => {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
-                to="/register"
+                to={currentUser ? "/dashboard" : "/register"}
                 className="rounded-md bg-white px-6 py-3 text-sm font-inter font-semibold text-primary-600 shadow-sm hover:bg-primary-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-all duration-200"
               >
-                Start now
+                {currentUser ? 'Go to Dashboard' : 'Start now'}
               </Link>
               <Link
                 to="/features"

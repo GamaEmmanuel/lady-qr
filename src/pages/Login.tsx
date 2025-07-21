@@ -23,56 +23,12 @@ const Login: React.FC = () => {
     setLoading(true);
     setError('');
 
-    try {
-      await login(email, password);
-    } catch (error: any) {
-      setError('Email o contraseña incorrectos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      await loginWithGoogle();
-    } catch (error: any) {
-      setError('Error al iniciar sesión con Google');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordlessLogin = async () => {
-    if (!email) {
-      setError('Please enter your email address first');
-      return;
-    }
-
-    setPasswordlessLoading(true);
-    setError('');
-    setPasswordlessSuccess(false);
-
-    try {
-      await sendPasswordlessLink(email);
-      setPasswordlessSuccess(true);
-    } catch (error: any) {
-      setError('Error sending authentication link. Please try again.');
-    } finally {
-      setPasswordlessLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-poppins font-bold text-gray-900 dark:text-white">
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Don't have an account?{' '}
+      setError('Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
           <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
             Sign up here
           </Link>

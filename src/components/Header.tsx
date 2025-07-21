@@ -89,7 +89,7 @@ const Header: React.FC = () => {
             <Menu as="div" className="relative">
               <Menu.Button className="flex items-center space-x-2 text-sm font-inter font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <UserCircleIcon className="h-6 w-6" />
-                <span>{currentUser.displayName || currentUser.email}</span>
+                <span>{currentUser.displayName || userData?.fullName || currentUser.email}</span>
               </Menu.Button>
               
               <Transition
