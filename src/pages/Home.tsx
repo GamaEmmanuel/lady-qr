@@ -24,7 +24,7 @@ const Home: React.FC = () => {
       const message = `✅ Firestore working! Test ID: ${result.testId}`;
       console.log(message);
     } else if (result.offline) {
-      console.log('🔌 App running in offline mode - this is normal if Firebase is not configured');
+      console.log('🔌 WebContainer offline mode - this is normal in embedded environments');
     } else {
       console.error('❌ Firestore Test Failed:', result.error);
       // Show specific error guidance
