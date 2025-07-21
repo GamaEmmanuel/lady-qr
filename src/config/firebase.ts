@@ -1,32 +1,52 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, enableNetwork, disableNetwork, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, enableNetwork, disableNetwork, connectFirestoreEmulator, doc, getDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
 
 const firebaseConfig = env.firebase;
 
-// Validate Firebase configuration
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  console.error('Firebase configuration is missing required fields. Please check your .env.local file.');
-  console.error('Required environment variables:');
-  console.error('- VITE_FIREBASE_API_KEY');
-  console.error('- VITE_FIREBASE_PROJECT_ID');
-  console.error('- VITE_FIREBASE_AUTH_DOMAIN');
-  console.error('- VITE_FIREBASE_STORAGE_BUCKET');
-  console.error('- VITE_FIREBASE_MESSAGING_SENDER_ID');
-  console.error('- VITE_FIREBASE_APP_ID');
+// Debug: Log Firebase configuration (without sensitive data)
+console.log('🔧 Firebase Config Check:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasProjectId: !!firebaseConfig.projectId,
+  hasAuthDomain: !!firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain
+});
+
+// Validate Firebase configuration with detailed logging
+const missingFields = [];
+if (!firebaseConfig.apiKey) missingFields.push('VITE_FIREBASE_API_KEY');
+if (!firebaseConfig.projectId) missingFields.push('VITE_FIREBASE_PROJECT_ID');
+if (!firebaseConfig.authDomain) missingFields.push('VITE_FIREBASE_AUTH_DOMAIN');
+if (!firebaseConfig.storageBucket) missingFields.push('VITE_FIREBASE_STORAGE_BUCKET');
+if (!firebaseConfig.messagingSenderId) missingFields.push('VITE_FIREBASE_MESSAGING_SENDER_ID');
+if (!firebaseConfig.appId) missingFields.push('VITE_FIREBASE_APP_ID');
+
+if (missingFields.length > 0) {
+  console.error('❌ Missing Firebase configuration fields:', missingFields);
+} else {
+  console.log('✅ All Firebase configuration fields present');
 }
 
 // Initialize Firebase only if it hasn't been initialized already
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let app;
+try {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  console.log('✅ Firebase app initialized successfully');
+} catch (error) {
+  console.error('❌ Firebase app initialization failed:', error);
+  throw error;
+}
 
 // Initialize Analytics (only in browser environment)
 let analytics;
 if (typeof window !== 'undefined') {
   try {
     analytics = getAnalytics(app);
+    console.log('✅ Firebase Analytics initialized');
   } catch (error) {
     console.warn('Analytics initialization failed:', error);
   }
@@ -37,37 +57,47 @@ let auth, db, storage;
 
 try {
   auth = getAuth(app);
+  console.log('✅ Firebase Auth initialized');
   db = getFirestore(app);
+  console.log('✅ Firebase Firestore initialized');
   storage = getStorage(app);
+  console.log('✅ Firebase Storage initialized');
   
-  // Enable offline persistence for Firestore
-  if (typeof window !== 'undefined') {
-    // Only enable persistence in browser environment
-    try {
-      // Note: Persistence is enabled by default in v9+
-      console.log('Firebase Firestore offline persistence enabled');
-    } catch (error) {
-      console.warn('Failed to enable Firestore persistence:', error);
-    }
-  }
-  
-  console.log('Firebase services initialized successfully');
+  console.log('✅ All Firebase services initialized successfully');
   
 } catch (error) {
-  console.error('Failed to initialize Firebase services:', error);
+  console.error('❌ Failed to initialize Firebase services:', error);
   // Don't throw error to prevent app crash, let it continue with offline mode
 }
 
-// Helper function to check Firebase connection status
+// Enhanced helper function to check Firebase connection status
 export const checkFirebaseConnection = async (): Promise<boolean> => {
   try {
-    if (!db) return false;
+    if (!db) {
+      console.warn('⚠️ Firestore not initialized');
+      return false;
+    }
     
-    // Try to enable network (this will succeed if we can connect)
-    await enableNetwork(db);
+    console.log('🔍 Testing Firebase connection...');
+    
+    // Try to read a simple document to test connection
+    const testDoc = doc(db, 'test', 'connection');
+    await getDoc(testDoc);
+    
+    console.log('✅ Firebase connection test successful');
     return true;
-  } catch (error) {
-    console.warn('Firebase connection check failed:', error);
+  } catch (error: any) {
+    console.warn('❌ Firebase connection test failed:', error.message);
+    
+    // Check specific error types
+    if (error.code === 'unavailable') {
+      console.warn('🔌 Firebase service unavailable - likely network issue');
+    } else if (error.code === 'permission-denied') {
+      console.warn('🔒 Firebase permission denied - check Firestore rules');
+    } else if (error.code === 'failed-precondition') {
+      console.warn('⚙️ Firebase failed precondition - check project configuration');
+    }
+    
     return false;
   }
 };
@@ -77,12 +107,24 @@ export const handleOfflineMode = async () => {
   try {
     if (db) {
       await disableNetwork(db);
-      console.log('Firebase switched to offline mode');
+      console.log('🔌 Firebase switched to offline mode');
     }
   } catch (error) {
-    console.warn('Failed to switch to offline mode:', error);
+    console.warn('⚠️ Failed to switch to offline mode:', error);
   }
 };
+
+// Test Firebase connection on initialization
+if (typeof window !== 'undefined' && db) {
+  // Run connection test after a short delay to allow initialization
+  setTimeout(async () => {
+    console.log('🚀 Running initial Firebase connection test...');
+    const isConnected = await checkFirebaseConnection();
+    if (!isConnected) {
+      console.warn('⚠️ Initial Firebase connection failed - app will run in offline mode');
+    }
+  }, 1000);
+}
 
 export { auth, db, storage };
 export { analytics };
