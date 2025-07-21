@@ -13,6 +13,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
+import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserProperties } from '../utils/analytics';
 
 // Mock function to get user's QR code counts
 const getUserQRCounts = async (userId: string) => {
@@ -90,6 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserData(testUserData);
       setSubscription(testSubscription);
       setQrCounts(testQrCounts);
+      
+      // Track login event
+      trackUserLogin('email');
+      setAnalyticsUserId(testUser.uid);
+      setAnalyticsUserProperties({
+        plan_type: testSubscription.planType,
+        user_type: 'test_user'
+      });
       return;
     }
     
@@ -124,6 +133,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+    
+    // Track sign up event
+    trackUserSignUp('email');
+    setAnalyticsUserId(result.user.uid);
+    setAnalyticsUserProperties({
+      plan_type: 'gratis',
+      user_type: 'new_user'
+    });
   };
 
   const loginWithGoogle = async () => {
@@ -151,6 +168,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+      
+      // Track sign up event for new Google users
+      trackUserSignUp('google');
+      setAnalyticsUserId(result.user.uid);
+      setAnalyticsUserProperties({
+        plan_type: 'gratis',
+        user_type: 'new_user'
+      });
+    } else {
+      // Track login event for existing Google users
+      trackUserLogin('google');
+      setAnalyticsUserId(result.user.uid);
     }
   };
 

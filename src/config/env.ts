@@ -9,6 +9,7 @@ interface EnvConfig {
     storageBucket: string;
     messagingSenderId: string;
     appId: string;
+    measurementId: string;
   };
   
   // Stripe
@@ -49,9 +50,10 @@ export const env: EnvConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ladyqr.firebaseapp.com",
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ladyqr",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "ladyqr.appspot.com",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abc123def456"
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "lady-qr.firebasestorage.app",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "534631817946",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:534631817946:web:9d15524fa569ed13c93be3",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-WKDZZLF91G"
   },
   
   stripe: {
