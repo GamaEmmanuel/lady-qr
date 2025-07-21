@@ -65,6 +65,12 @@ const isEmbeddedEnvironment = () => {
   }
 };
 
+// Force offline mode immediately in embedded environments to prevent connection timeouts
+if (typeof window !== 'undefined' && isEmbeddedEnvironment()) {
+  FORCE_OFFLINE_MODE = true;
+  console.log('🔌 Embedded environment detected - forcing offline mode to prevent connection timeouts');
+}
+
 // Only proceed if configuration is valid
 if (validateFirebaseConfig(firebaseConfig)) {
   if (isEmbeddedEnvironment()) {
