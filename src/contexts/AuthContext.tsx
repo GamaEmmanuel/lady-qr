@@ -14,7 +14,6 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import { checkFirebaseConnection, isOfflineMode } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
 import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserProperties } from '../utils/analytics';
@@ -82,73 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    // Test credentials for demo
-    if (email === 'test@ladyqr.com' && password === 'password123') {
-      console.log('🧪 Using test credentials for demo');
-      // Simulate successful login with test user
-      const testUser = {
-        uid: 'test-user-123',
-        email: 'test@ladyqr.com',
-        displayName: 'Usuario de Prueba',
-        emailVerified: true
-      } as FirebaseUser;
-
-      const testUserData: User = {
-        uid: 'test-user-123',
-        email: 'test@ladyqr.com',
-        fullName: 'Usuario de Prueba',
-        createdAt: new Date('2024-01-15')
-      };
-
-      const testSubscription: Subscription = {
-        id: 'test-sub',
-        planType: 'profesional',
-        status: 'active',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-01-15')
-      };
-
-      const testQrCounts = {
-        staticCodes: 5,
-        dynamicCodes: 8
-      };
-
-      setCurrentUser(testUser);
-      setUserData(testUserData);
-      setSubscription(testSubscription);
-      setQrCounts(testQrCounts);
-      
-      // Track login event
-      try {
-        trackUserLogin('email');
-        setAnalyticsUserId(testUser.uid);
-        setAnalyticsUserProperties({
-          plan_type: testSubscription.planType,
-          user_type: 'test_user'
-        });
-      } catch (error) {
-        console.warn('Analytics tracking failed:', error);
-      }
-      return;
-    }
-    
-    // For any other credentials, try Firebase if available
-    if (isOfflineMode() || !auth) {
-      throw new Error('Firebase authentication not available. Use test@ladyqr.com / password123 for demo.');
-    }
-    
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      throw new Error('Credenciales incorrectas. Usa test@ladyqr.com / password123 para la demo.');
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const register = async (email: string, password: string, fullName: string) => {
-    if (isOfflineMode() || !auth || !db) {
-      throw new Error('Registration not available in offline mode. Firebase connection required.');
-    }
-    
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: fullName });
     
@@ -186,10 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = async () => {
-    if (isOfflineMode() || !auth || !db) {
-      throw new Error('Google login not available in offline mode. Firebase connection required.');
-    }
-    
     const provider = new GoogleAuthProvider();
     // Add additional scopes if needed
     provider.addScope('profile');
@@ -242,10 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendPasswordlessLink = async (email: string) => {
-    if (isOfflineMode() || !auth) {
-      throw new Error('Passwordless login not available in offline mode. Firebase connection required.');
-    }
-    
     try {
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       // Store the email locally so we can complete the sign-in process
@@ -264,10 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const completePasswordlessSignIn = async (email?: string) => {
-    if (isOfflineMode() || !auth || !db) {
-      throw new Error('Passwordless login not available in offline mode. Firebase connection required.');
-    }
-    
     try {
       // Get the email from parameter or localStorage
       const emailForSignIn = email || localStorage.getItem('emailForSignIn');
@@ -341,27 +265,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isPasswordlessSignIn = (): boolean => {
-    if (isOfflineMode() || !auth) {
-      return false;
-    }
     return isSignInWithEmailLink(auth, window.location.href);
   };
 
   const logout = async () => {
-    if (auth && !isOfflineMode()) {
-      await signOut(auth);
-    } else {
-      // Manual logout for offline mode
-      setCurrentUser(null);
-      setUserData(null);
-      setSubscription(null);
-      setQrCounts(null);
-    }
+    await signOut(auth);
   };
 
   const updateUserProfile = async (updates: Partial<User>) => {
-    if (!currentUser || isOfflineMode() || !db) {
-      console.warn('Profile update not available in offline mode');
+    if (!currentUser || !db) {
       return;
     }
     
@@ -382,38 +294,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   useEffect(() => {
-    if (isOfflineMode() || !auth) {
-      console.log('🔌 Auth state monitoring disabled - offline mode');
-      setLoading(false);
-      return;
-    }
-    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        
-        // Check Firebase connection before making Firestore calls
-        const isConnected = await checkFirebaseConnection();
-        if (!isConnected) {
-          console.warn('Firebase is offline, using cached/default data only');
-          // Set default values when offline
-          setUserData({
-            uid: user.uid,
-            email: user.email || '',
-            fullName: user.displayName || 'User',
-            createdAt: new Date()
-          });
-          setSubscription({
-            id: 'offline-free',
-            planType: 'gratis',
-            status: 'active',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-          setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
-          setLoading(false);
-          return;
-        }
         
         // Fetch user data with error handling
         try {
@@ -421,23 +304,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userDoc.exists()) {
             setUserData(userDoc.data() as User);
           } else {
-            // Create default user data if document doesn't exist
-            setUserData({
+            // Create user data if document doesn't exist
+            const userData = {
               uid: user.uid,
               email: user.email || '',
               fullName: user.displayName || 'User',
               createdAt: new Date()
-            });
+            };
+            await setDoc(doc(db, 'users', user.uid), userData);
+            setUserData(userData);
           }
         } catch (error) {
           console.error('Failed to fetch user data:', error);
-          // Set default user data on error
-          setUserData({
-            uid: user.uid,
-            email: user.email || '',
-            fullName: user.displayName || 'User',
-            createdAt: new Date()
-          });
+          throw error;
         }
         
         // Fetch subscription with error handling
@@ -446,25 +325,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (subscriptionDoc.exists()) {
             setSubscription(subscriptionDoc.data() as Subscription);
           } else {
-            // Create default free subscription if document doesn't exist
-            setSubscription({
-              id: 'default-free',
+            // Create free subscription if document doesn't exist
+            const freeSubscription = {
+              id: 'free',
               planType: 'gratis',
               status: 'active',
               createdAt: new Date(),
               updatedAt: new Date()
-            });
+            };
+            await setDoc(doc(db, `users/${user.uid}/subscriptions`, 'current'), freeSubscription);
+            setSubscription(freeSubscription);
           }
         } catch (error) {
           console.error('Failed to fetch subscription data:', error);
-          // Set default free subscription if offline
-          setSubscription({
-            id: 'error-free',
-            planType: 'gratis',
-            status: 'active',
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
+          throw error;
         }
         
         // Fetch QR counts with error handling
@@ -473,7 +347,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setQrCounts(counts);
         } catch (error) {
           console.error('Failed to fetch QR counts:', error);
-          // Set default counts if offline
           setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
         }
       } else {
