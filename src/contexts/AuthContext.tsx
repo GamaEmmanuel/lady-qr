@@ -14,7 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import { checkFirebaseConnection } from '../config/firebase';
+import { checkFirebaseConnection, isOfflineMode } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
 import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserProperties } from '../utils/analytics';
@@ -118,16 +118,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setQrCounts(testQrCounts);
       
       // Track login event
-      trackUserLogin('email');
-      setAnalyticsUserId(testUser.uid);
-      setAnalyticsUserProperties({
-        plan_type: testSubscription.planType,
-        user_type: 'test_user'
-      });
+      try {
+        trackUserLogin('email');
+        setAnalyticsUserId(testUser.uid);
+        setAnalyticsUserProperties({
+          plan_type: testSubscription.planType,
+          user_type: 'test_user'
+        });
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error);
+      }
       return;
     }
     
-    // For any other credentials, try Firebase (will likely fail with demo config)
+    // For any other credentials, try Firebase if available
+    if (isOfflineMode() || !auth) {
+      throw new Error('Firebase authentication not available. Use test@ladyqr.com / password123 for demo.');
+    }
+    
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -136,6 +144,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (email: string, password: string, fullName: string) => {
+    if (isOfflineMode() || !auth || !db) {
+      throw new Error('Registration not available in offline mode. Firebase connection required.');
+    }
+    
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: fullName });
     
@@ -160,15 +172,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
     
     // Track sign up event
-    trackUserSignUp('email');
-    setAnalyticsUserId(result.user.uid);
-    setAnalyticsUserProperties({
-      plan_type: 'gratis',
-      user_type: 'new_user'
-    });
+    try {
+      trackUserSignUp('email');
+      setAnalyticsUserId(result.user.uid);
+      setAnalyticsUserProperties({
+        plan_type: 'gratis',
+        user_type: 'new_user'
+      });
+    } catch (error) {
+      console.warn('Analytics tracking failed:', error);
+    }
   };
 
   const loginWithGoogle = async () => {
+    if (isOfflineMode() || !auth || !db) {
+      throw new Error('Google login not available in offline mode. Firebase connection required.');
+    }
+    
     const provider = new GoogleAuthProvider();
     // Add additional scopes if needed
     provider.addScope('profile');
@@ -199,27 +219,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
       
       // Track sign up event for new Google users
-      trackUserSignUp('google');
-      setAnalyticsUserId(result.user.uid);
-      setAnalyticsUserProperties({
-        plan_type: 'gratis',
-        user_type: 'new_user'
-      });
+      try {
+        trackUserSignUp('google');
+        setAnalyticsUserId(result.user.uid);
+        setAnalyticsUserProperties({
+          plan_type: 'gratis',
+          user_type: 'new_user'
+        });
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error);
+      }
     } else {
       // Track login event for existing Google users
-      trackUserLogin('google');
-      setAnalyticsUserId(result.user.uid);
+      try {
+        trackUserLogin('google');
+        setAnalyticsUserId(result.user.uid);
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error);
+      }
     }
   };
 
   const sendPasswordlessLink = async (email: string) => {
+    if (isOfflineMode() || !auth) {
+      throw new Error('Passwordless login not available in offline mode. Firebase connection required.');
+    }
+    
     try {
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       // Store the email locally so we can complete the sign-in process
       localStorage.setItem('emailForSignIn', email);
       
       // Track passwordless authentication attempt
-      trackUserLogin('email_link_sent');
+      try {
+        trackUserLogin('email_link_sent');
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error);
+      }
     } catch (error: any) {
       console.error('Error sending passwordless link:', error);
       throw new Error('Error sending authentication link. Please try again.');
@@ -227,6 +263,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const completePasswordlessSignIn = async (email?: string) => {
+    if (isOfflineMode() || !auth || !db) {
+      throw new Error('Passwordless login not available in offline mode. Firebase connection required.');
+    }
+    
     try {
       // Get the email from parameter or localStorage
       const emailForSignIn = email || localStorage.getItem('emailForSignIn');
@@ -270,20 +310,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
         
         // Track sign up event for new users
-        trackUserSignUp('email_link');
-        setAnalyticsUserId(result.user.uid);
-        setAnalyticsUserProperties({
-          plan_type: 'gratis',
-          user_type: 'new_user',
-          auth_method: 'email_link'
-        });
+        try {
+          trackUserSignUp('email_link');
+          setAnalyticsUserId(result.user.uid);
+          setAnalyticsUserProperties({
+            plan_type: 'gratis',
+            user_type: 'new_user',
+            auth_method: 'email_link'
+          });
+        } catch (error) {
+          console.warn('Analytics tracking failed:', error);
+        }
       } else {
         // Track login event for existing users
-        trackUserLogin('email_link');
-        setAnalyticsUserId(result.user.uid);
-        setAnalyticsUserProperties({
-          auth_method: 'email_link'
-        });
+        try {
+          trackUserLogin('email_link');
+          setAnalyticsUserId(result.user.uid);
+          setAnalyticsUserProperties({
+            auth_method: 'email_link'
+          });
+        } catch (error) {
+          console.warn('Analytics tracking failed:', error);
+        }
       }
     } catch (error: any) {
       console.error('Error completing passwordless sign-in:', error);
@@ -292,15 +340,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isPasswordlessSignIn = (): boolean => {
+    if (isOfflineMode() || !auth) {
+      return false;
+    }
     return isSignInWithEmailLink(auth, window.location.href);
   };
 
   const logout = async () => {
-    await signOut(auth);
+    if (auth && !isOfflineMode()) {
+      await signOut(auth);
+    } else {
+      // Manual logout for offline mode
+      setCurrentUser(null);
+      setUserData(null);
+      setSubscription(null);
+      setQrCounts(null);
+    }
   };
 
   const updateUserProfile = async (updates: Partial<User>) => {
-    if (!currentUser) return;
+    if (!currentUser || isOfflineMode() || !db) {
+      console.warn('Profile update not available in offline mode');
+      return;
+    }
     
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => prev ? { ...prev, ...updates } : null);
@@ -319,6 +381,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   useEffect(() => {
+    if (isOfflineMode() || !auth) {
+      console.log('🔌 Auth state monitoring disabled - offline mode');
+      setLoading(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
