@@ -113,6 +113,30 @@ const Header: React.FC = () => {
                     </Menu.Item>
                     <Menu.Item>
                       <Link
+                        to="/create"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Create QR
+                      </Link>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <Link
+                        to="/pricing"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Pricing
+                      </Link>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <Link
+                        to="/features"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Features
+                      </Link>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
