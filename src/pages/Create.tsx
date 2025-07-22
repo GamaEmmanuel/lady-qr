@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
@@ -187,6 +189,63 @@ const Create: React.FC = () => {
       console.error('Error generating QR code:', error);
       alert('Error al generar el código QR. Intenta nuevamente.');
     });
+  };
+
+  const handleSave = async () => {
+    if (!canCreate) {
+      alert('Has alcanzado el límite de códigos QR para tu plan actual.');
+      return;
+    }
+    
+    if (!qrData) {
+      alert('Por favor ingresa los datos del código QR primero.');
+      return;
+    }
+
+    if (!currentUser) {
+      alert('Debes iniciar sesión para guardar códigos QR.');
+      return;
+    }
+
+    try {
+      // Generate a unique ID for the QR code
+      const qrId = `qr-${Date.now()}`;
+      
+      // Create QR code document
+      const qrCodeData = {
+        id: qrId,
+        userId: currentUser.uid,
+        name: formData.name || `${selectedTypeConfig?.name} QR Code`,
+        type: selectedType,
+        isDynamic: isDynamic,
+        content: formData,
+        customizationOptions: hasCustomization ? customization : {
+          foregroundColor: '#000000',
+          backgroundColor: '#ffffff',
+          cornerSquareStyle: 'square',
+          cornerDotStyle: 'square',
+          dotsStyle: 'square'
+        },
+        destinationUrl: selectedType === 'url' ? formData.url : null,
+        shortUrlId: isDynamic ? `short-${Date.now()}` : null,
+        scanCount: 0,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Save to Firestore
+      await setDoc(doc(db, 'qrcodes', qrId), qrCodeData);
+      
+      alert('¡Código QR guardado exitosamente!');
+      
+      // Reset form
+      setFormData({});
+      
+    } catch (error) {
+      console.error('Error saving QR code:', error);
+      alert('Error al guardar el código QR. Intenta nuevamente.');
+    }
   };
 
   const downloadCanvas = (canvas: HTMLCanvasElement) => {
@@ -383,6 +442,26 @@ const Create: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* QR Name Field */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                QR Code Name
+              </h3>
+              <div>
+                <label htmlFor="qrName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Name (for your archive)
+                </label>
+                <input
+                  type="text"
+                  id="qrName"
+                  value={formData.name || ''}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  placeholder={`My ${selectedTypeConfig?.name} QR Code`}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
 
             {/* Form Fields */}
             {selectedTypeConfig && (
@@ -616,6 +695,28 @@ const Create: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
+                  <button 
+                    onClick={handleSave}
+                    disabled={!canCreate || !qrData}
+                    className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                      !canCreate || !qrData
+                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                        : 'bg-success-600 hover:bg-success-700 text-white'
+                    }`}
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span>
+                      {!canCreate
+                        ? 'Limit Reached'
+                        : !qrData
+                        ? 'Enter Data First'
+                        : 'Save to Archive'
+                      }
+                    </span>
+                  </button>
+                  
                   <button 
                     onClick={handleDownload}
                     disabled={!canCreate || !qrData}
