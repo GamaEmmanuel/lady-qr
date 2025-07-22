@@ -6,6 +6,7 @@ import { db } from '../config/firebase';
 import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
+import { generateShortUrl, createTrackableQRData } from '../utils/qrTracking';
 import QRPreview from '../components/QRPreview';
 import { HexColorPicker } from 'react-colorful';
 import QRCode from 'qrcode';
@@ -99,27 +100,44 @@ const Create: React.FC = () => {
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
     
+    let originalData = '';
+    
     switch (selectedType) {
       case 'url':
-        return formData.url || '';
+        originalData = formData.url || '';
+        break;
       case 'text':
-        return formData.text || '';
+        originalData = formData.text || '';
+        break;
       case 'email':
-        return `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
+        originalData = `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
+        break;
       case 'sms':
-        return `sms:${formData.phone}${formData.message ? `?body=${encodeURIComponent(formData.message)}` : ''}`;
+        originalData = `sms:${formData.phone}${formData.message ? `?body=${encodeURIComponent(formData.message)}` : ''}`;
+        break;
       case 'wifi':
-        return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
+        originalData = `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
+        break;
       case 'location':
         if (formData.latitude && formData.longitude) {
-          return `geo:${formData.latitude},${formData.longitude}`;
+          originalData = `geo:${formData.latitude},${formData.longitude}`;
+        } else {
+          originalData = formData.address || '';
         }
-        return formData.address || '';
+        break;
       case 'vcard':
-        return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
+        originalData = `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
+        break;
       default:
-        return JSON.stringify(formData);
+        originalData = JSON.stringify(formData);
+        break;
     }
+    
+    // For editing, use the existing QR ID, otherwise generate a temporary one for preview
+    const qrId = isEditing ? editingQRId! : `temp-${Date.now()}`;
+    
+    // Create trackable QR data
+    return createTrackableQRData(originalData, qrId, !isDynamic);
   };
 
   const qrData = generateQRData();
@@ -263,6 +281,10 @@ const Create: React.FC = () => {
       // Generate a unique ID for the QR code
       const qrId = isEditing ? editingQRId! : `qr-${Date.now()}`;
       
+      // Generate short URL for dynamic QR codes
+      const shortUrlId = isDynamic ? `short-${Date.now()}` : null;
+      const destinationUrl = selectedType === 'url' ? formData.url : null;
+      
       // Create QR code document
       const qrCodeData = {
         id: qrId,
@@ -271,6 +293,7 @@ const Create: React.FC = () => {
         type: selectedType,
         isDynamic: isDynamic,
         content: formData,
+        originalContent: formData, // Store original data separately
         customizationOptions: hasCustomization ? customization : {
           foregroundColor: '#000000',
           backgroundColor: '#ffffff',
@@ -278,8 +301,8 @@ const Create: React.FC = () => {
           cornerDotStyle: 'square',
           dotsStyle: 'square'
         },
-        destinationUrl: selectedType === 'url' ? formData.url : null,
-        shortUrlId: isDynamic ? `short-${Date.now()}` : null,
+        destinationUrl: destinationUrl,
+        shortUrlId: shortUrlId,
         scanCount: 0,
         isActive: true,
         createdAt: new Date(),
