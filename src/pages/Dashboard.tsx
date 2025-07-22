@@ -33,8 +33,7 @@ const Dashboard: React.FC = () => {
         setQrLoading(true);
         const qrCodesQuery = query(
           collection(db, 'qrcodes'),
-          where('userId', '==', currentUser.uid),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', currentUser.uid)
         );
         
         const qrCodesSnapshot = await getDocs(qrCodesQuery);
@@ -43,7 +42,7 @@ const Dashboard: React.FC = () => {
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate() || new Date(),
           updatedAt: doc.data().updatedAt?.toDate() || new Date()
-        }));
+        })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         
         setQrCodes(qrCodesData);
       } catch (error) {
