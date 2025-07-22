@@ -5,6 +5,7 @@ import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
 import QRExpirationTimer from '../components/QRExpirationTimer';
 import { useQRExpiration } from '../hooks/useQRExpiration';
+import QRCode from 'qrcode';
 import { 
   ArrowDownTrayIcon, 
   EyeIcon,
@@ -72,7 +73,46 @@ const CreateGuest: React.FC = () => {
       return;
     }
     
-    alert('Regístrate para descargar códigos QR permanentes.');
+    if (!qrData) {
+      alert('Por favor ingresa los datos del código QR primero.');
+      return;
+    }
+
+    // Generate QR code and download as PNG for guest users
+    const canvas = document.createElement('canvas');
+    const size = 512; // Higher resolution for download
+    
+    QRCode.toCanvas(canvas, qrData, {
+      width: size,
+      margin: 2,
+      color: {
+        dark: basicCustomization.foregroundColor,
+        light: basicCustomization.backgroundColor
+      },
+      errorCorrectionLevel: 'M'
+    }).then(() => {
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `qr-code-guest-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          // Show message about signing up for more features
+          setTimeout(() => {
+            alert('¡Descarga completada! Regístrate gratis para códigos permanentes, personalización y más formatos de descarga.');
+          }, 500);
+        }
+      }, 'image/png', 1.0);
+    }).catch(error => {
+      console.error('Error generating QR code:', error);
+      alert('Error al generar el código QR. Intenta nuevamente.');
+    });
   };
 
   const renderField = (field: any) => {
