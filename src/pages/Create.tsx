@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -192,7 +192,7 @@ const Create: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!canCreate) {
+    if (!isEditing && !canCreate) {
       alert('Has alcanzado el límite de códigos QR para tu plan actual.');
       return;
     }
@@ -209,7 +209,7 @@ const Create: React.FC = () => {
 
     try {
       // Generate a unique ID for the QR code
-      const qrId = `qr-${Date.now()}`;
+      const qrId = isEditing ? editingQRId! : `qr-${Date.now()}`;
       
       // Create QR code document
       const qrCodeData = {
@@ -237,7 +237,11 @@ const Create: React.FC = () => {
       // Save to Firestore
       await setDoc(doc(db, 'qrcodes', qrId), qrCodeData);
       
-      alert('¡Código QR guardado exitosamente!');
+      if (isEditing) {
+        alert('¡Código QR actualizado exitosamente!');
+      } else {
+        alert('¡Código QR guardado exitosamente!');
+      }
       
       // Reset form
       setFormData({});
@@ -319,10 +323,10 @@ const Create: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">
-            Create Professional QR Code
+            {isEditing ? 'Edit QR Code' : 'Create Professional QR Code'}
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Create permanent QR codes with full customization and analytics
+            {isEditing ? 'Edit your existing QR code' : 'Create permanent QR codes with full customization and analytics'}
           </p>
           
           {/* Plan Limitations Warning */}
@@ -697,9 +701,9 @@ const Create: React.FC = () => {
                 <div className="space-y-3">
                   <button 
                     onClick={handleSave}
-                    disabled={!canCreate || !qrData}
+                    disabled={(!isEditing && !canCreate) || !qrData}
                     className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                      !canCreate || !qrData
+                      (!isEditing && !canCreate) || !qrData
                         ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                         : 'bg-success-600 hover:bg-success-700 text-white'
                     }`}
@@ -709,10 +713,10 @@ const Create: React.FC = () => {
                     </svg>
                     <span>
                       {!canCreate
-                        ? 'Limit Reached'
+                        ? (isEditing ? 'Update QR Code' : 'Limit Reached')
                         : !qrData
                         ? 'Enter Data First'
-                        : 'Save to History'
+                        : (isEditing ? 'Update QR Code' : 'Save to History')
                       }
                     </span>
                   </button>

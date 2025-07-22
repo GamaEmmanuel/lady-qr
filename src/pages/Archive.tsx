@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -16,6 +16,7 @@ import {
 
 const Archive: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created');
   const [filterType, setFilterType] = useState('all');
@@ -282,7 +283,11 @@ const Archive: React.FC = () => {
                     </td>
                   </tr>
                 ) : filteredQRCodes.map((qr) => (
-                  <tr key={qr.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr 
+                    key={qr.id} 
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    onClick={() => navigate(`/create?edit=${qr.id}`)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="text-2xl mr-3">{getTypeIcon(qr.type)}</div>
@@ -316,7 +321,7 @@ const Archive: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {qr.createdAt?.toLocaleDateString('en-US') || 'Unknown'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-2">
                         <button className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1 rounded">
                           <EyeIcon className="h-4 w-4" />

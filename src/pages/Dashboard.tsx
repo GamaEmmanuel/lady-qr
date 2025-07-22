@@ -277,7 +277,11 @@ const Dashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : filteredQRCodes.map((qr) => (
-                  <tr key={qr.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr 
+                    key={qr.id} 
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                    onClick={() => navigate(`/create?edit=${qr.id}`)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="text-2xl mr-3">{getTypeIcon(qr.type)}</div>
@@ -311,7 +315,7 @@ const Dashboard: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {qr.createdAt?.toLocaleDateString('es-ES') || 'Unknown'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-2">
                         <button className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1 rounded">
                           <EyeIcon className="h-4 w-4" />
