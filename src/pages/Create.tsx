@@ -6,6 +6,7 @@ import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
 import { HexColorPicker } from 'react-colorful';
+import QRCode from 'qrcode';
 import { 
   PhotoIcon, 
   ArrowDownTrayIcon, 
@@ -128,8 +129,80 @@ const Create: React.FC = () => {
       return;
     }
     
-    // Implement download logic here
-    console.log('Downloading QR code...');
+    if (!qrData) {
+      alert('Por favor ingresa los datos del código QR primero.');
+      return;
+    }
+
+    // Generate QR code and download as PNG
+    const canvas = document.createElement('canvas');
+    const size = 512; // Higher resolution for download
+    
+    QRCode.toCanvas(canvas, qrData, {
+      width: size,
+      margin: 2,
+      color: {
+        dark: hasCustomization ? customization.foregroundColor : '#000000',
+        light: hasCustomization ? customization.backgroundColor : '#ffffff'
+      },
+      errorCorrectionLevel: hasCustomization && customization.logoUrl ? 'H' : 'M'
+    }).then(() => {
+      // If there's a logo and customization is available, add it
+      if (hasCustomization && customization.logoUrl) {
+        const ctx = canvas.getContext('2d');
+        const logo = new Image();
+        logo.crossOrigin = 'anonymous';
+        logo.onload = () => {
+          const logoSize = size * 0.15;
+          const logoX = (size - logoSize) / 2;
+          const logoY = (size - logoSize) / 2;
+          
+          // Draw white background circle for logo
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, logoSize / 2 + 6, 0, 2 * Math.PI);
+          ctx.fill();
+          
+          // Draw logo
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, logoSize / 2, 0, 2 * Math.PI);
+          ctx.clip();
+          ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+          ctx.restore();
+          
+          // Download the canvas
+          downloadCanvas(canvas);
+        };
+        logo.onerror = () => {
+          // Download without logo if logo fails to load
+          downloadCanvas(canvas);
+        };
+        logo.src = customization.logoUrl;
+      } else {
+        // Download without logo
+        downloadCanvas(canvas);
+      }
+    }).catch(error => {
+      console.error('Error generating QR code:', error);
+      alert('Error al generar el código QR. Intenta nuevamente.');
+    });
+  };
+
+  const downloadCanvas = (canvas: HTMLCanvasElement) => {
+    // Convert canvas to blob and download
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `qr-code-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    }, 'image/png', 1.0);
   };
 
   const renderField = (field: any) => {
