@@ -13,7 +13,8 @@ import {
   TrashIcon,
   ArrowDownTrayIcon,
   PlayIcon,
-  PauseIcon
+  PauseIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
@@ -58,9 +59,9 @@ const Dashboard: React.FC = () => {
   }, [currentUser]);
 
   const stats = [
-    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon, clickable: true },
+    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
     { name: 'Total Scans', value: qrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0), icon: ChartBarIcon },
-    { name: 'Active QRs', value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon, clickable: true },
+    { name: 'Active QRs', value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
     { name: 'Current Plan', value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
   ];
 
@@ -141,19 +142,22 @@ const Dashboard: React.FC = () => {
             <div 
               key={index} 
               className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 ${
-               stat.clickable ? 'cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105' : ''
+                stat.clickable ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''
               }`}
               onClick={stat.clickable ? () => navigate('/archive') : undefined}
             >
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                 <stat.icon className={`h-8 w-8 ${stat.clickable ? 'text-green-600' : 'text-primary-600'}`} />
+                  <stat.icon className="h-8 w-8 text-primary-600" />
                 </div>
                 <div className="ml-4">
-                 <p className={`text-sm font-medium ${stat.clickable ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
                     {stat.name}
+                    {stat.navigationIcon && (
+                      <stat.navigationIcon className="h-3 w-3 ml-1 text-gray-400" />
+                    )}
                   </p>
-                 <p className={`text-2xl font-poppins font-bold ${stat.clickable ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}>
+                  <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
                     {stat.value}
                   </p>
                 </div>
