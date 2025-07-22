@@ -1,0 +1,24 @@
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/r/**",
+        "function": "redirect"
+      },
+      {
+        "source": "/api/analytics",
+        "function": "getAnalytics"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
