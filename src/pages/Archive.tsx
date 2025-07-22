@@ -120,7 +120,7 @@ const Archive: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">
-                QR Code Archive
+                QR Code History
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 Manage and organize all your saved QR codes
