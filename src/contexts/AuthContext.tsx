@@ -257,13 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const freeSubscription: Subscription = {
           id: `sub_${result.user.uid}_${Date.now()}`,
           userId: result.user.uid,
-          userId: result.user.uid,
           planType: 'gratis',
           status: 'active',
-          stripeSubscriptionId: null,
-          trialEndsAt: null,
-          currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          cancelAtPeriodEnd: false,
           stripeSubscriptionId: null,
           trialEndsAt: null,
           currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -272,7 +267,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updatedAt: new Date()
         };
         
-        await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
         await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
         
         // Track sign up event for new users
@@ -334,6 +328,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return qrCounts.dynamicCodes < plan.limits.dynamicCodes;
     }
   };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
