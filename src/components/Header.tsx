@@ -121,6 +121,14 @@ const Header: React.FC = () => {
                     </Menu.Item>
                     <Menu.Item>
                       <Link
+                        to="/archive"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        QR Archive
+                      </Link>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <Link
                         to="/pricing"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
@@ -227,6 +235,13 @@ const Header: React.FC = () => {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Create QR
+                      </Link>
+                      <Link
+                        to="/archive"
+                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        QR Archive
                       </Link>
                       <Link
                         to="/profile"
