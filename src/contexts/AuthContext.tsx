@@ -247,7 +247,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updatedAt: new Date()
         };
         
-        await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
+        await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
+        await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
         
         // Track sign up event for new users
         try {
@@ -336,9 +337,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Fetch subscription with error handling
         try {
-          // Query the suscriptions collection to find the user's active subscription
+          // Query the subscriptions collection to find the user's active subscription
           const subscriptionQuery = query(
-            collection(db, 'suscriptions'),
+            collection(db, 'subscriptions'),
             where('userId', '==', user.uid),
             where('status', '==', 'active'),
             limit(1)
@@ -363,7 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date(),
               updatedAt: new Date()
             };
-            await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
+            await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
             setSubscription(freeSubscription);
           }
         } catch (error) {

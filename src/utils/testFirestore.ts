@@ -203,8 +203,8 @@ export const testFirestoreWrite = async () => {
     console.log('✅ Created template document');
     
     // 11. Suscriptions collection (alternative spelling for subscriptions)
-    console.log('📝 Creating suscription document...');
-    const suscriptionData = {
+    console.log('📝 Creating subscription document...');
+    const subscriptionData = {
       id: 'sus-' + Date.now(),
       userId: testUserId,
       planType: 'gratis',
@@ -216,14 +216,15 @@ export const testFirestoreWrite = async () => {
       createdAt: timestamp,
       updatedAt: timestamp
     };
-    await setDoc(doc(db, 'suscriptions', suscriptionData.id), suscriptionData);
-    console.log('✅ Created suscription document');
+    await setDoc(doc(db, 'subscriptions', subscriptionData.id), subscriptionData);
+    console.log('✅ Created subscription document');
     
     console.log('🎉 All collection documents created successfully!');
     return {
       success: true,
       testId: testUserId,
       message: 'Created documents in all collections: users, qrcodes, subscriptions, analytics, short_urls, plans, settings, scans, payments, templates, suscriptions'
+      message: 'Created documents in all collections: users, qrcodes, subscriptions, analytics, short_urls, plans, settings, scans, payments, templates, subscriptions'
     };
     
   } catch (error) {
