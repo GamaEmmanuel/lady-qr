@@ -12,7 +12,7 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
@@ -142,14 +142,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Create free subscription
       const freeSubscription: Subscription = {
-        id: 'free',
+        id: `sub_${result.user.uid}_${Date.now()}`,
+        userId: result.user.uid,
         planType: 'gratis',
         status: 'active',
+        stripeSubscriptionId: null,
+        trialEndsAt: null,
+        currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        cancelAtPeriodEnd: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
-      await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+      await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
       
       // Track sign up event for new Google users
       try {
@@ -225,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Create free subscription for new users
         const freeSubscription: Subscription = {
-          id: result.user.uid,
+          id: `sub_${result.user.uid}_${Date.now()}`,
           userId: result.user.uid,
           userId: result.user.uid,
           planType: 'gratis',
@@ -238,11 +243,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           trialEndsAt: null,
           currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           cancelAtPeriodEnd: false,
-          createdAt: new Date(),
+        await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
           updatedAt: new Date()
         };
         
-        await setDoc(doc(db, 'suscriptions', result.user.uid), freeSubscription);
+        await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
         
         // Track sign up event for new users
         try {
@@ -331,21 +336,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Fetch subscription with error handling
         try {
-          const subscriptionDoc = await getDoc(doc(db, 'suscriptions', user.uid));
-          if (subscriptionDoc.exists()) {
-            setSubscription(subscriptionDoc.data() as Subscription);
+          // Query the suscriptions collection to find the user's active subscription
+          const subscriptionQuery = query(
+            collection(db, 'suscriptions'),
+            where('userId', '==', user.uid),
+            where('status', '==', 'active'),
+            limit(1)
+          );
+          
+          const subscriptionSnapshot = await getDocs(subscriptionQuery);
+          
+          if (!subscriptionSnapshot.empty) {
+            const subscriptionDoc = subscriptionSnapshot.docs[0];
+            setSubscription({ id: subscriptionDoc.id, ...subscriptionDoc.data() } as Subscription);
           } else {
             // Create free subscription if document doesn't exist
-            const freeSubscription = {
-              id: user.uid,
-              id: result.user.uid,
-              userId: result.user.uid,
+            const freeSubscription: Subscription = {
+              id: `sub_${user.uid}_${Date.now()}`,
+              userId: user.uid,
               planType: 'gratis',
               status: 'active',
-              stripeSubscriptionId: null,
-              trialEndsAt: null,
-              currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-              cancelAtPeriodEnd: false,
               stripeSubscriptionId: null,
               trialEndsAt: null,
               currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -353,12 +363,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date(),
               updatedAt: new Date()
             };
-            await setDoc(doc(db, 'suscriptions', user.uid), freeSubscription);
-            await setDoc(doc(db, 'suscriptions', result.user.uid), freeSubscription);
+            await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
+            setSubscription(freeSubscription);
           }
         } catch (error) {
           console.error('Failed to fetch subscription data:', error);
-          throw error;
+          // Set a default free subscription if query fails
+          setSubscription({
+            id: 'default',
+            userId: user.uid,
+            planType: 'gratis',
+            status: 'active',
+            stripeSubscriptionId: null,
+            trialEndsAt: null,
+            currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            cancelAtPeriodEnd: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
         }
         
         // Fetch QR counts with error handling
