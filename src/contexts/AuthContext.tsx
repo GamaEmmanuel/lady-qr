@@ -243,7 +243,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           trialEndsAt: null,
           currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
           cancelAtPeriodEnd: false,
-        await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
+          createdAt: new Date(),
           updatedAt: new Date()
         };
         
