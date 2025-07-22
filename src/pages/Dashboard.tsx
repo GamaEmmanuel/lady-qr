@@ -192,7 +192,7 @@ const Dashboard: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
-                My QR Codes Archive
+                My QR Codes History
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Manage and edit your saved QR codes

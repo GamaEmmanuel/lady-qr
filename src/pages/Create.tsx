@@ -712,7 +712,7 @@ const Create: React.FC = () => {
                         ? 'Limit Reached'
                         : !qrData
                         ? 'Enter Data First'
-                        : 'Save to Archive'
+                        : 'Save to History'
                       }
                     </span>
                   </button>
