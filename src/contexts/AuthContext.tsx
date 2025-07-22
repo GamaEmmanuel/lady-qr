@@ -257,13 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const freeSubscription: Subscription = {
           id: `sub_${result.user.uid}_${Date.now()}`,
           userId: result.user.uid,
-          planType: 'gratis',
           status: 'active',
           stripeSubscriptionId: null,
-          trialEndsAt: null,
-          currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          cancelAtPeriodEnd: false,
-          createdAt: new Date(),
           updatedAt: new Date()
         };
         
@@ -272,7 +267,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Track sign up event for new users
         try {
           trackUserSignUp('email_link');
-          setAnalyticsUserId(result.user.uid);
           setAnalyticsUserProperties({
             plan_type: 'gratis',
             user_type: 'new_user',
