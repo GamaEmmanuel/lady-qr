@@ -16,6 +16,7 @@ import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import CreateGuest from './pages/CreateGuest';
 import AuthComplete from './pages/AuthComplete';
+import Archive from './pages/Archive';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/auth/complete" element={<AuthComplete />} />
+                <Route path="/archive" element={<Archive />} />
               </Routes>
             </main>
             <Footer />
