@@ -46,6 +46,54 @@ const Create: React.FC = () => {
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
+  // Load existing QR code data when editing
+  useEffect(() => {
+    const loadQRCode = async () => {
+      if (!isEditing || !editingQRId || !currentUser) return;
+      
+      try {
+        setLoading(true);
+        const qrDoc = await getDoc(doc(db, 'qrcodes', editingQRId));
+        
+        if (!qrDoc.exists()) {
+          alert('QR code not found');
+          return;
+        }
+        
+        const qrData = qrDoc.data();
+        
+        // Security check - ensure QR belongs to current user
+        if (qrData.userId !== currentUser.uid) {
+          alert('You do not have permission to edit this QR code');
+          return;
+        }
+        
+        // Load QR code data into form
+        setSelectedType(qrData.type);
+        setIsDynamic(qrData.isDynamic || false);
+        setFormData(qrData.content || {});
+        
+        // Load customization options
+        if (qrData.customizationOptions) {
+          setCustomization(qrData.customizationOptions);
+          
+          // Load logo preview if exists
+          if (qrData.customizationOptions.logoUrl) {
+            setLogoPreview(qrData.customizationOptions.logoUrl);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading QR code:', error);
+        alert('Error loading QR code data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQRCode();
+  }, [isEditing, editingQRId, currentUser]);
+
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
   const generateQRData = () => {
