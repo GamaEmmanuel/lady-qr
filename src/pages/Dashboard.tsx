@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { plans } from '../data/plans';
 import { 
   PlusIcon, 
@@ -15,49 +17,50 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
-  const { userData, subscription, loading } = useAuth();
+  const { currentUser, userData, subscription, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created');
   const [filterType, setFilterType] = useState('all');
+  const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [qrLoading, setQrLoading] = useState(true);
 
-  // Mock data for demonstration
-  const mockQRCodes = [
-    {
-      id: '1',
-      name: 'Sitio Web Principal',
-      type: 'url',
-      isDynamic: true,
-      scanCount: 156,
-      isActive: true,
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-20')
-    },
-    {
-      id: '2',
-      name: 'Tarjeta de Contacto',
-      type: 'vcard',
-      isDynamic: false,
-      scanCount: 45,
-      isActive: true,
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-10')
-    },
-    {
-      id: '3',
-      name: 'Menú Restaurante',
-      type: 'menu',
-      isDynamic: true,
-      scanCount: 89,
-      isActive: true,
-      createdAt: new Date('2024-01-05'),
-      updatedAt: new Date('2024-01-18')
-    }
-  ];
+  // Fetch QR codes from Firestore
+  React.useEffect(() => {
+    const fetchQRCodes = async () => {
+      if (!currentUser) return;
+      
+      try {
+        setQrLoading(true);
+        const qrCodesQuery = query(
+          collection(db, 'qrcodes'),
+          where('userId', '==', currentUser.uid),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const qrCodesSnapshot = await getDocs(qrCodesQuery);
+        const qrCodesData = qrCodesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate() || new Date()
+        }));
+        
+        setQrCodes(qrCodesData);
+      } catch (error) {
+        console.error('Error fetching QR codes:', error);
+        setQrCodes([]);
+      } finally {
+        setQrLoading(false);
+      }
+    };
+
+    fetchQRCodes();
+  }, [currentUser]);
 
   const stats = [
-    { name: 'Total QR Codes', value: mockQRCodes.length, icon: QrCodeIcon },
-    { name: 'Total Scans', value: mockQRCodes.reduce((sum, qr) => sum + qr.scanCount, 0), icon: ChartBarIcon },
-    { name: 'Active QRs', value: mockQRCodes.filter(qr => qr.isActive).length, icon: EyeIcon },
+    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon },
+    { name: 'Total Scans', value: qrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0), icon: ChartBarIcon },
+    { name: 'Active QRs', value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon },
     { name: 'Current Plan', value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
   ];
 
@@ -228,7 +231,19 @@ const Dashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {mockQRCodes.map((qr) => (
+                {qrLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                    </td>
+                  </tr>
+                ) : qrCodes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                      No QR codes found. <Link to="/create" className="text-primary-600 hover:text-primary-700">Create your first QR code</Link>
+                    </td>
+                  </tr>
+                ) : qrCodes.map((qr) => (
                   <tr key={qr.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -249,7 +264,7 @@ const Dashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {qr.scanCount}
+                      {qr.scanCount || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -261,7 +276,7 @@ const Dashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {qr.createdAt.toLocaleDateString('es-ES')}
+                      {qr.createdAt?.toLocaleDateString('es-ES') || 'Unknown'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">

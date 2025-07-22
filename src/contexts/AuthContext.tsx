@@ -18,14 +18,39 @@ import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
 import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserProperties } from '../utils/analytics';
 
-// Mock function to get user's QR code counts
 const getUserQRCounts = async (userId: string) => {
-  // In a real implementation, this would query Firestore
-  // For now, return mock data
-  return {
-    staticCodes: 0,
-    dynamicCodes: 0
-  };
+  try {
+    // Query all QR codes for the user
+    const qrCodesQuery = query(
+      collection(db, 'qrcodes'),
+      where('userId', '==', userId)
+    );
+    
+    const qrCodesSnapshot = await getDocs(qrCodesQuery);
+    
+    let staticCodes = 0;
+    let dynamicCodes = 0;
+    
+    qrCodesSnapshot.forEach((doc) => {
+      const qrData = doc.data();
+      if (qrData.isDynamic) {
+        dynamicCodes++;
+      } else {
+        staticCodes++;
+      }
+    });
+    
+    return {
+      staticCodes,
+      dynamicCodes
+    };
+  } catch (error) {
+    console.error('Error fetching QR code counts:', error);
+    return {
+      staticCodes: 0,
+      dynamicCodes: 0
+    };
+  }
 };
 
 interface AuthContextType {
