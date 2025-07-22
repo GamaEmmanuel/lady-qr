@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
@@ -20,6 +20,9 @@ import {
 
 const Create: React.FC = () => {
   const { currentUser, subscription, qrCounts, canCreateQR } = useAuth();
+  const [searchParams] = useSearchParams();
+  const editingQRId = searchParams.get('edit');
+  const isEditing = !!editingQRId;
   
   // Redirect non-logged-in users to guest creation page
   if (!currentUser) {
