@@ -2,7 +2,7 @@ import { Plan } from '../types';
 
 export const plans: Plan[] = [
   {
-    id: 'gratis',
+    id: 'free',
     name: 'Free',
     price: 0,
     interval: 'month',
@@ -26,7 +26,7 @@ export const plans: Plan[] = [
     }
   },
   {
-    id: 'basico',
+    id: 'basic',
     name: 'Basic',
     price: 7,
     interval: 'month',
@@ -51,7 +51,7 @@ export const plans: Plan[] = [
     }
   },
   {
-    id: 'profesional',
+    id: 'professional',
     name: 'Professional',
     price: 15,
     interval: 'month',
@@ -77,7 +77,7 @@ export const plans: Plan[] = [
     }
   },
   {
-    id: 'negocios',
+    id: 'Business',
     name: 'Business',
     price: null,
     interval: 'month',
