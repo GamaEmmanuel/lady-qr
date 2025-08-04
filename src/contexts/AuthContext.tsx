@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User as FirebaseUser, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
+import {
+  User as FirebaseUser,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
@@ -25,12 +25,12 @@ const getUserQRCounts = async (userId: string) => {
       collection(db, 'qrcodes'),
       where('userId', '==', userId)
     );
-    
+
     const qrCodesSnapshot = await getDocs(qrCodesQuery);
-    
+
     let staticCodes = 0;
     let dynamicCodes = 0;
-    
+
     qrCodesSnapshot.forEach((doc) => {
       const qrData = doc.data();
       if (qrData.isDynamic) {
@@ -39,7 +39,7 @@ const getUserQRCounts = async (userId: string) => {
         staticCodes++;
       }
     });
-    
+
     return {
       staticCodes,
       dynamicCodes
@@ -70,7 +70,7 @@ interface AuthContextType {
   canCreateQR: (type: 'static' | 'dynamic') => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -112,16 +112,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, fullName: string) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: fullName });
-    
+
     const userData: User = {
       uid: result.user.uid,
       email: result.user.email!,
       fullName,
       createdAt: new Date()
     };
-    
+
     await setDoc(doc(db, 'users', result.user.uid), userData);
-    
+
     // Create free subscription
     const freeSubscription: Subscription = {
       id: 'free',
@@ -130,9 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
-    
+
     // Track sign up event
     try {
       trackUserSignUp('email');
@@ -151,9 +151,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Add additional scopes if needed
     provider.addScope('profile');
     provider.addScope('email');
-    
+
     const result = await signInWithPopup(auth, provider);
-    
+
     const userDoc = await getDoc(doc(db, 'users', result.user.uid));
     if (!userDoc.exists()) {
       const userData: User = {
@@ -162,9 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName: result.user.displayName || '',
         createdAt: new Date()
       };
-      
+
       await setDoc(doc(db, 'users', result.user.uid), userData);
-      
+
       // Create free subscription
       const freeSubscription: Subscription = {
         id: `sub_${result.user.uid}_${Date.now()}`,
@@ -178,9 +178,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
-      
+
       // Track sign up event for new Google users
       try {
         trackUserSignUp('google');
@@ -208,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       // Store the email locally so we can complete the sign-in process
       localStorage.setItem('emailForSignIn', email);
-      
+
       // Track passwordless authentication attempt
       try {
         trackUserLogin('email_link_sent');
@@ -225,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Get the email from parameter or localStorage
       const emailForSignIn = email || localStorage.getItem('emailForSignIn');
-      
+
       if (!emailForSignIn) {
         throw new Error('Email not found. Please try the sign-in process again.');
       }
@@ -237,10 +237,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Complete the sign-in process
       const result = await signInWithEmailLink(auth, emailForSignIn, window.location.href);
-      
+
       // Clear the email from localStorage
       localStorage.removeItem('emailForSignIn');
-      
+
       // Check if this is a new user and create profile if needed
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
       if (!userDoc.exists()) {
@@ -250,9 +250,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fullName: result.user.displayName || '',
           createdAt: new Date()
         };
-        
+
         await setDoc(doc(db, 'users', result.user.uid), userData);
-        
+
         // Create free subscription for new users
         const freeSubscription: Subscription = {
           id: `sub_${result.user.uid}_${Date.now()}`,
@@ -261,9 +261,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           stripeSubscriptionId: null,
           updatedAt: new Date()
         };
-        
+
         await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
-        
+
         // Track sign up event for new users
         try {
           trackUserSignUp('email_link');
@@ -305,17 +305,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser || !db) {
       return;
     }
-    
+
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => prev ? { ...prev, ...updates } : null);
   };
 
   const canCreateQR = (type: 'static' | 'dynamic'): boolean => {
     if (!subscription || !qrCounts) return false;
-    
+
     const plan = plans.find(p => p.id === subscription.planType);
     if (!plan) return false;
-    
+
     if (type === 'static') {
       return plan.limits.staticCodes === -1 || qrCounts.staticCodes < plan.limits.staticCodes;
     } else {
@@ -327,7 +327,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        
+
         // Fetch user data with error handling
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -348,7 +348,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to fetch user data:', error);
           throw error;
         }
-        
+
         // Fetch subscription with error handling
         try {
           // Query the subscriptions collection to find the user's active subscription
@@ -358,12 +358,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             where('status', '==', 'active'),
             limit(1)
           );
-          
+
           const subscriptionSnapshot = await getDocs(subscriptionQuery);
-          
+
           if (!subscriptionSnapshot.empty) {
             const subscriptionDoc = subscriptionSnapshot.docs[0];
-            setSubscription({ id: subscriptionDoc.id, ...subscriptionDoc.data() } as Subscription);
+            const subscriptionData: Subscription = {
+              id: subscriptionDoc.id,
+              userId: user.uid, // Add this line
+              planType: subscriptionDoc.data().planType,
+              status: subscriptionDoc.data().status,
+              stripeSubscriptionId: subscriptionDoc.data().stripeSubscriptionId,
+              trialEndsAt: subscriptionDoc.data().trialEndsAt,
+              currentPeriodEndsAt: subscriptionDoc.data().currentPeriodEndsAt,
+              cancelAtPeriodEnd: subscriptionDoc.data().cancelAtPeriodEnd,
+              createdAt: subscriptionDoc.data().createdAt,
+              updatedAt: subscriptionDoc.data().updatedAt
+            };
+            setSubscription(subscriptionData);
           } else {
             // Create free subscription if document doesn't exist
             const freeSubscription: Subscription = {
@@ -397,7 +409,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             updatedAt: new Date()
           });
         }
-        
+
         // Fetch QR counts with error handling
         try {
           const counts = await getUserQRCounts(user.uid);
