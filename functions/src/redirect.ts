@@ -1,9 +1,7 @@
-import * as functions from 'firebase-functions';
+import {onRequest} from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { parseUserAgent } from './utils/deviceParser';
-import { getLocationFromIP } from './utils/geoip';
 
-export const redirect = functions.https.onRequest(async (req, res) => {
+export const redirect = onRequest(async (req, res) => {
   try {
     // Enable CORS
     res.set('Access-Control-Allow-Origin', '*');
@@ -20,7 +18,8 @@ export const redirect = functions.https.onRequest(async (req, res) => {
     const shortId = pathParts[pathParts.length - 1];
 
     if (!shortId) {
-      return res.status(400).send('Invalid QR code URL');
+      res.status(400).send('Invalid QR code URL');
+      return;
     }
 
     console.log('Processing redirect for shortId:', shortId);
@@ -34,7 +33,8 @@ export const redirect = functions.https.onRequest(async (req, res) => {
 
     if (qrQuery.empty) {
       console.log('QR code not found for shortId:', shortId);
-      return res.status(404).send('QR Code not found');
+      res.status(404).send('QR Code not found');
+      return;
     }
 
     const qrDoc = qrQuery.docs[0];
@@ -44,54 +44,32 @@ export const redirect = functions.https.onRequest(async (req, res) => {
 
     // Check if QR code is active
     if (!qrData.isActive) {
-      return res.status(410).send('QR Code is inactive');
+      res.status(410).send('QR Code is inactive');
+      return;
     }
 
-    // Parse request data
+    // Log basic scan data
     const userAgent = req.get('User-Agent') || '';
     const ip = req.ip || req.get('x-forwarded-for') || req.get('x-real-ip') || '';
-    const referrer = req.get('Referer') || req.get('Referrer') || null;
 
-    console.log('Request info - IP:', ip, 'UserAgent:', userAgent.substring(0, 50));
-
-    // Parse device info
-    const deviceInfo = parseUserAgent(userAgent);
-    
-    // Get location info (async, don't wait for it to complete redirect)
-    const locationPromise = getLocationFromIP(ip);
-
-    // Create scan record
+    // Create simple scan record
     const scanData = {
       qrCodeId: qrDoc.id,
       scannedAt: admin.firestore.FieldValue.serverTimestamp(),
       ipAddress: ip,
       userAgent: userAgent,
-      deviceInfo: deviceInfo,
-      referrer: referrer
+      referrer: req.get('Referer') || null
     };
 
-    // Log the scan and update scan count in parallel
-    const [locationInfo] = await Promise.allSettled([
-      locationPromise,
-      admin.firestore().collection('scans').add({
-        ...scanData,
-        location: { country: 'Unknown', city: 'Unknown', region: 'Unknown' } // Will be updated below
-      }),
+    // Log the scan and update scan count
+    await Promise.allSettled([
+      admin.firestore().collection('scans').add(scanData),
       qrDoc.ref.update({
         scanCount: admin.firestore.FieldValue.increment(1),
         lastScannedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       })
     ]);
-
-    // Update location info if available
-    if (locationInfo.status === 'fulfilled') {
-      const scanRef = await admin.firestore().collection('scans').add({
-        ...scanData,
-        location: locationInfo.value
-      });
-      console.log('Scan logged with location:', scanRef.id);
-    }
 
     console.log('Redirecting to:', qrData.destinationUrl);
 

@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
-import { generateShortUrl, createTrackableQRData } from '../utils/qrTracking';
+import { createTrackableQRData } from '../utils/qrTracking';
 import QRPreview from '../components/QRPreview';
+import QRAnalytics from '../components/QRAnalytics';
 import { HexColorPicker } from 'react-colorful';
 import QRCode from 'qrcode';
-import { 
-  PhotoIcon, 
-  ArrowDownTrayIcon, 
+import {
+  PhotoIcon,
+  ArrowDownTrayIcon,
   AdjustmentsHorizontalIcon,
   EyeIcon,
   ShieldExclamationIcon,
@@ -24,12 +25,12 @@ const Create: React.FC = () => {
   const [searchParams] = useSearchParams();
   const editingQRId = searchParams.get('edit');
   const isEditing = !!editingQRId;
-  
+
   // Redirect non-logged-in users to guest creation page
   if (!currentUser) {
     return <Navigate to="/create-guest" replace />;
   }
-  
+
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
   const [isDynamic, setIsDynamic] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -51,39 +52,39 @@ const Create: React.FC = () => {
   useEffect(() => {
     const loadQRCode = async () => {
       if (!isEditing || !editingQRId || !currentUser) return;
-      
+
       try {
         setLoading(true);
         const qrDoc = await getDoc(doc(db, 'qrcodes', editingQRId));
-        
+
         if (!qrDoc.exists()) {
           alert('QR code not found');
           return;
         }
-        
+
         const qrData = qrDoc.data();
-        
+
         // Security check - ensure QR belongs to current user
         if (qrData.userId !== currentUser.uid) {
           alert('You do not have permission to edit this QR code');
           return;
         }
-        
+
         // Load QR code data into form
         setSelectedType(qrData.type);
         setIsDynamic(qrData.isDynamic || false);
         setFormData(qrData.content || {});
-        
+
         // Load customization options
         if (qrData.customizationOptions) {
           setCustomization(qrData.customizationOptions);
-          
+
           // Load logo preview if exists
           if (qrData.customizationOptions.logoUrl) {
             setLogoPreview(qrData.customizationOptions.logoUrl);
           }
         }
-        
+
       } catch (error) {
         console.error('Error loading QR code:', error);
         alert('Error loading QR code data');
@@ -99,9 +100,9 @@ const Create: React.FC = () => {
 
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
-    
+
     let originalData = '';
-    
+
     switch (selectedType) {
       case 'url':
         originalData = formData.url || '';
@@ -132,10 +133,10 @@ const Create: React.FC = () => {
         originalData = JSON.stringify(formData);
         break;
     }
-    
+
     // For editing, use the existing QR ID, otherwise generate a temporary one for preview
     const qrId = isEditing ? editingQRId! : `temp-${Date.now()}`;
-    
+
     // Create trackable QR data
     return createTrackableQRData(originalData, qrId, !isDynamic);
   };
@@ -170,15 +171,15 @@ const Create: React.FC = () => {
         alert('Please upload a PNG, JPG, or SVG image.');
         return;
       }
-      
+
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         alert('Please upload an image smaller than 2MB.');
         return;
       }
-      
+
       setLogoFile(file);
-      
+
       // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -200,7 +201,7 @@ const Create: React.FC = () => {
       alert('Has alcanzado el límite de códigos QR para tu plan actual.');
       return;
     }
-    
+
     if (!qrData) {
       alert('Por favor ingresa los datos del código QR primero.');
       return;
@@ -209,7 +210,7 @@ const Create: React.FC = () => {
     // Generate QR code and download as PNG
     const canvas = document.createElement('canvas');
     const size = 512; // Higher resolution for download
-    
+
     QRCode.toCanvas(canvas, qrData, {
       width: size,
       margin: 2,
@@ -222,19 +223,23 @@ const Create: React.FC = () => {
       // If there's a logo and customization is available, add it
       if (hasCustomization && customization.logoUrl) {
         const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          downloadCanvas(canvas); // Proceed without logo if context cannot be created
+          return;
+        }
         const logo = new Image();
         logo.crossOrigin = 'anonymous';
         logo.onload = () => {
           const logoSize = size * 0.15;
           const logoX = (size - logoSize) / 2;
           const logoY = (size - logoSize) / 2;
-          
+
           // Draw white background circle for logo
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
           ctx.arc(size / 2, size / 2, logoSize / 2 + 6, 0, 2 * Math.PI);
           ctx.fill();
-          
+
           // Draw logo
           ctx.save();
           ctx.beginPath();
@@ -242,7 +247,7 @@ const Create: React.FC = () => {
           ctx.clip();
           ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
           ctx.restore();
-          
+
           // Download the canvas
           downloadCanvas(canvas);
         };
@@ -266,7 +271,7 @@ const Create: React.FC = () => {
       alert('Has alcanzado el límite de códigos QR para tu plan actual.');
       return;
     }
-    
+
     if (!qrData) {
       alert('Por favor ingresa los datos del código QR primero.');
       return;
@@ -280,11 +285,11 @@ const Create: React.FC = () => {
     try {
       // Generate a unique ID for the QR code
       const qrId = isEditing ? editingQRId! : `qr-${Date.now()}`;
-      
+
       // Generate short URL for dynamic QR codes
       const shortUrlId = isDynamic ? `short-${Date.now()}` : null;
       const destinationUrl = selectedType === 'url' ? formData.url : null;
-      
+
       // Create QR code document
       const qrCodeData = {
         id: qrId,
@@ -311,16 +316,16 @@ const Create: React.FC = () => {
 
       // Save to Firestore
       await setDoc(doc(db, 'qrcodes', qrId), qrCodeData);
-      
+
       if (isEditing) {
         alert('¡Código QR actualizado exitosamente!');
       } else {
         alert('¡Código QR guardado exitosamente!');
       }
-      
+
       // Reset form
       setFormData({});
-      
+
     } catch (error) {
       console.error('Error saving QR code:', error);
       alert('Error al guardar el código QR. Intenta nuevamente.');
@@ -345,7 +350,7 @@ const Create: React.FC = () => {
 
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
-    
+
     switch (field.type) {
       case 'textarea':
         return (
@@ -409,9 +414,9 @@ const Create: React.FC = () => {
             {isEditing ? 'Edit QR Code' : 'Create Professional QR Code'}
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {isEditing ? 'Edit your existing QR code' : 'Create permanent QR codes with full customization and analytics'}
+            {isEditing ? 'View analytics and edit your QR code settings' : 'Create permanent QR codes with full customization and analytics'}
           </p>
-          
+
           {/* Plan Limitations Warning */}
           {!canCreate && (
             <div className="mt-4 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 rounded-lg p-4 max-w-2xl mx-auto">
@@ -437,45 +442,57 @@ const Create: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Configuration Panel */}
           <div className="lg:col-span-2 space-y-6">
-            {/* QR Type Selection */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                QR Code Type
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {qrTypes.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => {
-                      setSelectedType(type.id);
-                      setFormData({});
-                      setIsDynamic(type.canBeDynamic && !type.canBeStatic);
-                    }}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                      selectedType === type.id
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{type.icon}</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {type.name}
-                    </div>
-                  </button>
-                ))}
+            {/* QR Analytics (when editing) */}
+            {isEditing && editingQRId && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  QR Code Analytics
+                </h2>
+                <QRAnalytics qrCodeId={editingQRId} />
               </div>
-            </div>
+            )}
 
-            {/* Static/Dynamic Selection */}
-            {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
+            {/* QR Type Selection (only when creating new) */}
+            {!isEditing && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  QR Code Type
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {qrTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setSelectedType(type.id);
+                        setFormData({});
+                        setIsDynamic(type.canBeDynamic && !type.canBeStatic);
+                      }}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        selectedType === type.id
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">{type.icon}</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {type.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+                        {/* Static/Dynamic Selection (only when creating new) */}
+            {!isEditing && selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Code Type
                 </h3>
                 <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
                   <div className="text-sm text-primary-700 dark:text-primary-300">
-                    <strong>Your current plan:</strong> {currentPlan?.name} - 
-                    Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} | 
+                    <strong>Your current plan:</strong> {currentPlan?.name} -
+                    Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} |
                     Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
                   </div>
                 </div>
@@ -559,8 +576,8 @@ const Create: React.FC = () => {
                 <div className="space-y-4">
                   {selectedTypeConfig.fields.map((field) => (
                     <div key={field.id}>
-                      <label 
-                        htmlFor={field.id} 
+                      <label
+                        htmlFor={field.id}
                         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                       >
                         {field.label}
@@ -593,7 +610,7 @@ const Create: React.FC = () => {
                   <span>{showCustomization ? 'Hide' : 'Show'}</span>
                 </button>
               </div>
-              
+
               {!hasCustomization && (
                 <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -605,7 +622,7 @@ const Create: React.FC = () => {
                   </p>
                 </div>
               )}
-              
+
               {showCustomization && hasCustomization && (
                 <div className="space-y-6">
                   {/* Colors */}
@@ -623,7 +640,7 @@ const Create: React.FC = () => {
                             onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
                             className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 flex items-center space-x-2 px-3"
                           >
-                            <div 
+                            <div
                               className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
                               style={{ backgroundColor: customization.foregroundColor }}
                             />
@@ -641,7 +658,7 @@ const Create: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
                           Background color
@@ -651,7 +668,7 @@ const Create: React.FC = () => {
                             onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
                             className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 flex items-center space-x-2 px-3"
                           >
-                            <div 
+                            <div
                               className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
                               style={{ backgroundColor: customization.backgroundColor }}
                             />
@@ -766,9 +783,9 @@ const Create: React.FC = () => {
                   <EyeIcon className="h-5 w-5 mr-2" />
                   Preview
                 </h3>
-                
+
                 <div className="flex justify-center mb-6">
-                  <QRPreview 
+                  <QRPreview
                     data={qrData}
                     customization={hasCustomization ? customization : {
                       foregroundColor: '#000000',
@@ -782,7 +799,7 @@ const Create: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <button 
+                  <button
                     onClick={handleSave}
                     disabled={(!isEditing && !canCreate) || !qrData}
                     className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
@@ -803,8 +820,8 @@ const Create: React.FC = () => {
                       }
                     </span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={handleDownload}
                     disabled={!canCreate || !qrData}
                     className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
@@ -823,7 +840,7 @@ const Create: React.FC = () => {
                       }
                     </span>
                   </button>
-                  
+
                   <button className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md transition-colors">
                     <PhotoIcon className="h-5 w-5" />
                     <span>More formats</span>
@@ -850,7 +867,17 @@ const Create: React.FC = () => {
                     <div>Type: {selectedTypeConfig?.name}</div>
                     <div>Mode: {isDynamic ? 'Dynamic' : 'Static'}</div>
                     <div>Size: 250x250 px</div>
-                    <div>Status: Permanent</div>
+                    <div>Status: {isEditing ? 'Active' : 'Permanent'}</div>
+                    {isEditing && (
+                      <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                        <div className="text-xs text-gray-500 dark:text-gray-500">
+                          Created: {formData.createdAt ? new Date(formData.createdAt).toLocaleDateString() : 'Unknown'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500">
+                          Last updated: {formData.updatedAt ? new Date(formData.updatedAt).toLocaleDateString() : 'Unknown'}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

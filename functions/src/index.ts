@@ -1,12 +1,10 @@
-import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin
-admin.initializeApp();
+// Initialize Firebase Admin (only once)
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-// Import function modules
-import { redirect } from './redirect';
-import { getAnalytics } from './analytics';
-
-// Export functions
-export { redirect, getAnalytics };
+// Import and export function modules
+export {redirect} from './redirect';
+export {getAnalytics} from './analytics';

@@ -1,7 +1,7 @@
-import * as functions from 'firebase-functions';
+import {onRequest} from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 
-export const getAnalytics = functions.https.onRequest(async (req, res) => {
+export const getAnalytics = onRequest(async (req, res) => {
   try {
     // Enable CORS
     res.set('Access-Control-Allow-Origin', '*');
@@ -18,19 +18,22 @@ export const getAnalytics = functions.https.onRequest(async (req, res) => {
     const userId = req.query.userId as string;
 
     if (!qrCodeId || !userId) {
-      return res.status(400).json({ error: 'Missing qrCodeId or userId' });
+      res.status(400).json({ error: 'Missing qrCodeId or userId' });
+      return;
     }
 
     // Verify user owns this QR code
     const qrDoc = await admin.firestore().collection('qrcodes').doc(qrCodeId).get();
-    
+
     if (!qrDoc.exists) {
-      return res.status(404).json({ error: 'QR code not found' });
+      res.status(404).json({ error: 'QR code not found' });
+      return;
     }
 
     const qrData = qrDoc.data();
     if (qrData?.userId !== userId) {
-      return res.status(403).json({ error: 'Access denied' });
+      res.status(403).json({ error: 'Access denied' });
+      return;
     }
 
     // Get scan analytics
@@ -47,40 +50,14 @@ export const getAnalytics = functions.https.onRequest(async (req, res) => {
       scannedAt: doc.data().scannedAt?.toDate?.()?.toISOString() || null
     }));
 
-    // Calculate analytics
+    // Calculate basic analytics
     const totalScans = scans.length;
-    const uniqueIPs = new Set(scans.map(scan => scan.ipAddress)).size;
-    
-    // Group by country
-    const countryStats = scans.reduce((acc: any, scan) => {
-      const country = scan.location?.country || 'Unknown';
-      acc[country] = (acc[country] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Group by device type
-    const deviceStats = scans.reduce((acc: any, scan) => {
-      const deviceType = scan.deviceInfo?.type || 'unknown';
-      acc[deviceType] = (acc[deviceType] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Group by date (last 30 days)
-    const dateStats = scans.reduce((acc: any, scan) => {
-      if (scan.scannedAt) {
-        const date = new Date(scan.scannedAt).toISOString().split('T')[0];
-        acc[date] = (acc[date] || 0) + 1;
-      }
-      return acc;
-    }, {});
+    const uniqueIPs = new Set(scans.map((scan: any) => scan.ipAddress)).size;
 
     const analytics = {
       totalScans,
       uniqueScans: uniqueIPs,
       recentScans: scans.slice(0, 50), // Last 50 scans
-      countryStats,
-      deviceStats,
-      dateStats,
       lastScannedAt: scans[0]?.scannedAt || null
     };
 

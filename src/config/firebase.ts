@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore, doc, getDoc, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { env } from './env';
 
@@ -12,12 +12,12 @@ const firebaseConfig = env.firebase;
 const validateFirebaseConfig = (config: any) => {
   const required = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
   const missing = required.filter(field => !config[field] || config[field].trim() === '');
-  
+
   if (missing.length > 0) {
     console.error('❌ Missing required Firebase config fields:', missing);
     return false;
   }
-  
+
   return true;
 };
 
@@ -59,21 +59,21 @@ if (typeof window !== 'undefined' && app) {
 }
 
 // Initialize services with error handling
-let auth, db, storage;
+let auth: Auth, db: Firestore, storage: FirebaseStorage;
 
 if (app) {
   try {
     auth = getAuth(app);
     console.log('✅ Firebase Auth initialized');
-    
+
     db = getFirestore(app, 'main-database');
     console.log('✅ Firebase Firestore initialized');
-    
+
     storage = getStorage(app);
     console.log('✅ Firebase Storage initialized');
-    
+
     console.log('✅ All Firebase services initialized successfully');
-    
+
   } catch (error) {
     console.error('❌ Failed to initialize Firebase services:', error);
     throw error;
@@ -91,12 +91,12 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
     // Try a simple read operation
     const testDoc = doc(db, '__connection_test__', 'ping');
     const result = await getDoc(testDoc);
-    
+
     console.log('✅ Firebase connection test successful');
     return true;
   } catch (error: any) {
     console.error('❌ Firebase connection test failed:', error);
-    
+
     // Check for specific error types
     if (error.code === 'permission-denied') {
       console.error('🚫 Firestore rules are blocking access');
@@ -107,7 +107,7 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
     } else if (error.code === 'unavailable') {
       console.error('🚫 Firestore service unavailable');
     }
-    
+
     throw error;
   }
 };
