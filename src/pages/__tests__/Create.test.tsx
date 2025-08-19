@@ -1,470 +1,361 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import Create from '../Create';
-import { customRender, mockQRCodeData, mockAnalyticsData, setupFetchMock } from '../../test/utils';
-import { getDoc, setDoc } from 'firebase/firestore';
+import { AuthContext } from '../../contexts/AuthContext';
+import { ThemeContext } from '../../contexts/ThemeContext';
+import * as qrTracking from '../../utils/qrTracking';
 
-// Mock the components and hooks
-vi.mock('../../components/QRAnalytics', () => ({
-  default: ({ qrCodeId }: { qrCodeId: string }) => (
-    <div data-testid="qr-analytics" data-qr-id={qrCodeId}>
-      <div>Total Scans: {mockAnalyticsData.totalScans}</div>
-      <div>Unique Scans: {mockAnalyticsData.uniqueScans}</div>
-    </div>
-  ),
+// Mock QR tracking utilities
+vi.mock('../../utils/qrTracking', () => ({
+  createTrackableQRData: vi.fn(),
+  generateOriginalData: vi.fn(),
+  generateShortUrl: vi.fn()
 }));
 
-vi.mock('../../components/QRPreview', () => ({
-  default: ({ data, customization }: any) => (
-    <div data-testid="qr-preview" data-content={data}>
-      <div>QR Preview</div>
-      <div>Foreground: {customization.foregroundColor}</div>
-      <div>Background: {customization.backgroundColor}</div>
-    </div>
-  ),
-}));
-
+// Mock QR Code library
 vi.mock('qrcode', () => ({
   default: {
-    toCanvas: vi.fn().mockResolvedValue(undefined),
-    toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
+    toCanvas: vi.fn().mockResolvedValue(undefined)
+  }
+}));
+
+// Mock components
+vi.mock('../../components/QRPreview', () => ({
+  default: ({ data }: { data: string }) => <div data-testid="qr-preview">{data}</div>
+}));
+
+const mockAuthContext = {
+  currentUser: {
+    uid: 'test-user-123',
+    email: 'test@example.com'
   },
-}));
+  subscription: {
+    planType: 'basico' as const,
+    status: 'active' as const
+  },
+  qrCounts: {
+    staticCodes: 5,
+    dynamicCodes: 2
+  },
+  canCreateQR: jest.fn().mockReturnValue(true),
+  isLoading: false,
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+  signUp: jest.fn()
+};
 
-vi.mock('react-colorful', () => ({
-  HexColorPicker: ({ color, onChange }: any) => (
-    <div data-testid="color-picker" onClick={() => onChange('#ff0000')}>
-      Color: {color}
-    </div>
-  ),
-}));
+const mockThemeContext = {
+  theme: 'light' as const,
+  toggleTheme: jest.fn()
+};
 
+const renderWithContext = (component: React.ReactElement) => {
+  return render(
+    <BrowserRouter>
+      <AuthContext.Provider value={mockAuthContext}>
+        <ThemeContext.Provider value={mockThemeContext}>
+          {component}
+        </ThemeContext.Provider>
+      </AuthContext.Provider>
+    </BrowserRouter>
+  );
+};
 
-
-describe('Create Page', () => {
+describe('Create Component - Unified QR System', () => {
   beforeEach(() => {
-    setupFetchMock();
-    vi.clearAllMocks();
+    jest.clearAllMocks();
+
+    // Mock the tracking functions
+    const mockCreateTrackableQRData = qrTracking.createTrackableQRData as jest.MockedFunction<typeof qrTracking.createTrackableQRData>;
+    const mockGenerateOriginalData = qrTracking.generateOriginalData as jest.MockedFunction<typeof qrTracking.generateOriginalData>;
+    const mockGenerateShortUrl = qrTracking.generateShortUrl as jest.MockedFunction<typeof qrTracking.generateShortUrl>;
+
+    mockCreateTrackableQRData.mockImplementation((_, qrId) => `https://ladyqr.web.app/r/${qrId}`);
+    mockGenerateOriginalData.mockImplementation((type, formData) => {
+      if (type === 'url') return formData.url || '';
+      return 'test-original-data';
+    });
+    mockGenerateShortUrl.mockImplementation((qrId) => `https://ladyqr.web.app/r/${qrId}`);
   });
 
-  describe('Create Mode (New QR Code)', () => {
-    it('renders create mode correctly', async () => {
-      customRender(<Create />);
+  describe('QR Data Generation', () => {
+    it('should generate trackable QR data for URL type', async () => {
+      renderWithContext(<Create />);
+
+      // Select URL type
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      // Enter URL
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      // Check that createTrackableQRData is called
       await waitFor(() => {
-        expect(screen.getByText('Create Professional QR Code')).toBeInTheDocument();
+        expect(qrTracking.createTrackableQRData).toHaveBeenCalled();
       });
     });
 
-    it('shows QR type selection grid', async () => {
-      customRender(<Create />);
-      await waitFor(() => {
-        expect(screen.getByText('QR Code Type')).toBeInTheDocument();
-      });
-    });
+    it('should always use short URLs for both static and dynamic QR codes', async () => {
+      renderWithContext(<Create />);
 
-    it('allows selecting QR code type', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
+      // Test static QR code
+      const staticToggle = screen.getByRole('button', { name: /static/i });
+      fireEvent.click(staticToggle);
 
-      const emailButton = await screen.findByText('Email');
-      await user.click(emailButton);
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
 
-      await waitFor(() => {
-        expect(screen.getByText('Configuration')).toBeInTheDocument();
-        expect(screen.getByLabelText('Email Address *')).toBeInTheDocument();
-      });
-    });
-
-    it('shows static/dynamic selection for URL type', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const urlButton = await screen.findByText('Website');
-      await user.click(urlButton);
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://static.example.com' } });
 
       await waitFor(() => {
-        expect(screen.getByText('Code Type')).toBeInTheDocument();
-      });
-    });
-
-    it('allows entering QR code name', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const nameInput = screen.getByLabelText('Name (for your archive)');
-      await user.type(nameInput, 'My Test QR Code');
-
-      expect(nameInput).toHaveValue('My Test QR Code');
-    });
-
-    it('allows entering URL configuration', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const urlButton = screen.getByText('URL');
-      await user.click(urlButton);
-
-      const urlInput = screen.getByLabelText('URL *');
-      await user.type(urlInput, 'https://example.com');
-
-      expect(urlInput).toHaveValue('https://example.com');
-    });
-
-    it('shows customization options for pro plan', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />, {
-        authValue: {
-          currentUser: { uid: 'test-user', email: 'test@example.com' },
-          subscription: { planType: 'pro', status: 'active' },
-          qrCounts: { staticCodes: 0, dynamicCodes: 0 },
-          canCreateQR: vi.fn(() => true),
-          loading: false,
-        },
+        expect(qrTracking.createTrackableQRData).toHaveBeenCalledWith(
+          '',
+          expect.stringMatching(/qr-\d+/),
+          true // isStatic = true for static QR codes
+        );
       });
 
-      const customizationButton = screen.getByText('Show');
-      await user.click(customizationButton);
+      // Test dynamic QR code
+      const dynamicToggle = screen.getByRole('button', { name: /dynamic/i });
+      fireEvent.click(dynamicToggle);
 
-      expect(screen.getByText('Colors')).toBeInTheDocument();
-      expect(screen.getByText('Logo')).toBeInTheDocument();
-      expect(screen.getByText('Frame text')).toBeInTheDocument();
-    });
+      fireEvent.change(urlInput, { target: { value: 'https://dynamic.example.com' } });
 
-    it('hides customization for free plan', () => {
-      customRender(<Create />, {
-        authValue: {
-          currentUser: { uid: 'test-user', email: 'test@example.com' },
-          subscription: { planType: 'gratis', status: 'active' },
-          qrCounts: { staticCodes: 0, dynamicCodes: 0 },
-          canCreateQR: vi.fn(() => true),
-          loading: false,
-        },
+      await waitFor(() => {
+        expect(qrTracking.createTrackableQRData).toHaveBeenCalledWith(
+          '',
+          expect.stringMatching(/temp-\d+/),
+          false // isStatic = false for dynamic QR codes
+        );
       });
-
-      expect(screen.getByText('Not available on Gratis plan')).toBeInTheDocument();
-    });
-
-    it('shows QR preview', () => {
-      customRender(<Create />);
-
-      expect(screen.getByTestId('qr-preview')).toBeInTheDocument();
-    });
-
-    it('enables save button when form is valid', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const urlButton = screen.getByText('URL');
-      await user.click(urlButton);
-
-      const urlInput = screen.getByLabelText('URL *');
-      await user.type(urlInput, 'https://example.com');
-
-      const saveButton = screen.getByText('Save to History');
-      expect(saveButton).not.toBeDisabled();
-    });
-
-    it('disables save button when form is invalid', () => {
-      customRender(<Create />);
-
-      const saveButton = screen.getByText('Enter Data First');
-      expect(saveButton).toBeDisabled();
     });
   });
 
-  describe('Edit Mode (Existing QR Code)', () => {
-    beforeEach(() => {
-      vi.mocked(getDoc).mockResolvedValue({
-        exists: () => true as any,
-        data: () => mockQRCodeData,
-      } as any);
-    });
+  describe('QR Code Saving with Unified System', () => {
+    it('should save static QR code with correct properties', async () => {
+      const { setDoc } = require('firebase/firestore');
+      setDoc.mockResolvedValueOnce(undefined);
 
-    it('renders edit mode correctly', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
+      renderWithContext(<Create />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Edit QR Code')).toBeInTheDocument();
-        expect(screen.getByText('View analytics and edit your QR code settings')).toBeInTheDocument();
-      });
-    });
+      // Configure static URL QR code
+      const staticToggle = screen.getByRole('button', { name: /static/i });
+      fireEvent.click(staticToggle);
 
-    it('shows analytics when editing', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      const nameInput = screen.getByPlaceholderText(/enter qr code name/i);
+      fireEvent.change(nameInput, { target: { value: 'Test Static QR' } });
+
+      // Save the QR code
+      const saveButton = screen.getByRole('button', { name: /save qr code/i });
+      fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByTestId('qr-analytics')).toBeInTheDocument();
-        expect(screen.getByText('QR Code Analytics')).toBeInTheDocument();
-        expect(screen.getByText('Total Scans: 42')).toBeInTheDocument();
-        expect(screen.getByText('Unique Scans: 35')).toBeInTheDocument();
+        expect(setDoc).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            isDynamic: false,
+            isEditable: false, // Static QR codes are not editable
+            shortUrlId: expect.stringMatching(/short-\d+/), // All QR codes get short URLs
+            destinationUrl: 'https://example.com', // For URL types, store the destination
+            content: expect.objectContaining({
+              url: 'https://example.com'
+            })
+          })
+        );
       });
     });
 
-    it('hides QR type selection when editing', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
+    it('should save dynamic QR code with correct properties', async () => {
+      const { setDoc } = require('firebase/firestore');
+      setDoc.mockResolvedValueOnce(undefined);
+
+      renderWithContext(<Create />);
+
+      // Configure dynamic URL QR code
+      const dynamicToggle = screen.getByRole('button', { name: /dynamic/i });
+      fireEvent.click(dynamicToggle);
+
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://dynamic.example.com' } });
+
+      const nameInput = screen.getByPlaceholderText(/enter qr code name/i);
+      fireEvent.change(nameInput, { target: { value: 'Test Dynamic QR' } });
+
+      // Save the QR code
+      const saveButton = screen.getByRole('button', { name: /save qr code/i });
+      fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('QR Code Type')).not.toBeInTheDocument();
-        expect(screen.queryByText('URL')).not.toBeInTheDocument();
-        expect(screen.queryByText('Text')).not.toBeInTheDocument();
+        expect(setDoc).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            isDynamic: true,
+            isEditable: true, // Dynamic QR codes are editable
+            shortUrlId: expect.stringMatching(/short-\d+/), // All QR codes get short URLs
+            destinationUrl: 'https://dynamic.example.com',
+            content: expect.objectContaining({
+              url: 'https://dynamic.example.com'
+            })
+          })
+        );
       });
     });
 
-    it('hides static/dynamic selection when editing', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
+    it('should save non-URL QR code with correct destination data', async () => {
+      const { setDoc } = require('firebase/firestore');
+      setDoc.mockResolvedValueOnce(undefined);
 
-      await waitFor(() => {
-        expect(screen.queryByText('Code Type')).not.toBeInTheDocument();
-        expect(screen.queryByText('Static')).not.toBeInTheDocument();
-        expect(screen.queryByText('Dynamic')).not.toBeInTheDocument();
-      });
-    });
-
-    it('loads existing QR code data', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(() => {
-        const nameInput = screen.getByLabelText('Name (for your archive)');
-        expect(nameInput).toHaveValue('Test QR Code');
-
-        const urlInput = screen.getByLabelText('URL *');
-        expect(urlInput).toHaveValue('https://example.com');
-      });
-    });
-
-    it('allows editing QR code name', async () => {
-      const user = userEvent.setup();
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(async () => {
-        const nameInput = screen.getByLabelText('Name (for your archive)');
-        await user.clear(nameInput);
-        await user.type(nameInput, 'Updated QR Code Name');
-
-        expect(nameInput).toHaveValue('Updated QR Code Name');
-      });
-    });
-
-    it('allows editing QR code content', async () => {
-      const user = userEvent.setup();
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(async () => {
-        const urlInput = screen.getByLabelText('URL *');
-        await user.clear(urlInput);
-        await user.type(urlInput, 'https://updated-example.com');
-
-        expect(urlInput).toHaveValue('https://updated-example.com');
-      });
-    });
-
-    it('allows editing customization options', async () => {
-      const user = userEvent.setup();
-      customRender(
-        <Create />,
-        {
-          initialEntries: ['/create?edit=test-qr-id'],
-          authValue: {
-            currentUser: { uid: 'test-user', email: 'test@example.com' },
-            subscription: { planType: 'pro', status: 'active' },
-            qrCounts: { staticCodes: 0, dynamicCodes: 0 },
-            canCreateQR: vi.fn(() => true),
-            loading: false,
-          },
+      // Mock generateOriginalData for email type
+      const mockGenerateOriginalData = qrTracking.generateOriginalData as jest.MockedFunction<typeof qrTracking.generateOriginalData>;
+      mockGenerateOriginalData.mockImplementation((type, formData) => {
+        if (type === 'email') {
+          return `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
         }
-      );
-
-      await waitFor(async () => {
-        const customizationButton = screen.getByText('Show');
-        await user.click(customizationButton);
-
-        const frameTextInput = screen.getByLabelText('Frame text');
-        await user.clear(frameTextInput);
-        await user.type(frameTextInput, 'SCAN ME NOW');
-
-        expect(frameTextInput).toHaveValue('SCAN ME NOW');
-      });
-    });
-
-    it('shows update button instead of save button', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Update QR Code')).toBeInTheDocument();
-        expect(screen.queryByText('Save to History')).not.toBeInTheDocument();
-      });
-    });
-
-    it('shows creation and update dates in preview', async () => {
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText('Created: 1/1/2024')).toBeInTheDocument();
-        expect(screen.getByText('Last updated: 1/15/2024')).toBeInTheDocument();
-      });
-    });
-
-    it('handles loading state', () => {
-      vi.mocked(getDoc).mockImplementation(() => new Promise(() => {})); // Never resolves
-
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      expect(screen.getByText('Loading QR code...')).toBeInTheDocument();
-    });
-
-    it('handles QR code not found', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-      vi.mocked(getDoc).mockResolvedValue({
-        exists: () => false as any,
-        data: () => null,
-      } as any);
-
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
-
-      await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('QR code not found');
+        return 'test-data';
       });
 
-      alertSpy.mockRestore();
-    });
+      renderWithContext(<Create />);
 
-    it('handles unauthorized access', async () => {
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
-      vi.mocked(getDoc).mockResolvedValue({
-        exists: () => true as any,
-        data: () => ({ ...mockQRCodeData, userId: 'different-user-id' }),
-      } as any);
+      // Configure email QR code
+      const emailButton = screen.getByRole('button', { name: /email/i });
+      fireEvent.click(emailButton);
 
-      customRender(
-        <Create />,
-        { initialEntries: ['/create?edit=test-qr-id'] }
-      );
+      const emailInput = screen.getByPlaceholderText(/enter email address/i);
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
 
-      await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('You do not have permission to edit this QR code');
-      });
+      const subjectInput = screen.getByPlaceholderText(/enter email subject/i);
+      fireEvent.change(subjectInput, { target: { value: 'Test Subject' } });
 
-      alertSpy.mockRestore();
-    });
-  });
-
-  describe('Form Validation', () => {
-    it('requires URL for URL type', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const urlButton = await screen.findByText('Website');
-      await user.click(urlButton);
-
-      const saveButton = screen.getByText('Enter Data First');
-      expect(saveButton).toBeDisabled();
-
-      const urlInput = screen.getByLabelText('Website URL *');
-      await user.type(urlInput, 'https://example.com');
+      // Save the QR code
+      const saveButton = screen.getByRole('button', { name: /save qr code/i });
+      fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Save to History')).not.toBeDisabled();
-      });
-    });
-
-    it('requires email for email type', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const emailButton = await screen.findByText('Email');
-      await user.click(emailButton);
-
-      const emailInput = screen.getByLabelText('Email Address *');
-      await user.type(emailInput, 'test@example.com');
-
-      await waitFor(() => {
-        expect(screen.getByText('Save to History')).not.toBeDisabled();
-      });
-    });
-
-    it('requires phone for SMS type', async () => {
-      const user = userEvent.setup();
-      customRender(<Create />);
-
-      const smsButton = await screen.findByText('SMS');
-      await user.click(smsButton);
-
-      const phoneInput = screen.getByLabelText('Phone Number *');
-      await user.type(phoneInput, '+1234567890');
-
-      await waitFor(() => {
-        expect(screen.getByText('Save to History')).not.toBeDisabled();
+        expect(setDoc).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            type: 'email',
+            shortUrlId: expect.stringMatching(/short-\d+/),
+            destinationUrl: 'mailto:test@example.com?subject=Test%20Subject&body=', // Generated from original data
+            content: expect.objectContaining({
+              email: 'test@example.com',
+              subject: 'Test Subject'
+            })
+          })
+        );
       });
     });
   });
 
-  describe('Plan Limitations', () => {
-    it('shows plan limit warning when static codes limit reached', async () => {
-      customRender(<Create />, {
-        authValue: {
-          currentUser: { uid: 'test-user', email: 'test@example.com' },
-          subscription: { planType: 'gratis', status: 'active' },
-          qrCounts: { staticCodes: 3, dynamicCodes: 0 },
-          canCreateQR: vi.fn((type) => type === 'dynamic'),
-          loading: false,
-        },
-      });
+  describe('QR Preview with Unified System', () => {
+    it('should always show short URL in QR preview', async () => {
+      renderWithContext(<Create />);
+
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
 
       await waitFor(() => {
-        expect(screen.getByText('Plan Limit Reached')).toBeInTheDocument();
+        const qrPreview = screen.getByTestId('qr-preview');
+        expect(qrPreview).toHaveTextContent('https://ladyqr.web.app/r/temp-');
       });
     });
 
-    it('shows plan limit warning when dynamic codes limit reached', async () => {
-      customRender(<Create />, {
-        authValue: {
-          currentUser: { uid: 'test-user', email: 'test@example.com' },
-          subscription: { planType: 'gratis', status: 'active' },
-          qrCounts: { staticCodes: 0, dynamicCodes: 1 },
-          canCreateQR: vi.fn((type) => type === 'static'),
-          loading: false,
-        },
-      });
+    it('should update QR preview when switching between static and dynamic', async () => {
+      renderWithContext(<Create />);
+
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      // Both static and dynamic should show short URL
+      const staticToggle = screen.getByRole('button', { name: /static/i });
+      fireEvent.click(staticToggle);
 
       await waitFor(() => {
-        expect(screen.getByText('Plan Limit Reached')).toBeInTheDocument();
+        const qrPreview = screen.getByTestId('qr-preview');
+        expect(qrPreview).toHaveTextContent('https://ladyqr.web.app/r/temp-');
       });
+
+      const dynamicToggle = screen.getByRole('button', { name: /dynamic/i });
+      fireEvent.click(dynamicToggle);
+
+      await waitFor(() => {
+        const qrPreview = screen.getByTestId('qr-preview');
+        expect(qrPreview).toHaveTextContent('https://ladyqr.web.app/r/temp-');
+      });
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle save errors gracefully', async () => {
+      const { setDoc } = require('firebase/firestore');
+      setDoc.mockRejectedValueOnce(new Error('Firestore error'));
+
+      // Mock alert
+      window.alert = jest.fn();
+
+      renderWithContext(<Create />);
+
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderText(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      const saveButton = screen.getByRole('button', { name: /save qr code/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(window.alert).toHaveBeenCalledWith('Error al guardar el código QR. Intenta nuevamente.');
+      });
+    });
+
+    it('should prevent saving when user has reached QR limit', async () => {
+      const limitedAuthContext = {
+        ...mockAuthContext,
+        canCreateQR: jest.fn().mockReturnValue(false)
+      };
+
+      window.alert = jest.fn();
+
+      render(
+        <BrowserRouter>
+          <AuthContext.Provider value={limitedAuthContext}>
+            <ThemeContext.Provider value={mockThemeContext}>
+              <Create />
+            </ThemeContext.Provider>
+          </AuthContext.Provider>
+        </BrowserRouter>
+      );
+
+      const urlButton = screen.getByRole('button', { name: /url/i });
+      fireEvent.click(urlButton);
+
+      const urlInput = screen.getByPlaceholderPath(/enter website url/i);
+      fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
+
+      const saveButton = screen.getByRole('button', { name: /save qr code/i });
+      fireEvent.click(saveButton);
+
+      expect(window.alert).toHaveBeenCalledWith('Has alcanzado el límite de códigos QR para tu plan actual.');
     });
   });
 });

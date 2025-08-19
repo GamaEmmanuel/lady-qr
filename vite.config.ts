@@ -7,6 +7,14 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '0.0.0.0',
+    proxy: {
+      '/api/analytics': {
+        target: process.env.VITE_FUNCTIONS_ORIGIN || 'http://127.0.0.1:5001/lady-qr/us-central1',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/analytics/, '/getAnalytics')
+      }
+    }
   },
   preview: {
     port: 8080,

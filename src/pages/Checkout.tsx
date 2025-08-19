@@ -4,16 +4,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
 import { loadStripe } from '@stripe/stripe-js';
 import { env } from '../config/env';
-import { 
-  CheckIcon, 
-  CreditCardIcon, 
+import {
+  CheckIcon,
+  CreditCardIcon,
   ShieldCheckIcon,
   ArrowLeftIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-// Initialize Stripe with environment variable
-const stripePromise = loadStripe(env.stripe.publishableKey);
+// Initialize Stripe with environment variable (guard against empty key)
+const stripePromise = env.stripe.publishableKey ? loadStripe(env.stripe.publishableKey) : null;
 
 const Checkout: React.FC = () => {
   const location = useLocation();
@@ -104,13 +104,13 @@ const Checkout: React.FC = () => {
     try {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // In a real implementation, you would:
       // 1. Create payment intent with Stripe
       // 2. Process payment
       // 3. Update user subscription in database
       // 4. Send confirmation email
-      
+
       alert(`¡Pago procesado exitosamente! Bienvenido al plan ${plan.name}`);
       navigate('/dashboard');
     } catch (error) {
@@ -136,17 +136,27 @@ const Checkout: React.FC = () => {
   ];
 
   const selectedCountry = countries.find(c => c.code === formData.country);
-  const availablePaymentMethods = paymentMethods.filter(pm => 
+  const availablePaymentMethods = paymentMethods.filter(pm =>
     pm.countries.includes(formData.country)
   );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Key missing warning */}
+        {!env.stripe.publishableKey && (
+          <div className="mb-4 p-3 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+              Stripe publishable key is not set. Define VITE_STRIPE_PUBLISHABLE_KEY to enable payments.
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
-          <Link 
-            to="/pricing" 
+          <Link
+            to="/pricing"
             className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-4"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -303,7 +313,6 @@ const Checkout: React.FC = () => {
                   value={formData.country}
                   onChange={(e) => handleInputChange('country', e.target.value)}
                   className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="john@example.com"
                 >
                   {countries.map((country) => (
                     <option key={country.code} value={country.code}>
@@ -426,7 +435,7 @@ const Checkout: React.FC = () => {
                         OXXO Payment
                       </h4>
                       <p className="text-sm text-warning-700 dark:text-warning-400 mt-1">
-                        After confirming, you'll receive a barcode to pay at any OXXO store. 
+                        After confirming, you'll receive a barcode to pay at any OXXO store.
                         Your subscription will activate once payment is processed (24-48 hours).
                       </p>
                     </div>
@@ -443,7 +452,7 @@ const Checkout: React.FC = () => {
                         PIX Payment
                       </h4>
                       <p className="text-sm text-primary-700 dark:text-primary-400 mt-1">
-                        After confirming, you'll receive a QR code to pay with PIX. 
+                        After confirming, you'll receive a QR code to pay with PIX.
                         Payment is processed instantly.
                       </p>
                     </div>
@@ -455,8 +464,8 @@ const Checkout: React.FC = () => {
               {['MX', 'BR', 'AR'].includes(formData.country) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    {formData.country === 'MX' ? 'RFC' : 
-                     formData.country === 'BR' ? 'CPF/CNPJ' : 
+                    {formData.country === 'MX' ? 'RFC' :
+                     formData.country === 'BR' ? 'CPF/CNPJ' :
                      'CUIT/CUIL'} (Optional)
                   </label>
                   <input
@@ -464,8 +473,8 @@ const Checkout: React.FC = () => {
                     value={formData.taxId}
                     onChange={(e) => handleInputChange('taxId', e.target.value)}
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                    placeholder={formData.country === 'MX' ? 'XAXX010101000' : 
-                                formData.country === 'BR' ? '000.000.000-00' : 
+                    placeholder={formData.country === 'MX' ? 'XAXX010101000' :
+                                formData.country === 'BR' ? '000.000.000-00' :
                                 '00-00000000-0'}
                   />
                 </div>
@@ -480,7 +489,7 @@ const Checkout: React.FC = () => {
                       Secure Payment
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Your information is protected with 256-bit SSL encryption. 
+                      Your information is protected with 256-bit SSL encryption.
                       Processed by Stripe, the global leader in secure payments.
                     </p>
                   </div>
@@ -502,8 +511,8 @@ const Checkout: React.FC = () => {
                   <>
                     <CreditCardIcon className="h-5 w-5" />
                     <span>
-                      {paymentMethod === 'card' ? 'Pagar Ahora' : 
-                       paymentMethod === 'oxxo' ? 'Generar Código OXXO' : 
+                      {paymentMethod === 'card' ? 'Pagar Ahora' :
+                       paymentMethod === 'oxxo' ? 'Generar Código OXXO' :
                        'Generar Código PIX'} - ${Math.round(getPrice() * 1.16)} {selectedCountry?.currency}
                     </span>
                   </>

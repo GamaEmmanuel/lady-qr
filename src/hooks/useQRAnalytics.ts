@@ -50,17 +50,53 @@ export const useQRAnalytics = (qrCodeId: string) => {
         setLoading(true);
         setError(null);
 
-        const baseUrl = import.meta.env.VITE_FIREBASE_HOSTING_URL || window.location.origin;
-        const response = await fetch(
-          `${baseUrl}/api/analytics?qrCodeId=${qrCodeId}&userId=${currentUser.uid}`
-        );
+        // Build candidate URLs and try them in order until one succeeds
+        const hostingUrl = (import.meta.env.VITE_FIREBASE_HOSTING_URL as string | undefined) || undefined;
+        const functionsOrigin = (import.meta.env.VITE_FUNCTIONS_ORIGIN as string | undefined) || undefined;
+        const projectId = (import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined) || undefined;
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const sanitizeBase = (base: string) => base.replace(/\/$/, '');
+        const query = `?qrCodeId=${encodeURIComponent(qrCodeId)}&userId=${encodeURIComponent(currentUser.uid)}`;
+
+        const candidates: string[] = [];
+        // 1) Relative path – works on hosting and via Vite proxy
+        candidates.push(`/api/analytics${query}`);
+        // 2) Explicit hosting url if provided
+        if (hostingUrl) {
+          candidates.push(`${sanitizeBase(hostingUrl)}/api/analytics${query}`);
+        }
+        // 3) Direct Cloud Functions origin (v2 HTTPS function name is getAnalytics)
+        if (functionsOrigin) {
+          candidates.push(`${sanitizeBase(functionsOrigin)}/getAnalytics${query}`);
+        }
+        // 4) Fallback to default Cloud Functions domain using project ID (works in production without extra env)
+        if (!functionsOrigin && projectId) {
+          candidates.push(`https://us-central1-${projectId}.cloudfunctions.net/getAnalytics${query}`);
         }
 
-        const data = await response.json();
-        setAnalytics(data);
+        let lastError: Error | null = null;
+        let success = false;
+
+        for (const url of candidates) {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              const data = await response.json();
+              setAnalytics(data);
+              lastError = null;
+              success = true;
+              break;
+            } else {
+              lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+          } catch (e: any) {
+            lastError = e instanceof Error ? e : new Error('Network error');
+          }
+        }
+
+        if (!success && lastError) {
+          throw lastError;
+        }
       } catch (err) {
         console.error('Error fetching analytics:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch analytics');

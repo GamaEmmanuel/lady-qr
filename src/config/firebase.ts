@@ -66,7 +66,7 @@ if (app) {
     auth = getAuth(app);
     console.log('✅ Firebase Auth initialized');
 
-    db = getFirestore(app, 'main-database');
+    db = getFirestore(app);
     console.log('✅ Firebase Firestore initialized');
 
     storage = getStorage(app);

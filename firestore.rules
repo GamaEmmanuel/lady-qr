@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // QR codes: Allow server-side reads for redirects, authenticated user access for management
+    match /qrcodes/{qrCodeId} {
+      // Allow Firebase functions to read QR codes for redirects (server-side)
+      // This is necessary for the redirect function to work
+      allow read: if true;
+
+      // Allow authenticated users to read/write their own QR codes
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Users can read/write their own subscriptions
+    match /subscriptions/{subscriptionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Scans collection - allow server-side writes, users to read their own QR scans
+    match /scans/{scanId} {
+      // Allow users to read scans for QR codes they own
+      allow read: if request.auth != null &&
+        exists(/databases/$(database)/documents/qrcodes/$(resource.data.qrCodeId)) &&
+        get(/databases/$(database)/documents/qrcodes/$(resource.data.qrCodeId)).data.userId == request.auth.uid;
+
+      // Allow Firebase functions to write scan data (needed for analytics)
+      allow write: if true;
+    }
+
+    // Allow server-side access to plans for subscription logic
+    match /plans/{planId} {
+      allow read: if true;
+    }
+  }
+}
