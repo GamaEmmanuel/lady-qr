@@ -12,6 +12,7 @@ export const env = {
     publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ""
   },
   cloudFunction: {
-    redirectUrl: import.meta.env.VITE_CLOUD_FUNCTION_REDIRECT_URL
+    redirectUrl: import.meta.env.VITE_CLOUD_FUNCTION_REDIRECT_URL,
+    hostingUrl: import.meta.env.VITE_FIREBASE_HOSTING_URL
   }
 };

@@ -8,7 +8,7 @@ export interface User {
 export interface Subscription {
   id: string;
   userId: string;
-  planType: 'gratis' | 'basico' | 'profesional' | 'negocios';
+  planType: 'free' | 'basic' | 'professional' | 'Business';
   status: 'active' | 'payment_pending' | 'cancelled' | 'expired';
   stripeSubscriptionId?: string;
   trialEndsAt?: Date;
@@ -23,10 +23,12 @@ export interface QRCode {
   userId: string;
   name: string;
   type: QRCodeType;
-  isDynamic: boolean;
-  shortUrlId?: string;
-  destinationUrl?: string;
+  isDynamic: boolean; // Keep for backward compatibility
+  isEditable: boolean; // New field: true for dynamic, false for static
+  shortUrlId: string; // Now required - all QR codes get short URLs
+  destinationUrl?: string; // For URL-type QR codes, this is where they redirect
   content: Record<string, any>;
+  originalContent?: Record<string, any>; // Store original data for static QR codes
   customizationOptions: QRCustomization;
   scanCount: number;
   isActive: boolean;
@@ -34,25 +36,25 @@ export interface QRCode {
   updatedAt: Date;
 }
 
-export type QRCodeType = 
-  | 'url' 
-  | 'vcard' 
-  | 'text' 
-  | 'email' 
-  | 'sms' 
-  | 'wifi' 
-  | 'social' 
-  | 'pdf' 
-  | 'video' 
-  | 'location' 
-  | 'event' 
-  | 'appstore' 
-  | 'images' 
-  | 'menu' 
-  | 'mp3' 
-  | 'coupon' 
-  | 'feedback' 
-  | 'business' 
+export type QRCodeType =
+  | 'url'
+  | 'vcard'
+  | 'text'
+  | 'email'
+  | 'sms'
+  | 'wifi'
+  | 'social'
+  | 'pdf'
+  | 'video'
+  | 'location'
+  | 'event'
+  | 'appstore'
+  | 'images'
+  | 'menu'
+  | 'mp3'
+  | 'coupon'
+  | 'feedback'
+  | 'business'
   | 'crypto';
 
 export interface QRCustomization {

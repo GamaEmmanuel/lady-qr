@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .log { background: #f0f0f0; padding: 10px; border-radius: 4px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🔍 QR Code Debug Test</h1>
+    <p>This page helps debug QR code creation and redirect issues.</p>
+
+    <div class="test-section">
+        <h2>Test 1: Basic Redirect Function</h2>
+        <button onclick="testRedirectFunction()">Test Redirect Function</button>
+        <div id="redirect-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Create Test QR Code</h2>
+        <button onclick="createTestQR()">Create Test QR Code</button>
+        <div id="create-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: List Database Contents</h2>
+        <button onclick="listQRCodes()">List QR Codes in Database</button>
+        <div id="list-log" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Direct QR Test</h2>
+        <input type="text" id="qr-id-input" placeholder="Enter QR ID to test" style="padding: 8px; width: 300px;">
+        <button onclick="testSpecificQR()">Test This QR</button>
+        <div id="test-log" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        async function testRedirectFunction() {
+            const logId = 'redirect-log';
+            document.getElementById(logId).innerHTML = '';
+
+            log(logId, '🚀 Testing redirect function...');
+
+            try {
+                // Test with a known non-existent QR code
+                const response = await fetch('https://lady-qr.web.app/r/debug-test-123', {
+                    method: 'GET',
+                    redirect: 'manual' // Don't follow redirects
+                });
+
+                log(logId, `📡 Response status: ${response.status}`);
+                log(logId, `📡 Response headers: ${JSON.stringify([...response.headers.entries()])}`);
+
+                const text = await response.text();
+                log(logId, `📄 Response body: ${text}`);
+
+                if (response.status === 404 && text.includes('QR Code not found')) {
+                    log(logId, '✅ Redirect function is working correctly (returns 404 for non-existent QR)', 'success');
+                } else {
+                    log(logId, '❌ Unexpected response from redirect function', 'error');
+                }
+
+            } catch (error) {
+                log(logId, `❌ Error testing redirect: ${error.message}`, 'error');
+            }
+        }
+
+        async function createTestQR() {
+            const logId = 'create-log';
+            document.getElementById(logId).innerHTML = '';
+
+            log(logId, '🆕 Creating test QR code...');
+            log(logId, '📝 This would require authentication - check browser console for details');
+
+            // Generate a unique test ID
+            const testId = `debug-qr-${Date.now()}`;
+            const testUrl = `https://google.com?test=${testId}`;
+
+            log(logId, `🆔 Test QR ID: ${testId}`);
+            log(logId, `🔗 Test URL: ${testUrl}`);
+            log(logId, `📱 Expected QR redirect: https://lady-qr.web.app/r/${testId}`);
+
+            log(logId, '💡 To complete this test:');
+            log(logId, '1. Go to https://lady-qr.web.app/create');
+            log(logId, '2. Create a URL QR code with: ' + testUrl);
+            log(logId, '3. Check browser console for detailed logs');
+            log(logId, '4. Note the generated QR ID');
+            log(logId, '5. Test the QR code by scanning or visiting the redirect URL');
+        }
+
+        async function listQRCodes() {
+            const logId = 'list-log';
+            document.getElementById(logId).innerHTML = '';
+
+            log(logId, '📋 This would list QR codes from database...');
+            log(logId, '🔐 Requires authentication - check Firebase Console instead');
+            log(logId, '💡 Go to: https://console.firebase.google.com/project/lady-qr/firestore');
+            log(logId, '💡 Navigate to: main-database > qrcodes collection');
+            log(logId, '💡 Look for documents and their shortUrlId fields');
+        }
+
+        async function testSpecificQR() {
+            const logId = 'test-log';
+            const qrId = document.getElementById('qr-id-input').value.trim();
+
+            document.getElementById(logId).innerHTML = '';
+
+            if (!qrId) {
+                log(logId, '❌ Please enter a QR ID to test', 'error');
+                return;
+            }
+
+            log(logId, `🔍 Testing QR ID: ${qrId}`);
+
+            const testUrl = `https://lady-qr.web.app/r/${qrId}`;
+            log(logId, `📡 Testing URL: ${testUrl}`);
+
+            try {
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    redirect: 'manual' // Don't follow redirects
+                });
+
+                log(logId, `📡 Status: ${response.status}`);
+
+                if (response.status === 302) {
+                    const location = response.headers.get('location');
+                    log(logId, `✅ Redirect working! Destination: ${location}`, 'success');
+                } else if (response.status === 404) {
+                    const text = await response.text();
+                    log(logId, `❌ QR code not found: ${text}`, 'error');
+                } else {
+                    const text = await response.text();
+                    log(logId, `❓ Unexpected response: ${text}`, 'error');
+                }
+
+            } catch (error) {
+                log(logId, `❌ Error testing QR: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            log('redirect-log', '🏁 Debug page loaded. Click buttons to run tests.');
+        };
+    </script>
+</body>
+</html>

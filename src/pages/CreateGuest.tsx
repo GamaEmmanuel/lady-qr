@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { qrTypes } from '../data/qrTypes';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
+import { generateOriginalData } from '../utils/qrTracking';
 import QRExpirationTimer from '../components/QRExpirationTimer';
 import { useQRExpiration } from '../hooks/useQRExpiration';
 import QRCode from 'qrcode';
-import { 
-  ArrowDownTrayIcon, 
+import {
+  ArrowDownTrayIcon,
   EyeIcon,
   UserPlusIcon,
   ShieldExclamationIcon
@@ -30,28 +31,10 @@ const CreateGuest: React.FC = () => {
 
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
-    
-    switch (selectedType) {
-      case 'url':
-        return formData.url || '';
-      case 'text':
-        return formData.text || '';
-      case 'email':
-        return `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
-      case 'sms':
-        return `sms:${formData.phone}${formData.message ? `?body=${encodeURIComponent(formData.message)}` : ''}`;
-      case 'wifi':
-        return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
-      case 'location':
-        if (formData.latitude && formData.longitude) {
-          return `geo:${formData.latitude},${formData.longitude}`;
-        }
-        return formData.address || '';
-      case 'vcard':
-        return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
-      default:
-        return JSON.stringify(formData);
-    }
+
+    // For guest users, generate temporary QR data for preview
+    // This uses the original data format since guests can't save QR codes
+    return generateOriginalData(selectedType, formData);
   };
 
   const qrData = generateQRData();
@@ -72,7 +55,7 @@ const CreateGuest: React.FC = () => {
       alert('El código QR ha expirado. Genera uno nuevo o regístrate para códigos permanentes.');
       return;
     }
-    
+
     if (!qrData) {
       alert('Por favor ingresa los datos del código QR primero.');
       return;
@@ -81,7 +64,7 @@ const CreateGuest: React.FC = () => {
     // Generate QR code and download as PNG for guest users
     const canvas = document.createElement('canvas');
     const size = 512; // Higher resolution for download
-    
+
     QRCode.toCanvas(canvas, qrData, {
       width: size,
       margin: 2,
@@ -102,7 +85,7 @@ const CreateGuest: React.FC = () => {
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
-          
+
           // Show message about signing up for more features
           setTimeout(() => {
             alert('¡Descarga completada! Regístrate gratis para códigos permanentes, personalización y más formatos de descarga.');
@@ -117,7 +100,7 @@ const CreateGuest: React.FC = () => {
 
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
-    
+
     switch (field.type) {
       case 'textarea':
         return (
@@ -175,7 +158,7 @@ const CreateGuest: React.FC = () => {
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Create temporary QR codes that expire in 24 hours
           </p>
-          
+
           <div className="mt-4 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 rounded-lg p-4 max-w-2xl mx-auto">
             <div className="flex items-center space-x-3">
               <ShieldExclamationIcon className="h-6 w-6 text-warning-600 dark:text-warning-400 flex-shrink-0" />
@@ -224,10 +207,10 @@ const CreateGuest: React.FC = () => {
                   </button>
                 ))}
               </div>
-              
+
               <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  💡 <strong>Static QR Codes:</strong> Data is encoded directly in the QR pattern. 
+                  💡 <strong>Static QR Codes:</strong> Data is encoded directly in the QR pattern.
                   They work forever but cannot be edited after creation.
                 </p>
               </div>
@@ -242,8 +225,8 @@ const CreateGuest: React.FC = () => {
                 <div className="space-y-4">
                   {selectedTypeConfig.fields.map((field) => (
                     <div key={field.id}>
-                      <label 
-                        htmlFor={field.id} 
+                      <label
+                        htmlFor={field.id}
                         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                       >
                         {field.label}
@@ -298,7 +281,7 @@ const CreateGuest: React.FC = () => {
                   <EyeIcon className="h-5 w-5 mr-2" />
                   Preview
                 </h3>
-                
+
                 {/* Expiration Timer */}
                 {qrData && (
                   <div className="mb-6">
@@ -309,9 +292,9 @@ const CreateGuest: React.FC = () => {
                     />
                   </div>
                 )}
-                
+
                 <div className="flex justify-center mb-6">
-                  <QRPreview 
+                  <QRPreview
                     data={qrData}
                     customization={basicCustomization}
                     size={250}
@@ -320,7 +303,7 @@ const CreateGuest: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <button 
+                  <button
                     onClick={handleDownload}
                     disabled={isExpired || !qrData}
                     className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
@@ -331,15 +314,15 @@ const CreateGuest: React.FC = () => {
                   >
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     <span>
-                      {isExpired 
-                        ? 'QR Code Expired' 
+                      {isExpired
+                        ? 'QR Code Expired'
                         : !qrData
                         ? 'Enter Data First'
                         : 'Sign Up to Download'
                       }
                     </span>
                   </button>
-                  
+
                   <Link
                     to="/register"
                     className="w-full flex items-center justify-center space-x-2 bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-md transition-colors"

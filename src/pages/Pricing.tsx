@@ -5,9 +5,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
 
 const Pricing: React.FC = () => {
-  const { currentUser, subscription } = useAuth();
+  const { currentUser, subscription, subscribeToPlan } = useAuth();
   const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
-  
+
   return (
     <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -20,7 +20,7 @@ const Pricing: React.FC = () => {
             Start free and upgrade as your business grows. All plans include professional support and multiple payment methods.
           </p>
         </div>
-        
+
         {/* Current Plan Notification */}
         {currentUser && (
           <div className="isolate mx-auto mt-8 max-w-md">
@@ -44,14 +44,14 @@ const Pricing: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-8">
           {plans.map((plan, index) => (
             <div
               key={plan.id}
               className={`flex flex-col justify-between rounded-3xl p-8 xl:p-10 ${
-                index === 2 
-                  ? 'bg-primary-600 text-white ring-2 ring-primary-600' 
+                index === 2
+                  ? 'bg-primary-600 text-white ring-2 ring-primary-600'
                   : 'bg-white dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700'
               }`}
             >
@@ -118,16 +118,31 @@ const Pricing: React.FC = () => {
                   })}
                 </ul>
               </div>
-              <Link
-                to={plan.id === 'gratis' ? '/register' : plan.id === 'negocios' ? '/contact' : '/checkout'}
+              <button
+                onClick={async () => {
+                  if (!currentUser) {
+                    window.location.href = '/register';
+                    return;
+                  }
+                  if (plan.price === null) {
+                    window.location.href = '/contact';
+                    return;
+                  }
+                  try {
+                    await subscribeToPlan(plan.id);
+                    alert(`You are now subscribed to the ${plan.name} plan.`);
+                  } catch (e: any) {
+                    alert(e.message || 'Failed to subscribe. Please try again.');
+                  }
+                }}
                 className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-all duration-200 ${
                   index === 2
                     ? 'bg-white text-primary-600 shadow-sm hover:bg-gray-50'
                     : 'bg-primary-600 text-white shadow-sm hover:bg-primary-500'
                 }`}
               >
-                {plan.id === 'gratis' ? 'Start free' : plan.id === 'negocios' ? 'Contact Sales' : 'Subscribe'}
-              </Link>
+                {plan.id === 'free' ? 'Start free' : plan.price === null ? 'Contact Sales' : 'Subscribe'}
+              </button>
             </div>
           ))}
         </div>

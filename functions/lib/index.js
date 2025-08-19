@@ -33,12 +33,18 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAnalytics = exports.redirect = void 0;
+exports.getAnalytics = exports.redirect = exports.getMainDatabase = void 0;
 const admin = __importStar(require("firebase-admin"));
 // Initialize Firebase Admin (only once)
 if (!admin.apps.length) {
     admin.initializeApp();
 }
+// Helper function to get Firestore instance (default database)
+const getMainDatabase = () => {
+    return admin.firestore();
+};
+exports.getMainDatabase = getMainDatabase;
+console.log('✅ Firebase Admin initialized with default Firestore database');
 // Import and export function modules
 var redirect_1 = require("./redirect");
 Object.defineProperty(exports, "redirect", { enumerable: true, get: function () { return redirect_1.redirect; } });

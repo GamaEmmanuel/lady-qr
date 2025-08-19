@@ -68,6 +68,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   canCreateQR: (type: 'static' | 'dynamic') => boolean;
+  subscribeToPlan: (planId: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -122,23 +123,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     await setDoc(doc(db, 'users', result.user.uid), userData);
 
-    // Create free subscription
+    // Create free subscription (top-level collection)
     const freeSubscription: Subscription = {
-      id: 'free',
-      planType: 'gratis',
+      id: `sub_${result.user.uid}_${Date.now()}`,
+      userId: result.user.uid,
+      planType: 'free',
       status: 'active',
+      cancelAtPeriodEnd: false,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    await setDoc(doc(db, `users/${result.user.uid}/subscriptions`, 'current'), freeSubscription);
+    await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
 
     // Track sign up event
     try {
       trackUserSignUp('email');
       setAnalyticsUserId(result.user.uid);
       setAnalyticsUserProperties({
-        plan_type: 'gratis',
+        plan_type: 'free',
         user_type: 'new_user'
       });
     } catch (error) {
@@ -169,24 +172,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const freeSubscription: Subscription = {
         id: `sub_${result.user.uid}_${Date.now()}`,
         userId: result.user.uid,
-        planType: 'gratis',
+        planType: 'free',
         status: 'active',
-        stripeSubscriptionId: null,
-        trialEndsAt: null,
-        currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         cancelAtPeriodEnd: false,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      await setDoc(doc(db, 'suscriptions', freeSubscription.id), freeSubscription);
+      await setDoc(doc(db, 'subscriptions', freeSubscription.id), freeSubscription);
 
       // Track sign up event for new Google users
       try {
         trackUserSignUp('google');
         setAnalyticsUserId(result.user.uid);
         setAnalyticsUserProperties({
-          plan_type: 'gratis',
+          plan_type: 'free',
           user_type: 'new_user'
         });
       } catch (error) {
@@ -257,8 +257,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const freeSubscription: Subscription = {
           id: `sub_${result.user.uid}_${Date.now()}`,
           userId: result.user.uid,
+          planType: 'free',
           status: 'active',
-          stripeSubscriptionId: null,
+          // stripeSubscriptionId, trialEndsAt intentionally omitted
+          currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          cancelAtPeriodEnd: false,
+          createdAt: new Date(),
           updatedAt: new Date()
         };
 
@@ -268,7 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           trackUserSignUp('email_link');
           setAnalyticsUserProperties({
-            plan_type: 'gratis',
+            plan_type: 'free',
             user_type: 'new_user',
             auth_method: 'email_link'
           });
@@ -308,6 +312,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => prev ? { ...prev, ...updates } : null);
+  };
+
+  // Add: allow user to change/subscribe to a plan directly
+  const subscribeToPlan = async (planId: string) => {
+    if (!currentUser) {
+      throw new Error('You must be logged in to subscribe to a plan.');
+    }
+
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) {
+      throw new Error('Invalid plan selected.');
+    }
+
+    // Do not allow direct subscription for enterprise/contact-only plans
+    if (plan.price === null) {
+      throw new Error('This plan requires contacting sales.');
+    }
+
+    // Find existing active subscription
+    const subscriptionQueryRef = query(
+      collection(db, 'subscriptions'),
+      where('userId', '==', currentUser.uid),
+      where('status', '==', 'active'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(subscriptionQueryRef);
+
+    let newSubscription: Subscription;
+    if (!snapshot.empty) {
+      // Update existing active subscription
+      const subDocRef = snapshot.docs[0].ref;
+      await setDoc(subDocRef, {
+        planType: planId,
+        status: 'active',
+        cancelAtPeriodEnd: false,
+        updatedAt: new Date()
+      }, { merge: true });
+
+      newSubscription = {
+        id: snapshot.docs[0].id,
+        userId: currentUser.uid,
+        planType: planId,
+        status: 'active',
+        cancelAtPeriodEnd: false,
+        createdAt: snapshot.docs[0].data().createdAt || new Date(),
+        updatedAt: new Date()
+      } as Subscription;
+    } else {
+      // Create new active subscription
+      newSubscription = {
+        id: `sub_${currentUser.uid}_${Date.now()}`,
+        userId: currentUser.uid,
+        planType: planId,
+        status: 'active',
+        cancelAtPeriodEnd: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await setDoc(doc(db, 'subscriptions', newSubscription.id), newSubscription);
+    }
+
+    // Also store plan info on the user's document for quick lookup
+    await setDoc(doc(db, 'users', currentUser.uid), {
+      planType: planId,
+      subscriptionStatus: 'active',
+      subscriptionUpdatedAt: new Date()
+    }, { merge: true });
+
+    // Update local state
+    setSubscription(newSubscription);
+    setUserData(prev => prev ? { ...prev, planType: planId, subscriptionStatus: 'active' } as User : prev);
+
+    // Optionally record analytics
+    try {
+      setAnalyticsUserProperties({ plan_type: planId });
+    } catch (err) {
+      console.warn('Analytics update failed:', err);
+    }
   };
 
   const canCreateQR = (type: 'static' | 'dynamic'): boolean => {
@@ -368,9 +451,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               userId: user.uid, // Add this line
               planType: subscriptionDoc.data().planType,
               status: subscriptionDoc.data().status,
-              stripeSubscriptionId: subscriptionDoc.data().stripeSubscriptionId,
-              trialEndsAt: subscriptionDoc.data().trialEndsAt,
-              currentPeriodEndsAt: subscriptionDoc.data().currentPeriodEndsAt,
               cancelAtPeriodEnd: subscriptionDoc.data().cancelAtPeriodEnd,
               createdAt: subscriptionDoc.data().createdAt,
               updatedAt: subscriptionDoc.data().updatedAt
@@ -381,10 +461,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const freeSubscription: Subscription = {
               id: `sub_${user.uid}_${Date.now()}`,
               userId: user.uid,
-              planType: 'gratis',
+              planType: 'free',
               status: 'active',
-              stripeSubscriptionId: null,
-              trialEndsAt: null,
               currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
               cancelAtPeriodEnd: false,
               createdAt: new Date(),
@@ -399,10 +477,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSubscription({
             id: 'default',
             userId: user.uid,
-            planType: 'gratis',
+            planType: 'free',
             status: 'active',
-            stripeSubscriptionId: null,
-            trialEndsAt: null,
             currentPeriodEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             cancelAtPeriodEnd: false,
             createdAt: new Date(),
@@ -444,7 +520,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isPasswordlessSignIn,
     logout,
     updateUserProfile,
-    canCreateQR
+    canCreateQR,
+    subscribeToPlan
   };
 
   return (

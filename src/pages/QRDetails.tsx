@@ -6,7 +6,8 @@ import { db } from '../config/firebase';
 import { QRCode as QRCodeType } from '../types';
 import QRPreview from '../components/QRPreview';
 import QRAnalytics from '../components/QRAnalytics';
-import { 
+import { generateShortUrl } from '../utils/qrTracking';
+import {
   ArrowLeftIcon,
   PencilIcon,
   TrashIcon,
@@ -32,14 +33,14 @@ const QRDetails: React.FC = () => {
 
       try {
         const qrDoc = await getDoc(doc(db, 'qrcodes', id));
-        
+
         if (!qrDoc.exists()) {
           navigate('/dashboard');
           return;
         }
 
         const qrData = qrDoc.data() as QRCodeType;
-        
+
         // Security check
         if (qrData.userId !== currentUser.uid) {
           navigate('/dashboard');
@@ -147,7 +148,7 @@ const QRDetails: React.FC = () => {
               Back to Dashboard
             </button>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="text-3xl">{getTypeIcon(qrCode.type)}</div>
@@ -172,7 +173,7 @@ const QRDetails: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => navigate(`/create?edit=${id}`)}
@@ -181,7 +182,7 @@ const QRDetails: React.FC = () => {
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Edit
               </button>
-              
+
               <button
                 onClick={handleToggleActive}
                 className={`inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white ${
@@ -202,7 +203,7 @@ const QRDetails: React.FC = () => {
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={handleDelete}
                 className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-error-600 hover:bg-error-700"
@@ -253,10 +254,10 @@ const QRDetails: React.FC = () => {
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   QR Code
                 </h3>
-                
+
                 <div className="flex justify-center mb-6">
-                  <QRPreview 
-                    data={qrCode.isDynamic ? `https://ladyqr.web.app/r/${qrCode.shortUrlId}` : JSON.stringify(qrCode.content)}
+                                    <QRPreview
+                    data={generateShortUrl(qrCode.shortUrlId)}
                     customization={qrCode.customizationOptions}
                     size={250}
                   />
@@ -267,7 +268,7 @@ const QRDetails: React.FC = () => {
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     <span>Download PNG</span>
                   </button>
-                  
+
                   <button className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md transition-colors">
                     <ShareIcon className="h-5 w-5" />
                     <span>Share QR Code</span>
@@ -282,7 +283,7 @@ const QRDetails: React.FC = () => {
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Details
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
@@ -343,7 +344,7 @@ const QRDetails: React.FC = () => {
                     <div>
                       <span className="text-sm text-gray-600 dark:text-gray-400">Short URL:</span>
                       <span className="ml-2 text-sm font-medium text-primary-600 dark:text-primary-400">
-                        https://ladyqr.web.app/r/{qrCode.shortUrlId}
+                        {generateShortUrl(qrCode.shortUrlId)}
                       </span>
                     </div>
                     <div className="mt-2">

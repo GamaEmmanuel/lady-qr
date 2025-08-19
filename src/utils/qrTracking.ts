@@ -20,8 +20,9 @@ export const generateTrackingPixel = (qrCodeId: string): string => {
  * Generate a short URL for dynamic QR codes
  */
 export const generateShortUrl = (qrCodeId: string): string => {
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL || window.location.origin;
-  return `${baseUrl}/functions/v1/qr-redirect/${qrCodeId}`;
+  // Use Firebase hosting domain if provided, otherwise current origin
+  const baseUrl = import.meta.env.VITE_FIREBASE_HOSTING_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${baseUrl}/r/${qrCodeId}`;
 };
 
 /**
@@ -57,28 +58,40 @@ export const trackStaticScan = async (qrCodeId: string, scanData?: ScanData): Pr
 
 /**
  * Create a tracking-enabled QR code data string
- * For static QR codes, this embeds tracking mechanisms
+ * ALL QR codes now use short URLs for consistent tracking
  */
 export const createTrackableQRData = (originalData: string, qrCodeId: string, isStatic: boolean): string => {
-  if (!isStatic) {
-    // For dynamic QR codes, return the short URL
-    return generateShortUrl(qrCodeId);
-  }
+  // All QR codes (both static and dynamic) now use short URLs for tracking
+  // This ensures consistent analytics and tracking across all QR code types
+  return generateShortUrl(qrCodeId);
+};
 
-  // For static QR codes, we need to embed tracking
-  // This depends on the QR type:
-  
-  // If it's a URL, we can add tracking parameters
-  if (originalData.startsWith('http')) {
-    const url = new URL(originalData);
-    url.searchParams.set('qr_track', qrCodeId);
-    url.searchParams.set('qr_t', Date.now().toString());
-    return url.toString();
+/**
+ * Generate the original data content for a QR code based on its type
+ * This is used to determine what the QR code should redirect to
+ */
+export const generateOriginalData = (type: string, formData: Record<string, any>): string => {
+  switch (type) {
+    case 'url':
+      return formData.url || '';
+    case 'text':
+      return formData.text || '';
+    case 'email':
+      return `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
+    case 'sms':
+      return `sms:${formData.phone}${formData.message ? `?body=${encodeURIComponent(formData.message)}` : ''}`;
+    case 'wifi':
+      return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
+    case 'location':
+      if (formData.latitude && formData.longitude) {
+        return `geo:${formData.latitude},${formData.longitude}`;
+      }
+      return formData.address || '';
+    case 'vcard':
+      return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
+    default:
+      return JSON.stringify(formData);
   }
-
-  // For other types (text, vCard, etc.), we return the original data
-  // Tracking will need to be handled differently (e.g., through analytics pixels)
-  return originalData;
 };
 
 /**
@@ -87,7 +100,7 @@ export const createTrackableQRData = (originalData: string, qrCodeId: string, is
  */
 export const generateTrackingCode = (qrCodeId: string): string => {
   const trackingUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-scan`;
-  
+
   return `
 <!-- Lady QR Tracking Code -->
 <script>
@@ -124,7 +137,7 @@ export const hasQRTracking = (url: string): { hasTracking: boolean; qrCodeId?: s
   try {
     const urlObj = new URL(url);
     const qrTrack = urlObj.searchParams.get('qr_track');
-    
+
     return {
       hasTracking: !!qrTrack,
       qrCodeId: qrTrack || undefined
@@ -140,7 +153,7 @@ export const hasQRTracking = (url: string): { hasTracking: boolean; qrCodeId?: s
 export const initAutoTracking = (): void => {
   // Check if current page was accessed via QR code
   const { hasTracking, qrCodeId } = hasQRTracking(window.location.href);
-  
+
   if (hasTracking && qrCodeId) {
     trackStaticScan(qrCodeId, {
       referer: document.referrer,
