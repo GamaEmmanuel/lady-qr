@@ -75,7 +75,8 @@ const Create: React.FC = () => {
         // Load QR code data into form
         setSelectedType(qrData.type);
         setIsDynamic(qrData.isDynamic || false);
-        setFormData(qrData.content || {});
+        // Ensure name is available in formData for editing
+        setFormData({ ...(qrData.content || {}), name: qrData.name || '' });
 
         // Load customization options
         if (qrData.customizationOptions) {
@@ -99,6 +100,10 @@ const Create: React.FC = () => {
   }, [isEditing, editingQRId, currentUser]);
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
+
+  // Allowed QR types for creation UI
+  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'wifi', 'event'];
+  const allowedCreateTypes = qrTypes.filter(type => allowedTypeIds.includes(type.id));
 
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
@@ -257,6 +262,11 @@ const Create: React.FC = () => {
   const handleSave = async () => {
     if (!currentUser) {
       alert('Please log in to save your QR code.');
+      return;
+    }
+
+    if (!formData.name || !String(formData.name).trim()) {
+      alert('Please enter a name for your QR code.');
       return;
     }
 
@@ -436,18 +446,21 @@ const Create: React.FC = () => {
                       QR Code Type
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {qrTypes.map((type) => (
+                      {allowedCreateTypes.map((type) => (
                         <button
                           key={type.id}
                           onClick={() => {
                             setSelectedType(type.id);
-                            setFormData({});
+                            setFormData((prev) => ({ name: prev?.name || '' }));
                             setIsDynamic(type.canBeDynamic && !type.canBeStatic);
 
                             // Reset QR ID when type changes (for new QR codes)
                             if (!isEditing) {
                               setQrCodeId('');
                             }
+
+                            // Keep name field sticky across type changes
+                            setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
                           }}
                           className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                             selectedType === type.id
@@ -486,6 +499,8 @@ const Create: React.FC = () => {
                           if (!isEditing) {
                             setQrCodeId('');
                           }
+                          // Keep name field sticky
+                          setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
                         }}
                         disabled={!canCreateQR('static')}
                         className={`p-4 rounded-lg border-2 transition-all duration-200 ${
@@ -499,14 +514,6 @@ const Create: React.FC = () => {
                         <div className={`font-medium ${!canCreateQR('static') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                           Static
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Cannot be edited after creation
-                        </div>
-                        {!canCreateQR('static') && (
-                          <div className="text-xs text-error-600 dark:text-error-400 mt-1">
-                            Limit reached
-                          </div>
-                        )}
                       </button>
                       <button
                         onClick={() => {
@@ -515,6 +522,8 @@ const Create: React.FC = () => {
                           if (!isEditing) {
                             setQrCodeId('');
                           }
+                          // Keep name field sticky
+                          setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
                         }}
                         disabled={!canCreateQR('dynamic')}
                         className={`p-4 rounded-lg border-2 transition-all duration-200 ${
@@ -528,45 +537,121 @@ const Create: React.FC = () => {
                         <div className={`font-medium ${!canCreateQR('dynamic') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                           Dynamic
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Editable with analytics
-                        </div>
-                        {!canCreateQR('dynamic') && (
-                          <div className="text-xs text-error-600 dark:text-error-400 mt-1">
-                            Limit reached
-                          </div>
-                        )}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* QR Name Field */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                    QR Code Name
-                  </h3>
-                  <div>
-                    <label htmlFor="qrName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Name (for your archive)
-                    </label>
-                    <input
-                      type="text"
-                      id="qrName"
-                      value={formData.name || ''}
-                      onChange={(e) => handleFieldChange('name', e.target.value)}
-                      placeholder={`My ${selectedTypeConfig?.name} QR Code`}
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
-
                 {/* Form Fields */}
                 {selectedTypeConfig && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                      Configuration
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
+                        Configuration
+                      </h3>
+                      <button
+                        onClick={() => setShowCustomization(!showCustomization)}
+                        className="inline-flex items-center px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      >
+                        <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
+                        Customize
+                      </button>
+                    </div>
+
+                    {/* Universal Name Field */}
+                    <div className="mb-6">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Name <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        value={formData.name || ''}
+                        onChange={(e) => handleFieldChange('name', e.target.value)}
+                        placeholder="e.g., Promo - Summer Sale"
+                        maxLength={120}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                        required
+                      />
+                    </div>
+
+                    {/* Customization Options */}
+                    {showCustomization && (
+                      <div className="mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Foreground Color
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.foregroundColor }} />
+                              <button
+                                onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
+                                className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              >
+                                {showColorPicker === 'foreground' ? 'Close' : 'Change'}
+                              </button>
+                            </div>
+                            {showColorPicker === 'foreground' && (
+                              <div className="mt-3">
+                                <HexColorPicker color={customization.foregroundColor} onChange={(color) => handleCustomizationChange('foregroundColor', color)} />
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Background Color
+                            </label>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.backgroundColor }} />
+                              <button
+                                onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
+                                className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              >
+                                {showColorPicker === 'background' ? 'Close' : 'Change'}
+                              </button>
+                            </div>
+                            {showColorPicker === 'background' && (
+                              <div className="mt-3">
+                                <HexColorPicker color={customization.backgroundColor} onChange={(color) => handleCustomizationChange('backgroundColor', color)} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Logo Upload */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Add Logo (PNG/JPG/SVG)
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                              onChange={handleLogoUpload}
+                              className="text-sm text-gray-700 dark:text-gray-300"
+                            />
+                            {logoPreview && (
+                              <button
+                                onClick={removeLogo}
+                                className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              >
+                                <XMarkIcon className="h-4 w-4 mr-1" />
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          {logoPreview && (
+                            <div className="mt-3">
+                              <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
+                                <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-4">
                       {selectedTypeConfig.fields.map((field) => (
                         <div key={field.id}>
@@ -584,178 +669,58 @@ const Create: React.FC = () => {
                   </div>
                 )}
 
-                {/* Customization Panel */}
+                {/* Download/Save Buttons */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
-                      Customization
-                    </h3>
-                    {!hasCustomization && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                        Not available on {currentPlan?.name} plan
-                      </div>
-                    )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
-                      onClick={() => setShowCustomization(!showCustomization)}
-                      disabled={!hasCustomization}
-                      className="flex items-center space-x-2 text-primary-600 hover:text-primary-700"
+                      onClick={handleDownload}
+                      disabled={!canCreate || !qrData}
+                      className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                        !canCreate || !qrData
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-primary-600 hover:bg-primary-700 text-white'
+                      }`}
                     >
-                      <AdjustmentsHorizontalIcon className="h-5 w-5" />
-                      <span>{showCustomization ? 'Hide' : 'Show'}</span>
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                      <span>Download PNG</span>
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={!canCreate || !qrData}
+                      className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                        !canCreate || !qrData
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-accent-600 hover:bg-accent-700 text-white'
+                      }`}
+                    >
+                      <PhotoIcon className="h-5 w-5" />
+                      <span>Save to Dashboard</span>
                     </button>
                   </div>
-
-                  {!hasCustomization && (
-                    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Customization not included:</strong> Your {currentPlan?.name} plan doesn't include customization options.{' '}
-                        <Link to="/pricing" className="font-medium text-primary-600 hover:text-primary-700 underline hover:no-underline">
-                          Upgrade your plan
-                        </Link>
-                        {' '}to access all customization options.
-                      </p>
-                    </div>
-                  )}
-
-                  {showCustomization && hasCustomization && (
-                    <div className="space-y-6">
-                      {/* Colors */}
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                          Colors
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              Primary color
-                            </label>
-                            <div className="relative">
-                              <button
-                                onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
-                                className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 flex items-center space-x-2 px-3"
-                              >
-                                <div
-                                  className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
-                                  style={{ backgroundColor: customization.foregroundColor }}
-                                />
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              Background color
-                            </label>
-                            <div className="relative">
-                              <button
-                                onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
-                                className="w-full h-10 rounded-md border border-gray-300 dark:border-gray-600 flex items-center space-x-2 px-3"
-                              >
-                                <div
-                                  className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
-                                  style={{ backgroundColor: customization.backgroundColor }}
-                                />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Logo */}
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                          Logo
-                        </h4>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            {logoPreview ? (
-                              <img src={logoPreview} alt="Logo preview" className="w-12 h-12 rounded-full" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                <PhotoIcon className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-grow">
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg,image/jpg,image/svg+xml"
-                              onChange={handleLogoUpload}
-                              className="hidden"
-                              id="logoUpload"
-                            />
-                            <label
-                              htmlFor="logoUpload"
-                              className="block text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
-                            >
-                              Upload logo
-                            </label>
-                            {logoPreview && (
-                              <button
-                                onClick={removeLogo}
-                                className="mt-1 text-sm text-gray-500 hover:text-gray-700"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Frame Text */}
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                          Frame Text
-                        </h4>
-                        <input
-                          type="text"
-                          value={customization.frameText}
-                          onChange={(e) => handleCustomizationChange('frameText', e.target.value)}
-                          placeholder="ESCANÉAME"
-                          maxLength={20}
-                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
               {/* Preview Panel */}
-              <div className="space-y-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                  <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                    Preview
-                  </h2>
-                  <div className="flex flex-col items-center space-y-4">
-                     <QRPreview
-                       data={qrData}
-                       customization={hasCustomization ? customization : {
-                         foregroundColor: '#000000',
-                         backgroundColor: '#ffffff',
-                         cornerSquareStyle: 'square',
-                         cornerDotStyle: 'square',
-                         dotsStyle: 'square'
-                       }}
-                     />
-                     {/* Add Save and Download buttons */}
-                     <div className="flex items-center gap-3">
-                       <button
-                         onClick={handleSave}
-                         disabled={!canCreate || loading}
-                         className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         Save
-                       </button>
-                       <button
-                         onClick={handleDownload}
-                         disabled={!canCreate}
-                         className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                         Download
-                       </button>
-                     </div>
-                   </div>
+              <div className="lg:col-span-1">
+                <div className="sticky top-8">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                      <EyeIcon className="h-5 w-5 mr-2" />
+                      Preview
+                    </h3>
+                    <div className="flex justify-center mb-6">
+                      <QRPreview
+                        data={qrData}
+                        customization={customization}
+                        size={250}
+                      />
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div>Type: {selectedTypeConfig?.name}</div>
+                      <div>Mode: {isDynamic ? 'Dynamic (Editable)' : 'Static (Permanent)'}</div>
+                      <div>Size: 250x250 px</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
