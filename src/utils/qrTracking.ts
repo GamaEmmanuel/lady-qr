@@ -20,8 +20,8 @@ export const generateTrackingPixel = (qrCodeId: string): string => {
  * Generate a short URL for dynamic QR codes
  */
 export const generateShortUrl = (qrCodeId: string): string => {
-  // Use Firebase hosting domain if provided, otherwise current origin
-  const baseUrl = import.meta.env.VITE_FIREBASE_HOSTING_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  // Use Firebase hosting domain if provided, otherwise default to production domain
+  const baseUrl = import.meta.env.VITE_FIREBASE_HOSTING_URL || 'https://ladyqr.web.app';
   return `${baseUrl}/r/${qrCodeId}`;
 };
 
@@ -31,7 +31,8 @@ export const generateShortUrl = (qrCodeId: string): string => {
  */
 export const trackStaticScan = async (qrCodeId: string, scanData?: ScanData): Promise<boolean> => {
   try {
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL || window.location.origin;
+    // Prefer Supabase URL if configured, else fall back to Firebase hosting URL, else production default
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_FIREBASE_HOSTING_URL || 'https://ladyqr.web.app';
     const response = await fetch(`${baseUrl}/functions/v1/track-scan`, {
       method: 'POST',
       headers: {

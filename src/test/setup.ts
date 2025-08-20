@@ -1,6 +1,14 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Provide a minimal Jest compatibility layer for older tests
+// @ts-ignore
+(globalThis as any).jest = {
+  fn: vi.fn,
+  spyOn: vi.spyOn,
+  clearAllMocks: vi.clearAllMocks,
+};
+
 // Mock Firebase
 vi.mock('../config/firebase', () => ({
   db: {},
@@ -37,7 +45,6 @@ vi.mock('firebase/auth', () => ({
   signInWithPopup: vi.fn(),
   sendSignInLinkToEmail: vi.fn(),
   isSignInWithEmailLink: vi.fn(),
-  signInWithEmailLink: vi.fn(),
 }));
 
 // Mock environment variables

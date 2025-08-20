@@ -41,7 +41,8 @@ const CreateGuest: React.FC = () => {
   const { isExpired, timeRemaining, resetExpiration } = useQRExpiration(qrData);
 
   // Filter QR types to only show static-compatible ones for guests
-  const guestQRTypes = qrTypes.filter(type => type.canBeStatic);
+  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'wifi', 'event'];
+  const guestQRTypes = qrTypes.filter(type => type.canBeStatic && allowedTypeIds.includes(type.id));
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
@@ -192,7 +193,7 @@ const CreateGuest: React.FC = () => {
                     key={type.id}
                     onClick={() => {
                       setSelectedType(type.id);
-                      setFormData({});
+                      setFormData((prev) => ({ name: prev?.name || '' }));
                     }}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                       selectedType === type.id
@@ -222,6 +223,21 @@ const CreateGuest: React.FC = () => {
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Configuration
                 </h3>
+                {/* Universal Name Field */}
+                <div className="mb-6">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={formData.name || ''}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    placeholder="e.g., Guest - Test QR"
+                    maxLength={120}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
                 <div className="space-y-4">
                   {selectedTypeConfig.fields.map((field) => (
                     <div key={field.id}>
