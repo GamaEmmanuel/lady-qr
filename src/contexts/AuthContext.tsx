@@ -20,20 +20,34 @@ import { trackUserSignUp, trackUserLogin, setAnalyticsUserId, setAnalyticsUserPr
 
 const getUserQRCounts = async (userId: string) => {
   try {
-    // Query all QR codes for the user
-    const qrCodesQuery = query(
+    // Query all QR codes for the user (primary)
+    const primaryQueryRef = query(
       collection(db, 'qrcodes'),
       where('userId', '==', userId)
     );
 
-    const qrCodesSnapshot = await getDocs(qrCodesQuery);
+    const primarySnap = await getDocs(primaryQueryRef);
+    let docs = primarySnap.docs;
+
+    // Fallback for legacy ownership fields
+    if (primarySnap.empty) {
+      const [ownerIdSnap, userIDSnap] = await Promise.all([
+        getDocs(query(collection(db, 'qrcodes'), where('ownerId', '==', userId))),
+        getDocs(query(collection(db, 'qrcodes'), where('userID', '==', userId)))
+      ]);
+      const merged: Record<string, typeof docs[number]> = {};
+      [...ownerIdSnap.docs, ...userIDSnap.docs].forEach((d) => {
+        merged[d.id] = d;
+      });
+      docs = Object.values(merged);
+    }
 
     let staticCodes = 0;
     let dynamicCodes = 0;
 
-    qrCodesSnapshot.forEach((doc) => {
-      const qrData = doc.data();
-      if (qrData.isDynamic) {
+    docs.forEach((d) => {
+      const data = d.data() as any;
+      if (data.isDynamic) {
         dynamicCodes++;
       } else {
         staticCodes++;
