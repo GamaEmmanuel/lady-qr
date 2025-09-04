@@ -4,12 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { plans } from '../data/plans';
-import { 
-  PlusIcon, 
-  QrCodeIcon, 
-  ChartBarIcon, 
-  EyeIcon, 
-  PencilIcon, 
+import {
+  PlusIcon,
+  QrCodeIcon,
+  ChartBarIcon,
+  EyeIcon,
+  PencilIcon,
   TrashIcon,
   ArrowDownTrayIcon,
   PlayIcon,
@@ -30,22 +30,43 @@ const Dashboard: React.FC = () => {
   React.useEffect(() => {
     const fetchQRCodes = async () => {
       if (!currentUser) return;
-      
+
       try {
         setQrLoading(true);
-        const qrCodesQuery = query(
+        const primaryQuery = query(
           collection(db, 'qrcodes'),
           where('userId', '==', currentUser.uid)
         );
-        
-        const qrCodesSnapshot = await getDocs(qrCodesQuery);
-        const qrCodesData = qrCodesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate() || new Date()
-        })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        
+
+        const primarySnap = await getDocs(primaryQuery);
+        let allDocs = primarySnap.docs;
+
+        // Fallback for legacy documents that might use different ownership fields
+        if (primarySnap.empty) {
+          const [ownerIdSnap, userIDSnap] = await Promise.all([
+            getDocs(query(collection(db, 'qrcodes'), where('ownerId', '==', currentUser.uid))),
+            getDocs(query(collection(db, 'qrcodes'), where('userID', '==', currentUser.uid)))
+          ]);
+
+          const merged: Record<string, typeof allDocs[number]> = {};
+          [...ownerIdSnap.docs, ...userIDSnap.docs].forEach((d) => {
+            merged[d.id] = d;
+          });
+          allDocs = Object.values(merged);
+        }
+
+        const qrCodesData = allDocs.map(d => {
+          const data: any = d.data();
+          return ({
+            id: d.id,
+            ...data,
+            // Normalize ownership field for UI safety
+            userId: data.userId || data.ownerId || data.userID || '',
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || new Date()),
+            updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt || new Date())
+          });
+        }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
         setQrCodes(qrCodesData);
       } catch (error) {
         console.error('Error fetching QR codes:', error);
@@ -139,8 +160,8 @@ const Dashboard: React.FC = () => {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 ${
                 stat.clickable ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''
               }`}
@@ -277,8 +298,8 @@ const Dashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : filteredQRCodes.map((qr) => (
-                  <tr 
-                    key={qr.id} 
+                  <tr
+                    key={qr.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                     onClick={() => navigate(`/create?edit=${qr.id}`)}
                   >
