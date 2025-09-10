@@ -102,7 +102,7 @@ const Create: React.FC = () => {
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
   // Allowed QR types for creation UI
-  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'wifi', 'event'];
+  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'whatsapp', 'wifi', 'event'];
   const allowedCreateTypes = qrTypes.filter(type => allowedTypeIds.includes(type.id));
 
   const generateQRData = () => {

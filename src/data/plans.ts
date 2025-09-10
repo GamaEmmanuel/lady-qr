@@ -88,7 +88,6 @@ export const plans: Plan[] = [
       'All format downloads',
       'No tuQR branding',
       '20 users per account',
-      'Full API access',
       'Dedicated support'
     ],
     limits: {

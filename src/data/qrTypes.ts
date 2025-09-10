@@ -103,6 +103,18 @@ export const qrTypes: QRTypeConfig[] = [
     ]
   },
   {
+    id: 'whatsapp',
+    name: 'WhatsApp Message',
+    description: 'Start a WhatsApp chat with a predefined message',
+    icon: '📲',
+    canBeDynamic: false,
+    canBeStatic: true,
+    fields: [
+      { id: 'phone', label: 'Phone number (with country code)', type: 'tel', required: true, placeholder: 'e.g., 14155552671' },
+      { id: 'message', label: 'Message', type: 'textarea', placeholder: 'Hello! I found you via QR.' }
+    ]
+  },
+  {
     id: 'wifi',
     name: 'WiFi',
     description: 'Automatic WiFi network connection',

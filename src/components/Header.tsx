@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { 
-  Bars3Icon, 
-  XMarkIcon, 
-  SunIcon, 
+import {
+  Bars3Icon,
+  XMarkIcon,
+  SunIcon,
   MoonIcon,
   UserCircleIcon,
-  ArrowRightOnRectangleIcon 
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { QrCodeIcon } from '@heroicons/react/24/solid';
 import { Menu, Transition } from '@headlessui/react';
@@ -46,7 +46,7 @@ const Header: React.FC = () => {
             </span>
           </Link>
         </div>
-        
+
         <div className="flex lg:hidden">
           <button
             type="button"
@@ -56,7 +56,7 @@ const Header: React.FC = () => {
             <Bars3Icon className="h-6 w-6" />
           </button>
         </div>
-        
+
         <div className={`hidden lg:flex lg:gap-x-12 ${currentUser ? 'lg:hidden' : ''}`}>
           {navigation.map((item) => (
             <Link
@@ -72,7 +72,7 @@ const Header: React.FC = () => {
             </Link>
           ))}
         </div>
-        
+
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-4">
           <button
             onClick={toggleTheme}
@@ -84,14 +84,14 @@ const Header: React.FC = () => {
               <MoonIcon className="h-5 w-5" />
             )}
           </button>
-          
+
           {currentUser ? (
             <Menu as="div" className="relative">
               <Menu.Button className="flex items-center space-x-2 text-sm font-inter font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <UserCircleIcon className="h-6 w-6" />
                 <span>{currentUser.displayName || userData?.fullName || currentUser.email}</span>
               </Menu.Button>
-              
+
               <Transition
                 as={Fragment}
                 enter="transition ease-out duration-100"
@@ -121,14 +121,6 @@ const Header: React.FC = () => {
                     </Menu.Item>
                     <Menu.Item>
                       <Link
-                        to="/archive"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        QR History
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
                         to="/pricing"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
@@ -148,7 +140,7 @@ const Header: React.FC = () => {
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        My Profile
+                        Profile
                       </Link>
                     </Menu.Item>
                     <Menu.Item>
@@ -182,7 +174,7 @@ const Header: React.FC = () => {
           )}
         </div>
       </nav>
-      
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden">
@@ -237,18 +229,11 @@ const Header: React.FC = () => {
                         Create QR
                       </Link>
                       <Link
-                        to="/archive"
-                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        QR History
-                      </Link>
-                      <Link
                         to="/profile"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        My Profile
+                        Profile
                       </Link>
                       <button
                         onClick={handleLogout}

@@ -17,6 +17,7 @@ import FAQ from './pages/FAQ';
 import CreateGuest from './pages/CreateGuest';
 import AuthComplete from './pages/AuthComplete';
 import Archive from './pages/Archive';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/auth/complete" element={<AuthComplete />} />
                 <Route path="/archive" element={<Archive />} />
+                <Route path="/contact" element={<Contact />} />
               </Routes>
             </main>
             <Footer />

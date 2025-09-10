@@ -55,7 +55,8 @@ export type QRCodeType =
   | 'coupon'
   | 'feedback'
   | 'business'
-  | 'crypto';
+  | 'crypto'
+  | 'whatsapp';
 
 export interface QRCustomization {
   foregroundColor: string;

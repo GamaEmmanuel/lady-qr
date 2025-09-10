@@ -13,8 +13,8 @@ const FAQ: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const toggleItem = (id: string) => {
-    setOpenItems(prev => 
-      prev.includes(id) 
+    setOpenItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -233,8 +233,8 @@ const FAQ: React.FC = () => {
     { id: 'business', name: 'Use Cases', count: faqData.filter(item => item.category === 'business').length }
   ];
 
-  const filteredFAQs = selectedCategory === 'all' 
-    ? faqData 
+  const filteredFAQs = selectedCategory === 'all'
+    ? faqData
     : faqData.filter(item => item.category === selectedCategory);
 
   return (
@@ -313,18 +313,10 @@ const FAQ: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:support@ladyqr.com"
+              href="/contact"
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
             >
               📧 Contact Support
-            </a>
-            <a
-              href="https://wa.me/5215512345678"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-6 py-3 border border-primary-600 text-base font-medium rounded-md text-primary-600 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              💬 Live Chat
             </a>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
