@@ -81,6 +81,11 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
       return `mailto:${formData.email}?subject=${encodeURIComponent(formData.subject || '')}&body=${encodeURIComponent(formData.body || '')}`;
     case 'sms':
       return `sms:${formData.phone}${formData.message ? `?body=${encodeURIComponent(formData.message)}` : ''}`;
+    case 'whatsapp': {
+      const phone = String(formData.phone || '').replace(/\D/g, '');
+      const text = formData.message ? `?text=${encodeURIComponent(formData.message)}` : '';
+      return phone ? `https://wa.me/${phone}${text}` : '';
+    }
     case 'wifi':
       return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
     case 'location':

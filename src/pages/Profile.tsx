@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
-import { 
+import {
   UserCircleIcon,
   CreditCardIcon,
   BellIcon,
@@ -46,10 +46,10 @@ const Profile: React.FC = () => {
         fullName: editForm.fullName,
         email: editForm.email
       });
-      setMessage({ type: 'success', text: 'Perfil actualizado correctamente' });
+      setMessage({ type: 'success', text: 'Profile updated successfully' });
       setIsEditing(false);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error al actualizar el perfil' });
+      setMessage({ type: 'error', text: 'Failed to update profile' });
     } finally {
       setIsSaving(false);
     }
@@ -65,7 +65,7 @@ const Profile: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('es-ES', {
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -78,17 +78,17 @@ const Profile: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">
-            Mi Perfil
+            Profile
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Gestiona tu información personal y configuración de cuenta
+            Manage your personal information and account settings
           </p>
         </div>
 
         {/* Message */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg border ${
-            message.type === 'success' 
+            message.type === 'success'
               ? 'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-700 text-success-700 dark:text-success-300'
               : 'bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-700 text-error-700 dark:text-error-300'
           }`}>
@@ -112,7 +112,7 @@ const Profile: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <UserCircleIcon className="h-8 w-8 text-primary-600" />
                   <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
-                    Información Personal
+                    Personal Information
                   </h2>
                 </div>
                 {!isEditing && (
@@ -121,7 +121,7 @@ const Profile: React.FC = () => {
                     className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 transition-colors"
                   >
                     <PencilIcon className="h-4 w-4" />
-                    <span>Editar</span>
+                    <span>Edit</span>
                   </button>
                 )}
               </div>
@@ -129,7 +129,7 @@ const Profile: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nombre completo
+                    Full name
                   </label>
                   {isEditing ? (
                     <input
@@ -161,10 +161,10 @@ const Profile: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Fecha de registro
+                    Registration date
                   </label>
                   <p className="text-gray-900 dark:text-white">
-                    {userData?.createdAt ? formatDate(userData.createdAt) : 'No disponible'}
+                    {userData?.createdAt ? formatDate(userData.createdAt) : 'Not available'}
                   </p>
                 </div>
 
@@ -176,14 +176,14 @@ const Profile: React.FC = () => {
                       className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
                     >
                       <CheckIcon className="h-4 w-4" />
-                      <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
+                      <span>{isSaving ? 'Saving...' : 'Save'}</span>
                     </button>
                     <button
                       onClick={handleCancelEdit}
                       className="flex items-center space-x-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md transition-colors"
                     >
                       <XMarkIcon className="h-4 w-4" />
-                      <span>Cancelar</span>
+                      <span>Cancel</span>
                     </button>
                   </div>
                 )}
@@ -195,7 +195,7 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3 mb-6">
                 <ShieldCheckIcon className="h-8 w-8 text-primary-600" />
                 <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
-                  Seguridad
+                  Security
                 </h2>
               </div>
 
@@ -204,14 +204,14 @@ const Profile: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <KeyIcon className="h-5 w-5 text-gray-400" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Contraseña</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Password</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Última actualización: Hace 30 días
+                        Last updated: 30 days ago
                       </p>
                     </div>
                   </div>
                   <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                    Cambiar
+                    Change
                   </button>
                 </div>
 
@@ -219,14 +219,14 @@ const Profile: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <BellIcon className="h-5 w-5 text-gray-400" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Autenticación de dos factores</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Two-factor authentication</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Añade una capa extra de seguridad
+                        Add an extra layer of security
                       </p>
                     </div>
                   </div>
                   <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                    Configurar
+                    Set up
                   </button>
                 </div>
               </div>
@@ -237,16 +237,16 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <ExclamationTriangleIcon className="h-8 w-8 text-error-600" />
                 <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
-                  Zona de Peligro
+                  Danger Zone
                 </h2>
               </div>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-error-200 dark:border-error-700 rounded-lg bg-error-50 dark:bg-error-900/20">
                   <div>
-                    <p className="font-medium text-error-800 dark:text-error-300">Eliminar cuenta</p>
+                    <p className="font-medium text-error-800 dark:text-error-300">Delete account</p>
                     <p className="text-sm text-error-600 dark:text-error-400">
-                      Esta acción no se puede deshacer. Se eliminarán todos tus datos.
+                      This action cannot be undone. All your data will be deleted.
                     </p>
                   </div>
                   <button
@@ -254,7 +254,7 @@ const Profile: React.FC = () => {
                     className="flex items-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-md transition-colors"
                   >
                     <TrashIcon className="h-4 w-4" />
-                    <span>Eliminar</span>
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>
@@ -268,7 +268,7 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <CreditCardIcon className="h-6 w-6 text-primary-600" />
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
-                  Plan Actual
+                  Current Plan
                 </h3>
               </div>
 
@@ -279,16 +279,16 @@ const Profile: React.FC = () => {
                   </h4>
                   {currentPlan?.price && (
                     <p className="text-2xl font-bold text-primary-600 mt-1">
-                      ${currentPlan.price}/mes
+                      ${currentPlan.price}/month
                     </p>
                   )}
                   <p className="text-sm text-primary-700 dark:text-primary-300 mt-2">
-                    {subscription?.status === 'active' ? 'Activo' : 'Inactivo'}
+                    {subscription?.status === 'active' ? 'Active' : 'Inactive'}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <h5 className="font-medium text-gray-900 dark:text-white">Características incluidas:</h5>
+                  <h5 className="font-medium text-gray-900 dark:text-white">Included features:</h5>
                   <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                     {currentPlan?.features.slice(0, 3).map((feature, index) => (
                       <li key={index} className="flex items-center space-x-2">
@@ -304,11 +304,11 @@ const Profile: React.FC = () => {
                     to="/pricing"
                     className="w-full bg-primary-600 hover:bg-primary-700 text-white text-center py-2 px-4 rounded-md transition-colors block"
                   >
-                    {currentPlan?.id === 'gratis' ? 'Actualizar Plan' : 'Cambiar Plan'}
+                    {currentPlan?.id === 'gratis' ? 'Upgrade Plan' : 'Change Plan'}
                   </Link>
                   {currentPlan?.id !== 'gratis' && (
                     <button className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-center py-2 px-4 rounded-md transition-colors">
-                      Gestionar Facturación
+                      Manage Billing
                     </button>
                   )}
                 </div>
@@ -318,20 +318,20 @@ const Profile: React.FC = () => {
             {/* Quick Stats */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                Estadísticas Rápidas
+                Quick Stats
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">QR Codes creados:</span>
+                  <span className="text-gray-600 dark:text-gray-400">QR Codes created:</span>
                   <span className="font-medium text-gray-900 dark:text-white">12</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Escaneos totales:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Total scans:</span>
                   <span className="font-medium text-gray-900 dark:text-white">1,247</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Último escaneo:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">Hace 2 horas</span>
+                  <span className="text-gray-600 dark:text-gray-400">Last scan:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">2 hours ago</span>
                 </div>
               </div>
             </div>
@@ -345,21 +345,21 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <ExclamationTriangleIcon className="h-8 w-8 text-error-600" />
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
-                  Confirmar Eliminación
+                  Confirm Deletion
                 </h3>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                ¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer y se perderán todos tus datos, incluyendo códigos QR y estadísticas.
+                Are you sure you want to delete your account? This action cannot be undone and all your data, including QR codes and analytics, will be permanently removed.
               </p>
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-md transition-colors"
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button className="flex-1 bg-error-600 hover:bg-error-700 text-white py-2 px-4 rounded-md transition-colors">
-                  Eliminar Cuenta
+                  Delete Account
                 </button>
               </div>
             </div>

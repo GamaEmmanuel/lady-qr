@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
+import {
   QrCodeIcon,
   ChartBarIcon,
   PhotoIcon,
@@ -18,62 +18,62 @@ import {
 
 const Features: React.FC = () => {
   const qrTypes = [
-    { icon: '🌐', name: 'Sitio Web', description: 'Enlaces a páginas web' },
-    { icon: '👤', name: 'Tarjeta de Contacto', description: 'Información personal o empresarial' },
-    { icon: '📝', name: 'Texto', description: 'Mensajes de texto simples' },
-    { icon: '📧', name: 'Email', description: 'Envío de correos predefinidos' },
-    { icon: '💬', name: 'SMS', description: 'Mensajes de texto a teléfonos' },
-    { icon: '📶', name: 'WiFi', description: 'Conexión automática a redes' },
-    { icon: '📱', name: 'Redes Sociales', description: 'Enlaces a perfiles sociales' },
-    { icon: '📍', name: 'Ubicación', description: 'Coordenadas GPS o direcciones' },
-    { icon: '📅', name: 'Evento', description: 'Información para calendarios' },
-    { icon: '🏢', name: 'Página de Negocio', description: 'Información empresarial completa' },
-    { icon: '₿', name: 'Billetera Cripto', description: 'Direcciones de criptomonedas' },
-    { icon: '🍽️', name: 'Menú', description: 'Menús de restaurantes' }
+    { icon: '🌐', name: 'Website', description: 'Links to websites' },
+    { icon: '👤', name: 'Contact Card', description: 'Personal or business information' },
+    { icon: '📝', name: 'Text', description: 'Simple text messages' },
+    { icon: '📧', name: 'Email', description: 'Send predefined emails' },
+    { icon: '💬', name: 'SMS', description: 'Text messages to phones' },
+    { icon: '📶', name: 'WiFi', description: 'Automatic network connection' },
+    { icon: '📱', name: 'Social Media', description: 'Links to social profiles' },
+    { icon: '📍', name: 'Location', description: 'GPS coordinates or addresses' },
+    { icon: '📅', name: 'Event', description: 'Calendar event information' },
+    { icon: '🏢', name: 'Business Page', description: 'Complete business information' },
+    { icon: '₿', name: 'Crypto Wallet', description: 'Cryptocurrency addresses' },
+    { icon: '🍽️', name: 'Menu', description: 'Restaurant menus' }
   ];
 
   const imageFormats = [
-    { name: 'PNG', description: 'Ideal para web y redes sociales', quality: 'Alta calidad', transparency: 'Sí' },
-    { name: 'JPG', description: 'Perfecto para impresión', quality: 'Alta calidad', transparency: 'No' },
-    { name: 'SVG', description: 'Vector escalable infinitamente', quality: 'Vectorial', transparency: 'Sí' },
-    { name: 'PDF', description: 'Listo para impresión profesional', quality: 'Vectorial', transparency: 'Sí' },
-    { name: 'EPS', description: 'Para diseño gráfico profesional', quality: 'Vectorial', transparency: 'Sí' }
+    { name: 'PNG', description: 'Ideal for web and social media', quality: 'High quality', transparency: 'Yes' },
+    { name: 'JPG', description: 'Perfect for print', quality: 'High quality', transparency: 'No' },
+    { name: 'SVG', description: 'Infinitely scalable vector', quality: 'Vector', transparency: 'Yes' },
+    { name: 'PDF', description: 'Ready for professional print', quality: 'Vector', transparency: 'Yes' },
+    { name: 'EPS', description: 'For professional graphic design', quality: 'Vector', transparency: 'Yes' }
   ];
 
   const customizationOptions = [
     {
       icon: PaintBrushIcon,
-      title: 'Colores Personalizados',
-      description: 'Cambia los colores del código QR para que coincidan con tu marca',
-      features: ['Color de primer plano', 'Color de fondo', 'Gradientes lineales', 'Verificación de contraste']
+      title: 'Custom Colors',
+      description: 'Change the QR code colors to match your brand',
+      features: ['Foreground color', 'Background color', 'Linear gradients', 'Contrast checking']
     },
     {
       icon: SparklesIcon,
-      title: 'Formas y Estilos',
-      description: 'Personaliza la apariencia de los módulos del código QR',
-      features: ['Módulos cuadrados', 'Módulos redondeados', 'Módulos circulares', 'Esquinas personalizadas']
+      title: 'Shapes and Styles',
+      description: 'Customize the appearance of QR code modules',
+      features: ['Square modules', 'Rounded modules', 'Circular modules', 'Custom corners']
     },
     {
       icon: PhotoIcon,
-      title: 'Logo Central',
-      description: 'Añade tu logo en el centro del código QR',
-      features: ['Subida de imagen', 'Redimensionado automático', 'Corrección de errores nivel H', 'Fondo transparente']
+      title: 'Center Logo',
+      description: 'Add your logo in the center of the QR code',
+      features: ['Image upload', 'Automatic resizing', 'Error correction level H', 'Transparent background']
     },
     {
       icon: DocumentIcon,
-      title: 'Marcos y Texto',
-      description: 'Añade marcos decorativos con texto personalizado',
-      features: ['Galería de marcos', 'Texto editable', 'Llamadas a la acción', 'Estilos predefinidos']
+      title: 'Frames and Text',
+      description: 'Add decorative frames with custom text',
+      features: ['Frame gallery', 'Editable text', 'Calls to action', 'Preset styles']
     }
   ];
 
   const analyticsFeatures = [
-    { icon: ChartBarIcon, title: 'Escaneos Totales', description: 'Número total de veces que se ha escaneado tu código' },
-    { icon: EyeIcon, title: 'Escaneos Únicos', description: 'Usuarios únicos que han escaneado tu código' },
-    { icon: GlobeAmericasIcon, title: 'Ubicación Geográfica', description: 'Mapa interactivo mostrando dónde se escanea' },
-    { icon: DevicePhoneMobileIcon, title: 'Dispositivos', description: 'Tipos de dispositivos utilizados para escanear' },
-    { icon: CogIcon, title: 'Horarios de Actividad', description: 'Gráficos de cuándo se escanea más tu código' },
-    { icon: ArrowPathIcon, title: 'Tiempo Real', description: 'Datos actualizados instantáneamente' }
+    { icon: ChartBarIcon, title: 'Total Scans', description: 'Total number of times your code has been scanned' },
+    { icon: EyeIcon, title: 'Unique Scans', description: 'Unique users who have scanned your code' },
+    { icon: GlobeAmericasIcon, title: 'Geographic Location', description: 'Interactive map showing where scans occur' },
+    { icon: DevicePhoneMobileIcon, title: 'Devices', description: 'Types of devices used to scan' },
+    { icon: CogIcon, title: 'Activity Times', description: 'Charts of when your code is scanned most' },
+    { icon: ArrowPathIcon, title: 'Real Time', description: 'Instantly updated data' }
   ];
 
   return (
@@ -81,9 +81,9 @@ const Features: React.FC = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header */}
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary-600">Características</h2>
+          <h2 className="text-base font-semibold leading-7 text-primary-600">Features</h2>
           <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Todo lo que necesitas para crear códigos QR profesionales
+            Everything you need to create professional QR codes
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
             Discover all the features that make Lady QR the most complete platform for businesses worldwide
@@ -94,10 +94,10 @@ const Features: React.FC = () => {
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Códigos QR Estáticos vs Dinámicos
+              Static vs Dynamic QR Codes
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Entiende las diferencias y elige el tipo correcto para tus necesidades
+              Understand the differences and choose the right type for your needs
             </p>
           </div>
 
@@ -107,41 +107,41 @@ const Features: React.FC = () => {
               <div className="flex items-center space-x-3 mb-6">
                 <QrCodeIcon className="h-8 w-8 text-gray-600 dark:text-gray-400" />
                 <h4 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
-                  Códigos QR Estáticos
+                  Static QR Codes
                 </h4>
               </div>
-              
+
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Los datos se codifican directamente en el patrón del código QR. Una vez creado, no se puede modificar.
+                Data is encoded directly into the QR code pattern. Once created, it cannot be modified.
               </p>
 
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-success-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Permanentes</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Funcionan para siempre, sin depender de servidores</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Permanent</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Works forever without relying on servers</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-success-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Rápidos</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Escaneo instantáneo sin redirecciones</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Fast</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Instant scanning with no redirects</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-success-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Ideales para</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">WiFi, texto, contactos, ubicaciones</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Ideal for</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">WiFi, text, contacts, locations</div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 p-4 bg-warning-50 dark:bg-warning-900/20 rounded-lg border border-warning-200 dark:border-warning-700">
                 <p className="text-sm text-warning-700 dark:text-warning-300">
-                  <strong>Limitación:</strong> No se pueden editar después de crear y no incluyen analíticas.
+                  <strong>Limitation:</strong> Cannot be edited after creation and do not include analytics.
                 </p>
               </div>
             </div>
@@ -151,41 +151,41 @@ const Features: React.FC = () => {
               <div className="flex items-center space-x-3 mb-6">
                 <ArrowPathIcon className="h-8 w-8 text-primary-600" />
                 <h4 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
-                  Códigos QR Dinámicos
+                  Dynamic QR Codes
                 </h4>
               </div>
-              
+
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Redirigen a través de una URL corta que puedes cambiar en cualquier momento. Incluyen analíticas completas.
+                They redirect through a short URL you can change at any time. Includes full analytics.
               </p>
 
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Editables</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Cambia el destino sin reimprimir el código</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Editable</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Change the destination without reprinting the code</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Analíticas</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Rastrea escaneos, ubicaciones y dispositivos</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Analytics</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Track scans, locations, and devices</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <CheckIcon className="h-5 w-5 text-primary-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-medium text-gray-900 dark:text-white">Ideales para</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Marketing, eventos, negocios, campañas</div>
+                    <div className="font-medium text-gray-900 dark:text-white">Ideal for</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Marketing, events, businesses, campaigns</div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 p-4 bg-primary-100 dark:bg-primary-800/30 rounded-lg">
                 <p className="text-sm text-primary-700 dark:text-primary-300">
-                  <strong>Ventaja:</strong> Perfectos para campañas de marketing donde necesitas flexibilidad y datos.
+                  <strong>Advantage:</strong> Perfect for marketing campaigns where you need flexibility and data.
                 </p>
               </div>
             </div>
@@ -196,10 +196,10 @@ const Features: React.FC = () => {
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              15+ Tipos de Códigos QR
+              15+ QR Code Types
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Crea códigos QR para cualquier propósito con nuestros tipos especializados
+              Create QR codes for any purpose with our specialized types
             </p>
           </div>
 
@@ -218,10 +218,10 @@ const Features: React.FC = () => {
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Formatos de Descarga
+              Download Formats
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Descarga tus códigos QR en el formato perfecto para cada uso
+              Download your QR codes in the perfect format for every use
             </p>
           </div>
 
@@ -233,7 +233,7 @@ const Features: React.FC = () => {
                     {format.name}
                   </h4>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    format.quality === 'Vectorial' 
+                    format.quality === 'Vector'
                       ? 'bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300'
                       : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                   }`}>
@@ -243,11 +243,11 @@ const Features: React.FC = () => {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{format.description}</p>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Transparencia:</span>
+                    <span className="text-gray-500 dark:text-gray-400">Transparency:</span>
                     <span className="text-gray-900 dark:text-white">{format.transparency}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Calidad:</span>
+                    <span className="text-gray-500 dark:text-gray-400">Quality:</span>
                     <span className="text-gray-900 dark:text-white">{format.quality}</span>
                   </div>
                 </div>
@@ -257,20 +257,20 @@ const Features: React.FC = () => {
 
           <div className="mt-8 bg-accent-50 dark:bg-accent-900/20 rounded-lg p-6 border border-accent-200 dark:border-accent-700">
             <h4 className="font-semibold text-accent-800 dark:text-accent-300 mb-2">
-              💡 Recomendaciones de Uso
+              💡 Usage Recommendations
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-accent-700 dark:text-accent-400">
               <div>
-                <strong>Para Web y Redes Sociales:</strong> PNG con fondo transparente
+                <strong>For Web and Social Media:</strong> PNG with transparent background
               </div>
               <div>
-                <strong>Para Impresión:</strong> PDF o EPS en alta resolución
+                <strong>For Print:</strong> PDF or EPS in high resolution
               </div>
               <div>
-                <strong>Para Email:</strong> JPG o PNG optimizado
+                <strong>For Email:</strong> Optimized JPG or PNG
               </div>
               <div>
-                <strong>Para Diseño Gráfico:</strong> SVG o EPS vectorial
+                <strong>For Graphic Design:</strong> SVG or EPS vector
               </div>
             </div>
           </div>
@@ -280,10 +280,10 @@ const Features: React.FC = () => {
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Personalización Completa
+              Full Customization
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Haz que tus códigos QR reflejen perfectamente tu marca
+              Make your QR codes perfectly reflect your brand
             </p>
           </div>
 
@@ -314,10 +314,10 @@ const Features: React.FC = () => {
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Analíticas Avanzadas
+              Advanced Analytics
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Obtén insights valiosos sobre cómo interactúan con tus códigos QR
+              Gain valuable insights on how people interact with your QR codes
             </p>
           </div>
 
@@ -333,7 +333,7 @@ const Features: React.FC = () => {
 
           <div className="mt-8 bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-700">
             <p className="text-sm text-primary-700 dark:text-primary-300 text-center">
-              <strong>Nota:</strong> Las analíticas están disponibles solo para códigos QR dinámicos en planes Profesional y Negocios.
+              <strong>Note:</strong> Analytics are available only for dynamic QR codes on Professional and Business plans.
             </p>
           </div>
         </div>
@@ -344,28 +344,28 @@ const Features: React.FC = () => {
             <div className="text-center mb-8">
               <ShieldCheckIcon className="h-12 w-12 text-primary-600 mx-auto mb-4" />
               <h3 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
-                Seguridad y Confiabilidad
+                Security and Reliability
               </h3>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Tu información y la de tus usuarios está protegida
+                Your information and your users' information is protected
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl mb-2">🔒</div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Encriptación SSL</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Todos los datos se transmiten de forma segura</p>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">SSL Encryption</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">All data is transmitted securely</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">☁️</div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Respaldo en la Nube</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Tus códigos están seguros en Firebase</p>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Cloud Backup</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Your codes are safely stored in Firebase</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl mb-2">⚡</div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">99.9% Uptime</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Disponibilidad garantizada para tus códigos</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Guaranteed availability for your codes</p>
               </div>
             </div>
           </div>
@@ -374,7 +374,7 @@ const Features: React.FC = () => {
         {/* CTA Section */}
         <div className="mt-16 sm:mt-20 text-center">
           <h3 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white mb-4">
-            ¿Listo para crear códigos QR profesionales?
+            Ready to create professional QR codes?
           </h3>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
             Start free and discover all the features of Lady QR
@@ -384,13 +384,13 @@ const Features: React.FC = () => {
               to="/create"
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
             >
-              Crear QR Gratis
+              Create QR Free
             </Link>
             <Link
               to="/pricing"
               className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              Ver Precios
+              See Pricing
             </Link>
           </div>
         </div>

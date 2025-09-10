@@ -41,8 +41,7 @@ const CreateGuest: React.FC = () => {
   const { isExpired, timeRemaining, resetExpiration } = useQRExpiration(qrData);
 
   // Filter QR types to only show static-compatible ones for guests
-  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'wifi', 'event'];
-  const guestQRTypes = qrTypes.filter(type => type.canBeStatic && allowedTypeIds.includes(type.id));
+  const guestQRTypes = qrTypes;
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
@@ -334,7 +333,7 @@ const CreateGuest: React.FC = () => {
                         ? 'QR Code Expired'
                         : !qrData
                         ? 'Enter Data First'
-                        : 'Sign Up to Download'
+                        : 'Download QR'
                       }
                     </span>
                   </button>

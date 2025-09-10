@@ -1,6 +1,49 @@
 import {onRequest} from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { getMainDatabase } from './index';
+import { UAParser } from 'ua-parser-js';
+
+// Simple private IP detection (IPv4 only; IPv6 treated as private for safety)
+function isPrivateIp(ip: string): boolean {
+  if (!ip) return true;
+  const v4 = ip.replace('::ffff:', '');
+  if (v4.includes(':')) return true; // IPv6 or unknown
+  const parts = v4.split('.').map((n) => parseInt(n, 10));
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return true;
+  const [a, b] = parts;
+  return (
+    a === 10 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    a === 127 ||
+    a === 0
+  );
+}
+
+async function geoLookup(ip: string): Promise<{country: string; city: string; region: string; lat?: number; lng?: number}> {
+  try {
+    if (!ip || isPrivateIp(ip)) {
+      return { country: 'Unknown', city: 'Unknown', region: '' };
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1500);
+    const resp = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!resp.ok) {
+      return { country: 'Unknown', city: 'Unknown', region: '' };
+    }
+    const data: any = await resp.json();
+    return {
+      country: data.country_name || 'Unknown',
+      city: data.city || 'Unknown',
+      region: data.region || data.region_code || '',
+      lat: typeof data.latitude === 'number' ? data.latitude : undefined,
+      lng: typeof data.longitude === 'number' ? data.longitude : undefined,
+    };
+  } catch {
+    return { country: 'Unknown', city: 'Unknown', region: '' };
+  }
+}
 
 // Helper function to generate destination URL from QR content
 function generateDestinationUrl(type: string, content: any): string {
@@ -144,7 +187,27 @@ export const redirect = onRequest(async (req, res) => {
 
     // Log basic scan data
     const userAgent = req.get('User-Agent') || '';
-    const ip = req.ip || req.get('x-forwarded-for') || req.get('x-real-ip') || '';
+    const xff = (req.get('x-forwarded-for') || '').split(',')[0]?.trim();
+    const ip = xff || req.get('x-real-ip') || req.ip || '';
+
+    // Parse UA -> device info
+    const parser = new UAParser(userAgent);
+    const ua = parser.getResult();
+    let deviceType: 'mobile' | 'tablet' | 'desktop' | 'unknown' = 'unknown';
+    const uaDeviceType = ua.device?.type as ('mobile' | 'tablet' | 'console' | 'smarttv' | 'wearable' | 'embedded' | undefined);
+    if (uaDeviceType === 'mobile') deviceType = 'mobile';
+    else if (uaDeviceType === 'tablet') deviceType = 'tablet';
+    else if (!uaDeviceType) deviceType = 'desktop';
+
+    const deviceInfo = {
+      type: deviceType,
+      os: [ua.os?.name, ua.os?.version].filter(Boolean).join(' ') || 'unknown',
+      browser: [ua.browser?.name].filter(Boolean).join('') || 'unknown',
+      version: ua.browser?.version || '',
+    } as const;
+
+    // Geo lookup (best-effort, short timeout)
+    const location = await geoLookup(ip);
 
     // Create scan record
     const scanData = {
@@ -152,7 +215,9 @@ export const redirect = onRequest(async (req, res) => {
       scannedAt: admin.firestore.FieldValue.serverTimestamp(),
       ipAddress: ip,
       userAgent: userAgent,
-      referrer: req.get('Referer') || null
+      referrer: req.get('Referer') || null,
+      location,
+      deviceInfo,
     };
 
     // Log the scan and update scan count

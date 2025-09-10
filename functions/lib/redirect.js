@@ -37,6 +37,49 @@ exports.redirect = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const admin = __importStar(require("firebase-admin"));
 const index_1 = require("./index");
+const ua_parser_js_1 = require("ua-parser-js");
+// Simple private IP detection (IPv4 only; IPv6 treated as private for safety)
+function isPrivateIp(ip) {
+    if (!ip)
+        return true;
+    const v4 = ip.replace('::ffff:', '');
+    if (v4.includes(':'))
+        return true; // IPv6 or unknown
+    const parts = v4.split('.').map((n) => parseInt(n, 10));
+    if (parts.length !== 4 || parts.some((n) => Number.isNaN(n)))
+        return true;
+    const [a, b] = parts;
+    return (a === 10 ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        a === 127 ||
+        a === 0);
+}
+async function geoLookup(ip) {
+    try {
+        if (!ip || isPrivateIp(ip)) {
+            return { country: 'Unknown', city: 'Unknown', region: '' };
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1500);
+        const resp = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) {
+            return { country: 'Unknown', city: 'Unknown', region: '' };
+        }
+        const data = await resp.json();
+        return {
+            country: data.country_name || 'Unknown',
+            city: data.city || 'Unknown',
+            region: data.region || data.region_code || '',
+            lat: typeof data.latitude === 'number' ? data.latitude : undefined,
+            lng: typeof data.longitude === 'number' ? data.longitude : undefined,
+        };
+    }
+    catch (_a) {
+        return { country: 'Unknown', city: 'Unknown', region: '' };
+    }
+}
 // Helper function to generate destination URL from QR content
 function generateDestinationUrl(type, content) {
     switch (type) {
@@ -62,6 +105,7 @@ function generateDestinationUrl(type, content) {
     }
 }
 exports.redirect = (0, https_1.onRequest)(async (req, res) => {
+    var _a, _b, _c, _d, _e, _f;
     try {
         console.log('🚀 REDIRECT FUNCTION STARTED');
         console.log('📍 Request URL:', req.url);
@@ -158,14 +202,36 @@ exports.redirect = (0, https_1.onRequest)(async (req, res) => {
         }
         // Log basic scan data
         const userAgent = req.get('User-Agent') || '';
-        const ip = req.ip || req.get('x-forwarded-for') || req.get('x-real-ip') || '';
+        const xff = (_a = (req.get('x-forwarded-for') || '').split(',')[0]) === null || _a === void 0 ? void 0 : _a.trim();
+        const ip = xff || req.get('x-real-ip') || req.ip || '';
+        // Parse UA -> device info
+        const parser = new ua_parser_js_1.UAParser(userAgent);
+        const ua = parser.getResult();
+        let deviceType = 'unknown';
+        const uaDeviceType = (_b = ua.device) === null || _b === void 0 ? void 0 : _b.type;
+        if (uaDeviceType === 'mobile')
+            deviceType = 'mobile';
+        else if (uaDeviceType === 'tablet')
+            deviceType = 'tablet';
+        else if (!uaDeviceType)
+            deviceType = 'desktop';
+        const deviceInfo = {
+            type: deviceType,
+            os: [(_c = ua.os) === null || _c === void 0 ? void 0 : _c.name, (_d = ua.os) === null || _d === void 0 ? void 0 : _d.version].filter(Boolean).join(' ') || 'unknown',
+            browser: [(_e = ua.browser) === null || _e === void 0 ? void 0 : _e.name].filter(Boolean).join('') || 'unknown',
+            version: ((_f = ua.browser) === null || _f === void 0 ? void 0 : _f.version) || '',
+        };
+        // Geo lookup (best-effort, short timeout)
+        const location = await geoLookup(ip);
         // Create scan record
         const scanData = {
             qrCodeId: qrDoc.id,
             scannedAt: admin.firestore.FieldValue.serverTimestamp(),
             ipAddress: ip,
             userAgent: userAgent,
-            referrer: req.get('Referer') || null
+            referrer: req.get('Referer') || null,
+            location,
+            deviceInfo,
         };
         // Log the scan and update scan count
         await Promise.allSettled([
