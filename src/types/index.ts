@@ -87,6 +87,7 @@ export interface Plan {
   id: string;
   name: string;
   price: number | null;
+  priceId?: string; // Add this line
   interval: 'month' | 'year';
   features: string[];
   limits: {

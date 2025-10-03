@@ -13,5 +13,7 @@ export const getMainDatabase = () => {
 console.log('✅ Firebase Admin initialized with default Firestore database');
 
 // Import and export function modules
-export {redirect} from './redirect';
-export {getAnalytics} from './analytics';
+export * from "./redirect";
+export * from "./analytics";
+export * from "./stripe";
+export * from "./test";

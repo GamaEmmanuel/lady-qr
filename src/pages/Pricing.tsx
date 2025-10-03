@@ -1,17 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import getStripe from '../utils/stripe';
 
 const Pricing: React.FC = () => {
-  const { currentUser, subscription, subscribeToPlan } = useAuth();
+  const { currentUser, subscription } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+
+  const handleSubscribe = async (priceId: string | undefined) => {
+    console.log(`[Subscription] Initiating subscription process for priceId: ${priceId}`);
+    if (!currentUser) {
+      console.log('[Subscription] User not logged in. Redirecting to register.');
+      window.location.href = '/register';
+      return;
+    }
+    if (!priceId) {
+      console.warn('[Subscription] No priceId provided. Aborting.');
+      alert('This plan is not available for online purchase. Please contact us.');
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('[Subscription] Loading state set to true.');
+
+    try {
+      console.log('[Subscription] Creating Stripe checkout session...');
+      const functions = getFunctions();
+      // The cloud function name should be the same as the exported function name in the backend
+      const createCheckoutSession = httpsCallable(functions, 'createStripeCheckoutSession');
+      console.log('[Subscription] httpsCallable instance created for createStripeCheckoutSession.');
+
+      const response = await createCheckoutSession({
+        priceId,
+        origin: window.location.origin
+      });
+
+      const sessionId = (response.data as any).sessionId;
+      console.log(`[Subscription] Successfully created checkout session: ${sessionId}`);
+
+      const stripe = await getStripe();
+      if (stripe && sessionId) {
+        console.log('[Subscription] Redirecting to Stripe checkout...');
+        const { error } = await stripe.redirectToCheckout({ sessionId });
+        if (error) {
+          console.error('[Subscription] Stripe redirect error:', error);
+          alert('An error occurred during the checkout process.');
+        }
+      } else {
+        console.error('[Subscription] Stripe could not be initialized or session ID is missing.');
+        alert('Stripe could not be initialized.');
+      }
+    } catch (error) {
+      console.error('[Subscription] Error creating checkout session:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      console.log('[Subscription] Loading state set to false.');
+      setIsLoading(false);
+    }
+  };
+
+  const testHelloWorld = async () => {
+    try {
+      const functions = getFunctions();
+      const helloWorld = httpsCallable(functions, 'helloWorld');
+      const response = await helloWorld();
+      console.log('Hello World Response:', response.data);
+      alert('Hello World function succeeded! Check the console.');
+    } catch (error) {
+      console.error('Hello World Error:', error);
+      alert('Hello World function failed. Check the console.');
+    }
+  };
+
 
   return (
     <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
+          <button onClick={testHelloWorld} className="mb-4 bg-yellow-500 text-black px-4 py-2 rounded">
+            Run Test Function
+          </button>
           <h2 className="text-base font-semibold leading-7 text-primary-600">Pricing</h2>
           <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
             Plans designed for modern businesses
@@ -46,7 +118,9 @@ const Pricing: React.FC = () => {
         )}
 
         <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-8">
-          {plans.map((plan, index) => (
+          {plans.map((plan, index) => {
+            const isCurrentPlan = plan.id === currentPlan?.id;
+            return (
             <div
               key={plan.id}
               className={`flex flex-col justify-between rounded-3xl p-8 xl:p-10 ${
@@ -119,32 +193,30 @@ const Pricing: React.FC = () => {
                 </ul>
               </div>
               <button
-                onClick={async () => {
-                  if (!currentUser) {
-                    window.location.href = '/register';
-                    return;
-                  }
-                  if (plan.price === null) {
-                    window.location.href = '/contact';
-                    return;
-                  }
-                  try {
-                    await subscribeToPlan(plan.id);
-                    alert(`You are now subscribed to the ${plan.name} plan.`);
-                  } catch (e: any) {
-                    alert(e.message || 'Failed to subscribe. Please try again.');
-                  }
-                }}
+                onClick={() => !isCurrentPlan && handleSubscribe(plan.priceId)}
+                disabled={isLoading || isCurrentPlan}
                 className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-all duration-200 ${
-                  index === 2
+                  isLoading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : isCurrentPlan
+                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    : index === 2
                     ? 'bg-white text-primary-600 shadow-sm hover:bg-gray-50'
                     : 'bg-primary-600 text-white shadow-sm hover:bg-primary-500'
                 }`}
               >
-                {plan.id === 'free' ? 'Start free' : plan.price === null ? 'Contact Sales' : 'Subscribe'}
+                {isCurrentPlan
+                  ? 'Current Plan'
+                  : plan.id === 'free'
+                  ? 'Start free'
+                  : plan.price === null
+                  ? 'Contact Sales'
+                  : isLoading
+                  ? 'Processing...'
+                  : 'Subscribe'}
               </button>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Payment Methods */}

@@ -29,6 +29,7 @@ export const plans: Plan[] = [
     id: 'basic',
     name: 'Basic',
     price: 7,
+    priceId: 'price_1S5fztDUi8OxbbECZPInb8rQ', // Replace with your actual Stripe Price ID
     interval: 'month',
     features: [
       'Unlimited static QR codes',
@@ -54,6 +55,7 @@ export const plans: Plan[] = [
     id: 'professional',
     name: 'Professional',
     price: 15,
+    priceId: 'price_1S5g0TDUi8OxbbECDFvnQnCW', // Replace with your actual Stripe Price ID
     interval: 'month',
     features: [
       'Unlimited static QR codes',
@@ -80,6 +82,7 @@ export const plans: Plan[] = [
     id: 'Business',
     name: 'Business',
     price: null,
+    priceId: 'YOUR_STRIPE_BUSINESS_PRICE_ID', // Replace with your actual Stripe Price ID
     interval: 'month',
     features: [
       'Unlimited static QR codes',

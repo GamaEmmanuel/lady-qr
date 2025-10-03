@@ -7,25 +7,32 @@ import { generateOriginalData } from '../utils/qrTracking';
 import QRExpirationTimer from '../components/QRExpirationTimer';
 import { useQRExpiration } from '../hooks/useQRExpiration';
 import QRCode from 'qrcode';
+import { HexColorPicker } from 'react-colorful';
 import {
   ArrowDownTrayIcon,
   EyeIcon,
   UserPlusIcon,
-  ShieldExclamationIcon
+  ShieldExclamationIcon,
+  AdjustmentsHorizontalIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const CreateGuest: React.FC = () => {
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState<'foreground' | 'background' | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
 
-  // Basic customization for guest users (no customization options)
-  const basicCustomization: QRCustomization = {
+  // Customization for guest users
+  const [customization, setCustomization] = useState<QRCustomization>({
     foregroundColor: '#000000',
     backgroundColor: '#ffffff',
     cornerSquareStyle: 'square',
     cornerDotStyle: 'square',
-    dotsStyle: 'square'
-  };
+    dotsStyle: 'square',
+    frameText: 'ESCANÉAME'
+  });
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
@@ -50,6 +57,39 @@ const CreateGuest: React.FC = () => {
     }));
   };
 
+  const handleCustomizationChange = (key: keyof QRCustomization, value: any) => {
+    setCustomization(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const logoUrl = e.target?.result as string;
+        setLogoPreview(logoUrl);
+        // Update customization to include logo URL
+        setCustomization(prev => ({
+          ...prev,
+          logoUrl: logoUrl
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoPreview('');
+    // Remove logo from customization
+    setCustomization(prev => ({
+      ...prev,
+      logoUrl: undefined
+    }));
+  };
+
   const handleDownload = () => {
     if (isExpired) {
       alert('El código QR ha expirado. Genera uno nuevo o regístrate para códigos permanentes.');
@@ -69,29 +109,66 @@ const CreateGuest: React.FC = () => {
       width: size,
       margin: 2,
       color: {
-        dark: basicCustomization.foregroundColor,
-        light: basicCustomization.backgroundColor
+        dark: customization.foregroundColor,
+        light: customization.backgroundColor
       },
-      errorCorrectionLevel: 'M'
+      errorCorrectionLevel: customization.logoUrl ? 'H' : 'M'
     }).then(() => {
-      // Convert canvas to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `qr-code-guest-${Date.now()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+      // Add logo if provided
+      if (customization.logoUrl) {
+        const ctx = canvas.getContext('2d')!;
+        const logo = new Image();
+        logo.crossOrigin = 'anonymous';
+        logo.onload = () => {
+          const logoSize = size * 0.15;
+          const logoX = (size - logoSize) / 2;
+          const logoY = (size - logoSize) / 2;
 
-          // Show message about signing up for more features
-          setTimeout(() => {
-            alert('¡Descarga completada! Regístrate gratis para códigos permanentes, personalización y más formatos de descarga.');
-          }, 500);
-        }
-      }, 'image/png', 1.0);
+          // Draw white background circle for logo
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, logoSize / 2 + 6, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Draw logo with rounded corners
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, logoSize / 2, 0, 2 * Math.PI);
+          ctx.clip();
+          ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+          ctx.restore();
+
+          // Download the final image
+          downloadCanvas();
+        };
+        logo.onerror = () => {
+          console.warn('Failed to load logo for download, proceeding without logo');
+          downloadCanvas();
+        };
+        logo.src = customization.logoUrl;
+      } else {
+        downloadCanvas();
+      }
+
+      function downloadCanvas() {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `qr-code-guest-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Show message about signing up for more features
+            setTimeout(() => {
+              alert('¡Descarga completada! Regístrate gratis para códigos permanentes, personalización y más formatos de descarga.');
+            }, 500);
+          }
+        }, 'image/png', 1.0);
+      }
     }).catch(error => {
       console.error('Error generating QR code:', error);
       alert('Error al generar el código QR. Intenta nuevamente.');
@@ -167,11 +244,11 @@ const CreateGuest: React.FC = () => {
                   Temporary Codes Only
                 </h3>
                 <p className="text-sm text-warning-600 dark:text-warning-400 mt-1">
-                  QR codes created without an account expire in 24 hours and cannot be customized.{' '}
+                  QR codes created without an account expire in 24 hours and you won't be able to see any stats or analytics.{' '}
                   <Link to="/register" className="font-medium underline hover:no-underline">
                     Sign up free
                   </Link>
-                  {' '}for permanent codes with full customization.
+                  {' '}for permanent codes with analytics and unlimited downloads.
                 </p>
               </div>
             </div>
@@ -219,9 +296,19 @@ const CreateGuest: React.FC = () => {
             {/* Form Fields */}
             {selectedTypeConfig && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                  Configuration
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
+                    Configuration
+                  </h3>
+                  <button
+                    onClick={() => setShowCustomization(!showCustomization)}
+                    className="inline-flex items-center px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  >
+                    <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
+                    Customize
+                  </button>
+                </div>
+
                 {/* Universal Name Field */}
                 <div className="mb-6">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -237,6 +324,84 @@ const CreateGuest: React.FC = () => {
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
+
+                {/* Customization Options */}
+                {showCustomization && (
+                  <div className="mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Foreground Color
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.foregroundColor }} />
+                          <button
+                            onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
+                            className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          >
+                            {showColorPicker === 'foreground' ? 'Close' : 'Change'}
+                          </button>
+                        </div>
+                        {showColorPicker === 'foreground' && (
+                          <div className="mt-3">
+                            <HexColorPicker color={customization.foregroundColor} onChange={(color) => handleCustomizationChange('foregroundColor', color)} />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Background Color
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.backgroundColor }} />
+                          <button
+                            onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
+                            className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          >
+                            {showColorPicker === 'background' ? 'Close' : 'Change'}
+                          </button>
+                        </div>
+                        {showColorPicker === 'background' && (
+                          <div className="mt-3">
+                            <HexColorPicker color={customization.backgroundColor} onChange={(color) => handleCustomizationChange('backgroundColor', color)} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Logo Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Add Logo (PNG/JPG/SVG)
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                          onChange={handleLogoUpload}
+                          className="text-sm text-gray-700 dark:text-gray-300"
+                        />
+                        {logoPreview && (
+                          <button
+                            onClick={removeLogo}
+                            className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          >
+                            <XMarkIcon className="h-4 w-4 mr-1" />
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      {logoPreview && (
+                        <div className="mt-3">
+                          <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
+                            <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   {selectedTypeConfig.fields.map((field) => (
                     <div key={field.id}>
@@ -260,20 +425,20 @@ const CreateGuest: React.FC = () => {
                 Want More Features?
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Sign up for free to unlock permanent QR codes, full customization, analytics, and more!
+                Sign up for free to unlock permanent QR codes, analytics, and unlimited downloads!
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
                   <span className="text-primary-600">✓</span>
-                  <span>Permanent codes</span>
+                  <span className="text-gray-600 dark:text-gray-400">Permanent codes</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-primary-600">✓</span>
-                  <span>Full customization</span>
+                  <span className="text-gray-600 dark:text-gray-400">Analytics & tracking</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-primary-600">✓</span>
-                  <span>Analytics & tracking</span>
+                  <span className="text-gray-600 dark:text-gray-400">Unlimited downloads</span>
                 </div>
               </div>
               <div className="mt-4">
@@ -311,7 +476,7 @@ const CreateGuest: React.FC = () => {
                 <div className="flex justify-center mb-6">
                   <QRPreview
                     data={qrData}
-                    customization={basicCustomization}
+                    customization={customization}
                     size={250}
                     isExpired={isExpired}
                   />
@@ -349,7 +514,7 @@ const CreateGuest: React.FC = () => {
 
                 <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
                   <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
-                    💡 <strong>Tip:</strong> Sign up for permanent codes, customization, analytics and multiple download formats.
+                    💡 <strong>Tip:</strong> Sign up for permanent codes, analytics and unlimited downloads.
                   </p>
                 </div>
 

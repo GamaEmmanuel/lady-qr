@@ -3,6 +3,7 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, doc, getDoc, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { env } from './env';
 
 // Use environment variables from env.ts
@@ -59,7 +60,7 @@ if (typeof window !== 'undefined' && app) {
 }
 
 // Initialize services with error handling
-let auth: Auth, db: Firestore, storage: FirebaseStorage;
+let auth: Auth, db: Firestore, storage: FirebaseStorage, functions;
 
 if (app) {
   try {
@@ -71,6 +72,24 @@ if (app) {
 
     storage = getStorage(app);
     console.log('✅ Firebase Storage initialized');
+
+    functions = getFunctions(app);
+    console.log('✅ Firebase Functions initialized');
+
+    // Connect to emulators if running locally
+    /*
+    if (window.location.hostname === 'localhost') {
+      try {
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        console.log('🔥 Connected to Firestore Emulator');
+
+        connectFunctionsEmulator(functions, 'localhost', 5001);
+        console.log('🔥 Connected to Functions Emulator');
+      } catch (error) {
+        console.warn('⚠️ Could not connect to Firebase Emulators:', error);
+      }
+    }
+    */
 
     console.log('✅ All Firebase services initialized successfully');
 
@@ -112,6 +131,6 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
   }
 };
 
-export { auth, db, storage };
+export { auth, db, storage, functions };
 export { analytics };
 export default app;

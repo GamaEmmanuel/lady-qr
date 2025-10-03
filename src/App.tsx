@@ -1,9 +1,9 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -33,14 +33,14 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/create" element={<Create />} />
                 <Route path="/create-guest" element={<CreateGuest />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/features" element={<Features />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/auth/complete" element={<AuthComplete />} />
-                <Route path="/archive" element={<Archive />} />
+                <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
                 <Route path="/contact" element={<Contact />} />
               </Routes>
             </main>

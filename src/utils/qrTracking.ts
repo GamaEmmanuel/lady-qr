@@ -61,10 +61,44 @@ export const trackStaticScan = async (qrCodeId: string, scanData?: ScanData): Pr
  * Create a tracking-enabled QR code data string
  * ALL QR codes now use short URLs for consistent tracking
  */
-export const createTrackableQRData = (originalData: string, qrCodeId: string, isStatic: boolean): string => {
+export const createTrackableQRData = (qrCodeId: string): string => {
   // All QR codes (both static and dynamic) now use short URLs for tracking
   // This ensures consistent analytics and tracking across all QR code types
   return generateShortUrl(qrCodeId);
+};
+
+/**
+ * Generate social media app URL based on platform and username
+ */
+export const generateSocialMediaUrl = (platform: string, username: string): string => {
+  // Validate inputs
+  if (!platform || !username) {
+    return '';
+  }
+
+  // Clean username (remove @ if present)
+  const cleanUsername = username.replace(/^@/, '');
+
+  switch (platform) {
+    case 'instagram':
+      return `https://instagram.com/${cleanUsername}`;
+    case 'facebook':
+      return `https://facebook.com/${cleanUsername}`;
+    case 'twitter':
+      return `https://twitter.com/${cleanUsername}`;
+    case 'linkedin':
+      return `https://linkedin.com/in/${cleanUsername}`;
+    case 'youtube':
+      return `https://youtube.com/@${cleanUsername}`;
+    case 'tiktok':
+      return `https://tiktok.com/@${cleanUsername}`;
+    case 'whatsapp':
+      return `https://wa.me/${cleanUsername}`;
+    case 'telegram':
+      return `https://t.me/${cleanUsername}`;
+    default:
+      return `https://${platform}.com/${cleanUsername}`;
+  }
 };
 
 /**
@@ -95,6 +129,8 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
       return formData.address || '';
     case 'vcard':
       return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
+    case 'social':
+      return generateSocialMediaUrl(formData.platform, formData.username);
     default:
       return JSON.stringify(formData);
   }

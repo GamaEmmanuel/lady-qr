@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '0.0.0.0',
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
     proxy: {
       '/api/analytics': {
         target: process.env.VITE_FUNCTIONS_ORIGIN || 'http://127.0.0.1:5001/lady-qr/us-central1',

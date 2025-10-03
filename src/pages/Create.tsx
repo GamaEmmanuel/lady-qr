@@ -125,7 +125,7 @@ const Create: React.FC = () => {
     }
 
     // All QR codes now use short URLs for consistent tracking
-    const qrData = createTrackableQRData('', finalQrId, !isDynamic);
+    const qrData = createTrackableQRData(finalQrId);
     console.log('📱 QR Data Generated:', qrData);
     console.log('🎯 QR ID being used:', finalQrId);
     console.log('📊 Is Dynamic:', isDynamic);

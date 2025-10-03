@@ -32,25 +32,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMainDatabase = void 0;
-const admin = __importStar(require("firebase-admin"));
-// Initialize Firebase Admin (only once)
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
-// Helper function to get Firestore instance (default database)
-const getMainDatabase = () => {
-    return admin.firestore();
-};
-exports.getMainDatabase = getMainDatabase;
-console.log('✅ Firebase Admin initialized with default Firestore database');
-// Import and export function modules
-__exportStar(require("./redirect"), exports);
-__exportStar(require("./analytics"), exports);
-__exportStar(require("./stripe"), exports);
-__exportStar(require("./test"), exports);
-//# sourceMappingURL=index.js.map
+exports.helloWorld = void 0;
+const https_1 = require("firebase-functions/v2/https");
+const logger = __importStar(require("firebase-functions/logger"));
+exports.helloWorld = (0, https_1.onCall)((request) => {
+    logger.info("Hello logs! (v2)", { structuredData: true });
+    return { text: "Hello from Firebase!" };
+});
+//# sourceMappingURL=test.js.map

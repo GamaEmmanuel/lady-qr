@@ -139,17 +139,28 @@ export const qrTypes: QRTypeConfig[] = [
   {
     id: 'social',
     name: 'Social Media',
-    description: 'Links to social media profiles',
+    description: 'Open social media app with profile',
     icon: '📱',
     canBeDynamic: true,
-    canBeStatic: false,
+    canBeStatic: true,
     fields: [
-      { id: 'facebook', label: 'Facebook', type: 'url' },
-      { id: 'instagram', label: 'Instagram', type: 'url' },
-      { id: 'twitter', label: 'Twitter/X', type: 'url' },
-      { id: 'linkedin', label: 'LinkedIn', type: 'url' },
-      { id: 'youtube', label: 'YouTube', type: 'url' },
-      { id: 'tiktok', label: 'TikTok', type: 'url' }
+      {
+        id: 'platform',
+        label: 'Social Media Platform',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'instagram', label: 'Instagram' },
+          { value: 'facebook', label: 'Facebook' },
+          { value: 'twitter', label: 'Twitter/X' },
+          { value: 'linkedin', label: 'LinkedIn' },
+          { value: 'youtube', label: 'YouTube' },
+          { value: 'tiktok', label: 'TikTok' },
+          { value: 'whatsapp', label: 'WhatsApp' },
+          { value: 'telegram', label: 'Telegram' }
+        ]
+      },
+      { id: 'username', label: 'Username/Handle', type: 'text', required: true, placeholder: 'e.g., @username or username' }
     ]
   },
   {
