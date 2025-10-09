@@ -80,6 +80,35 @@ async function geoLookup(ip) {
         return { country: 'Unknown', city: 'Unknown', region: '' };
     }
 }
+// Helper function to generate social media app URL
+function generateSocialMediaUrl(platform, username) {
+    // Validate inputs
+    if (!platform || !username) {
+        return '';
+    }
+    // Clean username (remove @ if present)
+    const cleanUsername = username.replace(/^@/, '');
+    switch (platform) {
+        case 'instagram':
+            return `https://instagram.com/${cleanUsername}`;
+        case 'facebook':
+            return `https://facebook.com/${cleanUsername}`;
+        case 'twitter':
+            return `https://twitter.com/${cleanUsername}`;
+        case 'linkedin':
+            return `https://linkedin.com/in/${cleanUsername}`;
+        case 'youtube':
+            return `https://youtube.com/@${cleanUsername}`;
+        case 'tiktok':
+            return `https://tiktok.com/@${cleanUsername}`;
+        case 'whatsapp':
+            return `https://wa.me/${cleanUsername}`;
+        case 'telegram':
+            return `https://t.me/${cleanUsername}`;
+        default:
+            return `https://${platform}.com/${cleanUsername}`;
+    }
+}
 // Helper function to generate destination URL from QR content
 function generateDestinationUrl(type, content) {
     switch (type) {
@@ -100,6 +129,8 @@ function generateDestinationUrl(type, content) {
             return content.address || '';
         case 'vcard':
             return `BEGIN:VCARD\nVERSION:3.0\nFN:${content.firstName || ''} ${content.lastName || ''}\nORG:${content.company || ''}\nTITLE:${content.jobTitle || ''}\nEMAIL:${content.email || ''}\nTEL:${content.phone || ''}\nURL:${content.website || ''}\nEND:VCARD`;
+        case 'social':
+            return generateSocialMediaUrl(content.platform, content.username);
         default:
             return JSON.stringify(content);
     }

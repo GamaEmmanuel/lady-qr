@@ -18,10 +18,16 @@ export const generateTrackingPixel = (qrCodeId: string): string => {
 
 /**
  * Generate a short URL for dynamic QR codes
+ * ALWAYS uses production URL, even in dev mode, so QR codes work when shared
  */
 export const generateShortUrl = (qrCodeId: string): string => {
-  // Use Firebase hosting domain if provided, otherwise default to production domain
-  const baseUrl = import.meta.env.VITE_FIREBASE_HOSTING_URL || 'https://ladyqr.web.app';
+  // Get production URL - can be overridden with VITE_PRODUCTION_URL env var
+  // Never uses localhost or development URLs, even in dev mode
+  const productionUrl = import.meta.env.VITE_PRODUCTION_URL || 'https://lady-qr.web.app';
+
+  // Safety check: if somehow localhost is in the URL, force production
+  const baseUrl = productionUrl.includes('localhost') ? 'https://lady-qr.web.app' : productionUrl;
+
   return `${baseUrl}/r/${qrCodeId}`;
 };
 

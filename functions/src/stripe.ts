@@ -142,6 +142,14 @@ export const createStripeCheckoutSession = onCall(async (request) => {
     );
   }
 });
+
+// Map Stripe price IDs to plan types
+const PRICE_TO_PLAN_MAP: { [key: string]: string } = {
+  'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic',
+  'price_1S5g0TDUi8OxbbECDFvnQnCW': 'professional',
+  'YOUR_STRIPE_BUSINESS_PRICE_ID': 'Business',
+};
+
 export const stripeWebhook = onRequest(async (request, response) => {
   if (!stripe) {
     console.error('Stripe is not configured.');
@@ -177,29 +185,94 @@ export const stripeWebhook = onRequest(async (request, response) => {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (session.metadata?.firebaseUID) {
-        const userRef = admin.firestore().collection('users').doc(session.metadata.firebaseUID);
-        await userRef.update({
-          subscription: {
-            status: 'active',
-            planType: session.metadata.planId,
-            stripeSubscriptionId: session.subscription,
-            stripeCustomerId: session.customer,
-          },
+      if (session.metadata?.firebaseUID && session.metadata?.planId) {
+        const userId = session.metadata.firebaseUID;
+        const priceId = session.metadata.planId;
+
+        // Map price ID to plan type
+        const planType = PRICE_TO_PLAN_MAP[priceId] || 'free';
+
+        logger.info('Processing checkout.session.completed', {
+          userId,
+          priceId,
+          planType,
+          subscriptionId: session.subscription
         });
+
+        // Find existing active subscription for this user
+        const subscriptionsRef = admin.firestore().collection('subscriptions');
+        const existingSubQuery = await subscriptionsRef
+          .where('userId', '==', userId)
+          .where('status', '==', 'active')
+          .limit(1)
+          .get();
+
+        if (!existingSubQuery.empty) {
+          // Update existing subscription
+          const subDocRef = existingSubQuery.docs[0].ref;
+          await subDocRef.update({
+            planType: planType,
+            status: 'active',
+            stripeSubscriptionId: session.subscription,
+            cancelAtPeriodEnd: false,
+            updatedAt: new Date()
+          });
+          logger.info('Updated existing subscription', { subscriptionId: subDocRef.id });
+        } else {
+          // Create new subscription
+          const newSubscription = {
+            id: `sub_${userId}_${Date.now()}`,
+            userId: userId,
+            planType: planType,
+            status: 'active',
+            stripeSubscriptionId: session.subscription,
+            cancelAtPeriodEnd: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          await subscriptionsRef.doc(newSubscription.id).set(newSubscription);
+          logger.info('Created new subscription', { subscriptionId: newSubscription.id });
+        }
+
+        // Also update user document for quick reference
+        const userRef = admin.firestore().collection('users').doc(userId);
+        await userRef.update({
+          planType: planType,
+          subscriptionStatus: 'active',
+            stripeCustomerId: session.customer,
+          subscriptionUpdatedAt: new Date()
+        });
+        logger.info('Updated user document with plan info');
       }
       break;
     }
     case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userSnapshot = await admin.firestore().collection('users').where('stripeSubscriptionId', '==', subscription.id).get();
-        if (!userSnapshot.empty) {
-            const userDoc = userSnapshot.docs[0];
-            await userDoc.ref.update({
-                subscription: {
-                    status: 'canceled',
-                },
+        logger.info('Processing customer.subscription.deleted', { subscriptionId: subscription.id });
+
+        const subscriptionsRef = admin.firestore().collection('subscriptions');
+        const subscriptionQuery = await subscriptionsRef
+          .where('stripeSubscriptionId', '==', subscription.id)
+          .limit(1)
+          .get();
+
+        if (!subscriptionQuery.empty) {
+            const subDoc = subscriptionQuery.docs[0];
+            await subDoc.ref.update({
+                status: 'cancelled',
+                updatedAt: new Date()
             });
+
+            // Also update user document
+            const userId = subDoc.data().userId;
+            if (userId) {
+              const userRef = admin.firestore().collection('users').doc(userId);
+              await userRef.update({
+                subscriptionStatus: 'cancelled',
+                subscriptionUpdatedAt: new Date()
+              });
+            }
+            logger.info('Cancelled subscription', { subscriptionId: subDoc.id });
         }
         break;
     }

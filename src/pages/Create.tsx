@@ -101,9 +101,8 @@ const Create: React.FC = () => {
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
-  // Allowed QR types for creation UI
-  const allowedTypeIds: QRCodeType[] = ['url', 'vcard', 'text', 'email', 'sms', 'whatsapp', 'wifi', 'event'];
-  const allowedCreateTypes = qrTypes.filter(type => allowedTypeIds.includes(type.id));
+  // Show all QR types for creation UI (same as CreateGuest page)
+  const allowedCreateTypes = qrTypes;
 
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
@@ -426,11 +425,196 @@ const Create: React.FC = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Configuration Panel */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* QR Analytics (when editing) */}
-                {isEditing && editingQRId && (
+            {/* When editing/viewing QR: Different layout */}
+            {isEditing ? (
+              <div className="space-y-8">
+                {/* Top Section: QR Preview + Configuration */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:items-stretch">
+                  {/* QR Preview - Top Left */}
+                  <div className="lg:col-span-1 flex">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 w-full flex flex-col">
+                      <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <EyeIcon className="h-5 w-5 mr-2" />
+                        QR Code Preview
+                      </h3>
+                      <div className="flex justify-center mb-6 flex-grow items-center">
+                        <QRPreview
+                          data={qrData}
+                          customization={customization}
+                          size={250}
+                        />
+                      </div>
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mt-auto">
+                        <div>Type: {selectedTypeConfig?.name}</div>
+                        <div>Mode: {isDynamic ? 'Dynamic (Editable)' : 'Static (Permanent)'}</div>
+                        <div>Size: 250x250 px</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configuration - Top Right */}
+                  <div className="lg:col-span-2 flex">
+                    {/* Form Fields */}
+                    {selectedTypeConfig && (
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 w-full flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
+                            Configuration
+                          </h3>
+                          <button
+                            onClick={() => setShowCustomization(!showCustomization)}
+                            className="inline-flex items-center px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          >
+                            <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
+                            Customize
+                          </button>
+                        </div>
+
+                        {/* Universal Name Field */}
+                        <div className="mb-6">
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Name <span className="text-red-500 ml-1">*</span>
+                          </label>
+                          <input
+                            id="name"
+                            type="text"
+                            value={formData.name || ''}
+                            onChange={(e) => handleFieldChange('name', e.target.value)}
+                            placeholder="e.g., Promo - Summer Sale"
+                            maxLength={120}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                            required
+                          />
+                        </div>
+
+                        {/* Customization Options */}
+                        {showCustomization && (
+                          <div className="mb-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Foreground Color
+                                </label>
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.foregroundColor }} />
+                                  <button
+                                    onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
+                                    className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                  >
+                                    {showColorPicker === 'foreground' ? 'Close' : 'Change'}
+                                  </button>
+                                </div>
+                                {showColorPicker === 'foreground' && (
+                                  <div className="mt-3">
+                                    <HexColorPicker color={customization.foregroundColor} onChange={(color) => handleCustomizationChange('foregroundColor', color)} />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Background Color
+                                </label>
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.backgroundColor }} />
+                                  <button
+                                    onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
+                                    className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                  >
+                                    {showColorPicker === 'background' ? 'Close' : 'Change'}
+                                  </button>
+                                </div>
+                                {showColorPicker === 'background' && (
+                                  <div className="mt-3">
+                                    <HexColorPicker color={customization.backgroundColor} onChange={(color) => handleCustomizationChange('backgroundColor', color)} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Logo Upload */}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Add Logo (PNG/JPG/SVG)
+                              </label>
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                                  onChange={handleLogoUpload}
+                                  className="text-sm text-gray-700 dark:text-gray-300"
+                                />
+                                {logoPreview && (
+                                  <button
+                                    onClick={removeLogo}
+                                    className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                  >
+                                    <XMarkIcon className="h-4 w-4 mr-1" />
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                              {logoPreview && (
+                                <div className="mt-3">
+                                  <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
+                                    <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-4 flex-grow">
+                          {selectedTypeConfig.fields.map((field) => (
+                            <div key={field.id}>
+                              <label
+                                htmlFor={field.id}
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                              >
+                                {field.label}
+                                {field.required && <span className="text-red-500 ml-1">*</span>}
+                              </label>
+                              {renderField(field)}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Download/Save Buttons - Integrated in Configuration */}
+                        <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              onClick={handleDownload}
+                              disabled={!canCreate || !qrData}
+                              className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                                !canCreate || !qrData
+                                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+                              }`}
+                            >
+                              <ArrowDownTrayIcon className="h-5 w-5" />
+                              <span>Download PNG</span>
+                            </button>
+                            <button
+                              onClick={handleSave}
+                              disabled={!canCreate || !qrData}
+                              className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                                !canCreate || !qrData
+                                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                  : 'bg-accent-600 hover:bg-accent-700 text-white'
+                              }`}
+                            >
+                              <PhotoIcon className="h-5 w-5" />
+                              <span>Save to Dashboard</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Analytics - Bottom Full Width */}
+                {editingQRId && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                       QR Code Analytics
@@ -438,9 +622,13 @@ const Create: React.FC = () => {
                     <QRAnalytics qrCodeId={editingQRId} />
                   </div>
                 )}
-
+              </div>
+            ) : (
+              /* When creating new QR: Original layout */
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Configuration Panel */}
+                <div className="lg:col-span-2 space-y-6">
                 {/* QR Type Selection (only when creating new) */}
-                {!isEditing && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                       QR Code Type
@@ -476,10 +664,9 @@ const Create: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                )}
 
                 {/* Static/Dynamic Selection (only when creating new) */}
-                {!isEditing && selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
+                {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                       Code Type
@@ -724,6 +911,7 @@ const Create: React.FC = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
   );

@@ -16,7 +16,7 @@ import {
 import { Link } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { currentUser, userData, subscription, updateUserProfile, loading } = useAuth();
+  const { userData, subscription, updateUserProfile, loading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     fullName: userData?.fullName || '',
@@ -26,7 +26,10 @@ const Profile: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+  // Find the current plan based on subscription data
+  const currentPlan = subscription
+    ? plans.find(p => p.id === subscription.planType) || plans[0] // Fallback to free plan if not found
+    : plans[0]; // Default to free plan if no subscription
 
   // Show loading state while fetching subscription data
   if (loading) {
@@ -275,16 +278,8 @@ const Profile: React.FC = () => {
               <div className="space-y-4">
                 <div className="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
                   <h4 className="text-xl font-poppins font-bold text-primary-900 dark:text-primary-100">
-                    {currentPlan?.name}
+                    {currentPlan?.name || 'Free Plan'}
                   </h4>
-                  {currentPlan?.price && (
-                    <p className="text-2xl font-bold text-primary-600 mt-1">
-                      ${currentPlan.price}/month
-                    </p>
-                  )}
-                  <p className="text-sm text-primary-700 dark:text-primary-300 mt-2">
-                    {subscription?.status === 'active' ? 'Active' : 'Inactive'}
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -304,9 +299,9 @@ const Profile: React.FC = () => {
                     to="/pricing"
                     className="w-full bg-primary-600 hover:bg-primary-700 text-white text-center py-2 px-4 rounded-md transition-colors block"
                   >
-                    {currentPlan?.id === 'gratis' ? 'Upgrade Plan' : 'Change Plan'}
+                    {currentPlan?.id === 'free' ? 'Upgrade Plan' : 'Change Plan'}
                   </Link>
-                  {currentPlan?.id !== 'gratis' && (
+                  {currentPlan?.id !== 'free' && currentPlan?.price && currentPlan.price > 0 && (
                     <button className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-center py-2 px-4 rounded-md transition-colors">
                       Manage Billing
                     </button>

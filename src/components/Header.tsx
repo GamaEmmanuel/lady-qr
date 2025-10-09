@@ -27,6 +27,13 @@ const Header: React.FC = () => {
     { name: 'Features', href: '/features' },
   ];
 
+  // Navigation for logged-in users (header tabs)
+  const loggedInNavigation = [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Create QR', href: '/create' },
+    { name: 'Features', href: '/features' },
+  ];
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -57,8 +64,26 @@ const Header: React.FC = () => {
           </button>
         </div>
 
+        {/* Navigation for non-logged-in users */}
         <div className={`hidden lg:flex lg:gap-x-12 ${currentUser ? 'lg:hidden' : ''}`}>
           {navigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={`text-sm font-inter font-medium leading-6 transition-colors duration-200 ${
+                location.pathname === item.href
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : 'text-gray-900 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+              }`}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </div>
+
+        {/* Navigation for logged-in users (header tabs) */}
+        <div className={`hidden lg:flex lg:gap-x-12 ${!currentUser ? 'lg:hidden' : ''}`}>
+          {loggedInNavigation.map((item) => (
             <Link
               key={item.name}
               to={item.href}
@@ -105,34 +130,10 @@ const Header: React.FC = () => {
                   <div className="py-1">
                     <Menu.Item>
                       <Link
-                        to="/dashboard"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Dashboard
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
-                        to="/create"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Create QR
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
                         to="/pricing"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         Pricing
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
-                      <Link
-                        to="/features"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Features
                       </Link>
                     </Menu.Item>
                     <Menu.Item>
@@ -227,6 +228,20 @@ const Header: React.FC = () => {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Create QR
+                      </Link>
+                      <Link
+                        to="/features"
+                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Features
+                      </Link>
+                      <Link
+                        to="/pricing"
+                        className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Pricing
                       </Link>
                       <Link
                         to="/profile"
