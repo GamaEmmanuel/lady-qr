@@ -88,6 +88,8 @@ export const getAnalytics = onRequest(async (req, res) => {
         browser: scan.deviceInfo?.browser || 'unknown',
         version: scan.deviceInfo?.version || '',
       },
+      platformCategory: scan.platformCategory || 'Other',
+      isReturningVisitor: scan.isReturningVisitor || false,
     }));
 
     // Calculate basic analytics
@@ -103,10 +105,26 @@ export const getAnalytics = onRequest(async (req, res) => {
       return acc;
     }, {} as Record<string, number>);
 
+    // Aggregate city stats (top 10)
+    const cityStats = enrichedRecentScans.reduce((acc: Record<string, number>, scan: any) => {
+      const city = scan.location?.city || 'Unknown';
+      const country = scan.location?.country || 'Unknown';
+      const cityKey = `${city}, ${country}`;
+      acc[cityKey] = (acc[cityKey] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
     // Aggregate device stats by type
     const deviceStats = enrichedRecentScans.reduce((acc: Record<string, number>, scan: any) => {
       const type = scan.deviceInfo?.type || 'unknown';
       acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Aggregate platform stats (iOS, Android, etc.)
+    const platformStats = enrichedRecentScans.reduce((acc: Record<string, number>, scan: any) => {
+      const platform = scan.platformCategory || 'Other';
+      acc[platform] = (acc[platform] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -118,13 +136,36 @@ export const getAnalytics = onRequest(async (req, res) => {
       return acc;
     }, {} as Record<string, number>);
 
+    // Aggregate hour-of-day stats (0-23)
+    const hourStats = scans.reduce((acc: Record<number, number>, scan: any) => {
+      if (!scan.scannedAt) return acc;
+      try {
+        const hour = new Date(scan.scannedAt).getUTCHours();
+        if (!isNaN(hour) && hour >= 0 && hour <= 23) {
+          acc[hour] = (acc[hour] || 0) + 1;
+        }
+      } catch (err) {
+        // Skip invalid dates
+      }
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Calculate return visitor rate (handle missing field gracefully)
+    const returningVisitors = scans.filter((scan: any) => scan.isReturningVisitor === true).length;
+    const returnVisitorRate = totalScans > 0 ? (returningVisitors / totalScans) * 100 : 0;
+
     const analytics = {
       totalScans,
       uniqueScans: uniqueIPs,
       recentScans: enrichedRecentScans,
       countryStats,
+      cityStats,
       deviceStats,
+      platformStats,
       dateStats,
+      hourStats,
+      returnVisitorRate,
+      returningVisitors,
       lastScannedAt: sortedScans[0]?.scannedAt || null
     };
 
@@ -132,6 +173,10 @@ export const getAnalytics = onRequest(async (req, res) => {
 
   } catch (error) {
     console.error('Analytics error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });

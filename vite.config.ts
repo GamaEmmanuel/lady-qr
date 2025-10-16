@@ -12,9 +12,9 @@ export default defineConfig({
     },
     proxy: {
       '/api/analytics': {
-        target: process.env.VITE_FUNCTIONS_ORIGIN || 'http://127.0.0.1:5001/lady-qr/us-central1',
+        target: process.env.VITE_FUNCTIONS_ORIGIN || 'https://us-central1-lady-qr.cloudfunctions.net',
         changeOrigin: true,
-        secure: false,
+        secure: true,
         rewrite: (path) => path.replace(/^\/api\/analytics/, '/getAnalytics')
       }
     }

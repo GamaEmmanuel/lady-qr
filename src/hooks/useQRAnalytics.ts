@@ -20,6 +20,8 @@ export interface ScanAnalytics {
     browser: string;
     version: string;
   };
+  platformCategory?: string;
+  isReturningVisitor?: boolean;
   referrer?: string;
 }
 
@@ -28,8 +30,13 @@ export interface AnalyticsData {
   uniqueScans: number;
   recentScans: ScanAnalytics[];
   countryStats: Record<string, number>;
+  cityStats: Record<string, number>;
   deviceStats: Record<string, number>;
+  platformStats: Record<string, number>;
   dateStats: Record<string, number>;
+  hourStats: Record<number, number>;
+  returnVisitorRate: number;
+  returningVisitors: number;
   lastScannedAt: string | null;
 }
 
@@ -51,6 +58,7 @@ export const useQRAnalytics = (qrCodeId: string) => {
         setError(null);
 
         // Build candidate URLs
+        const getAnalyticsUrl = (import.meta.env.VITE_GET_ANALYTICS_URL as string | undefined) || undefined;
         const hostingUrl = (import.meta.env.VITE_FIREBASE_HOSTING_URL as string | undefined) || undefined;
         const functionsOrigin = (import.meta.env.VITE_FUNCTIONS_ORIGIN as string | undefined) || undefined;
         const projectId = (import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined) || undefined;
@@ -59,23 +67,52 @@ export const useQRAnalytics = (qrCodeId: string) => {
         const query = `?qrCodeId=${encodeURIComponent(qrCodeId)}&userId=${encodeURIComponent(currentUser.uid)}`;
 
         const candidates: string[] = [];
-        // Prefer direct functions first (often faster than proxy in dev)
+        // Prefer direct 2nd gen function URL first (if available)
+        if (getAnalyticsUrl) {
+          candidates.push(`${sanitizeBase(getAnalyticsUrl)}${query}`);
+        }
+        // Then try 1st gen function URL
         if (functionsOrigin) {
           candidates.push(`${sanitizeBase(functionsOrigin)}/getAnalytics${query}`);
         } else if (projectId) {
           candidates.push(`https://us-central1-${projectId}.cloudfunctions.net/getAnalytics${query}`);
         }
-        // Then try relative proxy and explicit hosting URL
+        // Then try relative proxy and explicit hosting URL (won't work in dev mode)
         candidates.push(`/api/analytics${query}`);
         if (hostingUrl) {
           candidates.push(`${sanitizeBase(hostingUrl)}/api/analytics${query}`);
         }
 
-        const fetchWithTimeout = (url: string, ms = 3500) =>
-          Promise.race([
-            fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
-          ]);
+        console.log('🔍 Analytics URL candidates:', candidates);
+
+        const fetchWithTimeout = async (url: string, ms = 3500): Promise<any> => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), ms);
+
+          try {
+            console.log(`🔄 Fetching: ${url}`);
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            console.log(`✅ Response from ${url}:`, response.status);
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log(`✅ Data received from ${url}`);
+            return data;
+          } catch (err: any) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+              console.warn(`⏱️ Timeout for ${url}`);
+              throw new Error('timeout');
+            }
+            console.error(`❌ Failed ${url}:`, err.message);
+            throw err;
+          }
+        };
 
         const firstFulfilled = <T,>(promises: Promise<T>[]): Promise<T> =>
           new Promise((resolve, reject) => {
@@ -210,6 +247,8 @@ async function computeClientSideAnalytics(qrCodeId: string, userId: string): Pro
       browser: scan.deviceInfo?.browser || 'unknown',
       version: scan.deviceInfo?.version || '',
     },
+    platformCategory: scan.platformCategory || 'Other',
+    isReturningVisitor: scan.isReturningVisitor || false,
   }));
 
   const totalScans = scans.length;
@@ -221,9 +260,23 @@ async function computeClientSideAnalytics(qrCodeId: string, userId: string): Pro
     return acc;
   }, {} as Record<string, number>);
 
+  const cityStats = recent.reduce((acc: Record<string, number>, scan: any) => {
+    const city = scan.location?.city || 'Unknown';
+    const country = scan.location?.country || 'Unknown';
+    const cityKey = `${city}, ${country}`;
+    acc[cityKey] = (acc[cityKey] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   const deviceStats = recent.reduce((acc: Record<string, number>, scan: any) => {
     const type = scan.deviceInfo?.type || 'unknown';
     acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const platformStats = recent.reduce((acc: Record<string, number>, scan: any) => {
+    const platform = scan.platformCategory || 'Other';
+    acc[platform] = (acc[platform] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -234,13 +287,28 @@ async function computeClientSideAnalytics(qrCodeId: string, userId: string): Pro
     return acc;
   }, {} as Record<string, number>);
 
+  const hourStats = scans.reduce((acc: Record<number, number>, scan: any) => {
+    if (!scan.scannedAt) return acc;
+    const hour = new Date(scan.scannedAt).getUTCHours();
+    acc[hour] = (acc[hour] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
+  const returningVisitors = scans.filter((scan: any) => scan.isReturningVisitor).length;
+  const returnVisitorRate = totalScans > 0 ? (returningVisitors / totalScans) * 100 : 0;
+
   return {
     totalScans,
     uniqueScans,
     recentScans: recent,
     countryStats,
+    cityStats,
     deviceStats,
+    platformStats,
     dateStats,
+    hourStats,
+    returnVisitorRate,
+    returningVisitors,
     lastScannedAt: sorted[0]?.scannedAt || null,
   };
 }

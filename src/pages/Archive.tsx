@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { downloadQRCode } from '../utils/downloadQR';
+import { generateShortUrl } from '../utils/qrTracking';
+import ConfirmDialog from '../components/ConfirmDialog';
 import {
   QrCodeIcon,
   EyeIcon,
@@ -22,6 +25,17 @@ const Archive: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [qrLoading, setQrLoading] = useState(true);
+
+  // Confirmation dialog state
+  const [pauseDialog, setPauseDialog] = useState<{ isOpen: boolean; qrId: string | null; currentStatus: boolean }>({
+    isOpen: false,
+    qrId: null,
+    currentStatus: false
+  });
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; qrId: string | null }>({
+    isOpen: false,
+    qrId: null
+  });
 
   // Fetch QR codes from Firestore
   React.useEffect(() => {
@@ -132,6 +146,77 @@ const Archive: React.FC = () => {
           return 0;
       }
     });
+
+  // Button Handlers
+  const handleView = (qrId: string) => {
+    navigate(`/qr/${qrId}`);
+  };
+
+  const handleEdit = (qrId: string) => {
+    navigate(`/create?edit=${qrId}`);
+  };
+
+  const handleDownload = async (qr: any) => {
+    try {
+      const qrData = generateShortUrl(qr.shortUrlId || qr.id);
+      await downloadQRCode({
+        data: qrData,
+        filename: qr.name || 'qr-code',
+        foregroundColor: qr.customizationOptions?.foregroundColor,
+        backgroundColor: qr.customizationOptions?.backgroundColor,
+        logoUrl: qr.customizationOptions?.logoUrl
+      });
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+      alert('Error downloading QR code. Please try again.');
+    }
+  };
+
+  const handlePauseClick = (qrId: string, currentStatus: boolean) => {
+    setPauseDialog({ isOpen: true, qrId, currentStatus });
+  };
+
+  const handlePauseConfirm = async () => {
+    if (!pauseDialog.qrId) return;
+
+    try {
+      const newStatus = !pauseDialog.currentStatus;
+      await updateDoc(doc(db, 'qrcodes', pauseDialog.qrId), {
+        isActive: newStatus,
+        updatedAt: new Date()
+      });
+
+      // Update local state
+      setQrCodes(prevCodes =>
+        prevCodes.map(qr =>
+          qr.id === pauseDialog.qrId
+            ? { ...qr, isActive: newStatus, updatedAt: new Date() }
+            : qr
+        )
+      );
+    } catch (error) {
+      console.error('Error updating QR code status:', error);
+      alert('Error updating QR code status. Please try again.');
+    }
+  };
+
+  const handleDeleteClick = (qrId: string) => {
+    setDeleteDialog({ isOpen: true, qrId });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.qrId) return;
+
+    try {
+      await deleteDoc(doc(db, 'qrcodes', deleteDialog.qrId));
+
+      // Update local state
+      setQrCodes(prevCodes => prevCodes.filter(qr => qr.id !== deleteDialog.qrId));
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      alert('Error deleting QR code. Please try again.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -343,23 +428,43 @@ const Archive: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1 rounded">
+                        <button
+                          onClick={() => handleView(qr.id)}
+                          className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 p-1 rounded hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                          title="View details"
+                        >
                           <EyeIcon className="h-4 w-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded">
+                        <button
+                          onClick={() => handleEdit(qr.id)}
+                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Edit"
+                        >
                           <PencilIcon className="h-4 w-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded">
+                        <button
+                          onClick={() => handleDownload(qr)}
+                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Download"
+                        >
                           <ArrowDownTrayIcon className="h-4 w-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded">
+                        <button
+                          onClick={() => handlePauseClick(qr.id, qr.isActive)}
+                          className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title={qr.isActive ? 'Pause' : 'Activate'}
+                        >
                           {qr.isActive ? (
                             <PauseIcon className="h-4 w-4" />
                           ) : (
                             <PlayIcon className="h-4 w-4" />
                           )}
                         </button>
-                        <button className="text-error-600 hover:text-error-900 dark:text-error-400 dark:hover:text-error-300 p-1 rounded">
+                        <button
+                          onClick={() => handleDeleteClick(qr.id)}
+                          className="text-error-600 hover:text-error-900 dark:text-error-400 dark:hover:text-error-300 p-1 rounded hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors"
+                          title="Delete"
+                        >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -371,6 +476,31 @@ const Archive: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        isOpen={pauseDialog.isOpen}
+        onClose={() => setPauseDialog({ isOpen: false, qrId: null, currentStatus: false })}
+        onConfirm={handlePauseConfirm}
+        title={pauseDialog.currentStatus ? 'Pause QR Code?' : 'Activate QR Code?'}
+        message={
+          pauseDialog.currentStatus
+            ? 'This QR code will stop redirecting users when scanned. You can reactivate it at any time.'
+            : 'This QR code will start redirecting users when scanned.'
+        }
+        confirmText={pauseDialog.currentStatus ? 'Pause' : 'Activate'}
+        confirmButtonClass={pauseDialog.currentStatus ? 'bg-warning-600 hover:bg-warning-700' : 'bg-success-600 hover:bg-success-700'}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, qrId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete QR Code?"
+        message="This action cannot be undone. The QR code and all its analytics data will be permanently deleted."
+        confirmText="Delete"
+        confirmButtonClass="bg-error-600 hover:bg-error-700"
+      />
     </div>
   );
 };

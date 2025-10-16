@@ -38,13 +38,31 @@ const https_1 = require("firebase-functions/v2/https");
 const admin = __importStar(require("firebase-admin"));
 const index_1 = require("./index");
 const ua_parser_js_1 = require("ua-parser-js");
-// Simple private IP detection (IPv4 only; IPv6 treated as private for safety)
+const crypto = __importStar(require("crypto"));
+// Enhanced private IP detection (IPv4 and IPv6)
 function isPrivateIp(ip) {
     if (!ip)
         return true;
+    // Handle IPv4-mapped IPv6 addresses (::ffff:192.168.1.1)
     const v4 = ip.replace('::ffff:', '');
-    if (v4.includes(':'))
-        return true; // IPv6 or unknown
+    // Check if it's IPv6
+    if (v4.includes(':')) {
+        // IPv6 address - check for private ranges
+        const ipv6 = v4.toLowerCase();
+        // Private IPv6 ranges:
+        // fc00::/7 (unique local addresses)
+        // fe80::/10 (link-local addresses)
+        // ::1 (localhost)
+        // :: (unspecified)
+        if (ipv6.startsWith('fc') || ipv6.startsWith('fd') ||
+            ipv6.startsWith('fe80') || ipv6.startsWith('fe9') || ipv6.startsWith('fea') || ipv6.startsWith('feb') ||
+            ipv6 === '::1' || ipv6 === '::') {
+            return true;
+        }
+        // All other IPv6 addresses are considered public
+        return false;
+    }
+    // IPv4 address - check for private ranges
     const parts = v4.split('.').map((n) => parseInt(n, 10));
     if (parts.length !== 4 || parts.some((n) => Number.isNaN(n)))
         return true;
@@ -55,28 +73,68 @@ function isPrivateIp(ip) {
         a === 127 ||
         a === 0);
 }
+// Generate a privacy-preserving fingerprint for tracking return visitors
+function generateFingerprint(ip, userAgent) {
+    // Create a hash of IP + UA for privacy (not storing raw IP/UA combination)
+    const hash = crypto.createHash('sha256');
+    hash.update(`${ip}|${userAgent}`);
+    return hash.digest('hex');
+}
 async function geoLookup(ip) {
     try {
+        console.log('🌍 Geolocation lookup for IP:', ip);
         if (!ip || isPrivateIp(ip)) {
+            console.log('⚠️  Private/invalid IP detected');
+            // Development mode: Return mock location data for testing
+            // This helps developers test the map visualization with local IPs
+            const isDevelopment = process.env.FUNCTIONS_EMULATOR === 'true' || ip.includes('127.0.0.1') || ip.includes('::1');
+            if (isDevelopment) {
+                console.log('🧪 Development mode: Using mock location data');
+                // Generate random location for testing (various cities around the world)
+                const mockLocations = [
+                    { country: 'United States', city: 'New York', region: 'NY', lat: 40.7128, lng: -74.0060 },
+                    { country: 'United Kingdom', city: 'London', region: 'England', lat: 51.5074, lng: -0.1278 },
+                    { country: 'Japan', city: 'Tokyo', region: 'Tokyo', lat: 35.6762, lng: 139.6503 },
+                    { country: 'Australia', city: 'Sydney', region: 'NSW', lat: -33.8688, lng: 151.2093 },
+                    { country: 'Brazil', city: 'São Paulo', region: 'SP', lat: -23.5505, lng: -46.6333 },
+                    { country: 'France', city: 'Paris', region: 'Île-de-France', lat: 48.8566, lng: 2.3522 },
+                    { country: 'Germany', city: 'Berlin', region: 'Berlin', lat: 52.5200, lng: 13.4050 },
+                    { country: 'Canada', city: 'Toronto', region: 'ON', lat: 43.6532, lng: -79.3832 },
+                ];
+                const randomLocation = mockLocations[Math.floor(Math.random() * mockLocations.length)];
+                console.log('📍 Mock location:', randomLocation);
+                return randomLocation;
+            }
             return { country: 'Unknown', city: 'Unknown', region: '' };
         }
+        console.log('✅ Public IP detected, calling ip-api.com...');
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 1500);
-        const resp = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, { signal: controller.signal });
+        const resp = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}`, { signal: controller.signal });
         clearTimeout(timeout);
         if (!resp.ok) {
+            console.log('❌ ip-api.com returned error status:', resp.status);
             return { country: 'Unknown', city: 'Unknown', region: '' };
         }
         const data = await resp.json();
-        return {
-            country: data.country_name || 'Unknown',
+        console.log('📍 Geolocation API response:', JSON.stringify(data, null, 2));
+        // Check if API returned an error (ip-api.com uses status field)
+        if (data.status === 'fail') {
+            console.log('❌ ip-api.com lookup failed:', data.message);
+            return { country: 'Unknown', city: 'Unknown', region: '' };
+        }
+        const result = {
+            country: data.country || 'Unknown',
             city: data.city || 'Unknown',
-            region: data.region || data.region_code || '',
-            lat: typeof data.latitude === 'number' ? data.latitude : undefined,
-            lng: typeof data.longitude === 'number' ? data.longitude : undefined,
+            region: data.regionName || data.region || '',
+            lat: typeof data.lat === 'number' ? data.lat : undefined,
+            lng: typeof data.lon === 'number' ? data.lon : undefined,
         };
+        console.log('📊 Parsed location:', JSON.stringify(result, null, 2));
+        return result;
     }
-    catch (_a) {
+    catch (error) {
+        console.error('❌ Geolocation error:', error);
         return { country: 'Unknown', city: 'Unknown', region: '' };
     }
 }
@@ -136,7 +194,7 @@ function generateDestinationUrl(type, content) {
     }
 }
 exports.redirect = (0, https_1.onRequest)(async (req, res) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     try {
         console.log('🚀 REDIRECT FUNCTION STARTED');
         console.log('📍 Request URL:', req.url);
@@ -252,8 +310,36 @@ exports.redirect = (0, https_1.onRequest)(async (req, res) => {
             browser: [(_e = ua.browser) === null || _e === void 0 ? void 0 : _e.name].filter(Boolean).join('') || 'unknown',
             version: ((_f = ua.browser) === null || _f === void 0 ? void 0 : _f.version) || '',
         };
+        // Determine platform category for analytics
+        const osName = (((_g = ua.os) === null || _g === void 0 ? void 0 : _g.name) || '').toLowerCase();
+        let platformCategory = 'Other';
+        if (osName.includes('ios') || osName.includes('iphone') || osName.includes('ipad')) {
+            platformCategory = 'iOS';
+        }
+        else if (osName.includes('android')) {
+            platformCategory = 'Android';
+        }
+        else if (osName.includes('windows')) {
+            platformCategory = 'Windows';
+        }
+        else if (osName.includes('mac')) {
+            platformCategory = 'macOS';
+        }
+        else if (osName.includes('linux')) {
+            platformCategory = 'Linux';
+        }
         // Geo lookup (best-effort, short timeout)
         const location = await geoLookup(ip);
+        // Generate fingerprint for return visitor tracking
+        const fingerprint = generateFingerprint(ip, userAgent);
+        // Check if this is a returning visitor (same fingerprint has scanned this QR before)
+        const previousScansQuery = await db
+            .collection('scans')
+            .where('qrCodeId', '==', qrDoc.id)
+            .where('fingerprint', '==', fingerprint)
+            .limit(1)
+            .get();
+        const isReturningVisitor = !previousScansQuery.empty;
         // Create scan record
         const scanData = {
             qrCodeId: qrDoc.id,
@@ -263,6 +349,9 @@ exports.redirect = (0, https_1.onRequest)(async (req, res) => {
             referrer: req.get('Referer') || null,
             location,
             deviceInfo,
+            platformCategory,
+            fingerprint,
+            isReturningVisitor,
         };
         // Log the scan and update scan count
         await Promise.allSettled([

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQRAnalytics } from '../hooks/useQRAnalytics';
 import {
   ChartBarIcon,
@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import D3Area from './charts/D3Area';
 import D3Donut from './charts/D3Donut';
+import GeoMap from './charts/GeoMap';
 
 interface QRAnalyticsProps {
   qrCodeId: string;
@@ -20,6 +21,39 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
 
   // Modern: simple time range control for charts and deltas
   const [range, setRange] = React.useState<'7d' | '30d' | '90d'>('30d');
+
+  // Prepare geographic data for map (must be called before any conditional returns)
+  const geoData = useMemo(() => {
+    if (!analytics) return [];
+
+    const locationMap = new Map<string, { lat?: number; lng?: number; count: number; city: string; country: string }>();
+
+    analytics.recentScans.forEach(scan => {
+      if (scan.location?.lat && scan.location?.lng) {
+        const key = `${scan.location.lat.toFixed(2)},${scan.location.lng.toFixed(2)}`;
+        const existing = locationMap.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          locationMap.set(key, {
+            lat: scan.location.lat,
+            lng: scan.location.lng,
+            count: 1,
+            city: scan.location.city,
+            country: scan.location.country,
+          });
+        }
+      }
+    });
+
+    return Array.from(locationMap.values()).filter(d => d.lat && d.lng) as Array<{
+      lat: number;
+      lng: number;
+      count: number;
+      city: string;
+      country: string;
+    }>;
+  }, [analytics]);
 
   if (loading) {
     return (
@@ -97,6 +131,11 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
     value: count
   }));
 
+  const platformData = Object.entries(analytics.platformStats || {}).map(([platform, count]) => ({
+    name: platform,
+    value: count
+  }));
+
   const countryData = Object.entries(analytics.countryStats)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5)
@@ -104,6 +143,20 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
       name: country,
       value: count
     }));
+
+  const cityData = Object.entries(analytics.cityStats || {})
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10)
+    .map(([city, count]) => ({
+      name: city,
+      value: count
+    }));
+
+  // Prepare hour-of-day data (0-23)
+  const hourData = Array.from({ length: 24 }, (_, i) => ({
+    x: new Date(2000, 0, 1, i), // Use arbitrary date, just care about hour
+    y: analytics.hourStats?.[i] || 0
+  }));
 
   const RangeButton: React.FC<{ value: '7d' | '30d' | '90d'; label: string }> = ({ value, label }) => (
     <button
@@ -178,11 +231,12 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
         <Card>
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-accent-50 dark:bg-accent-900/30 flex items-center justify-center">
-              <GlobeAmericasIcon className="h-6 w-6 text-accent-600" />
+              <UsersIcon className="h-6 w-6 text-accent-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Countries</p>
-              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{Object.keys(analytics.countryStats).length}</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Return Rate</p>
+              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{(analytics.returnVisitorRate || 0).toFixed(1)}%</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{analytics.returningVisitors || 0} returning</p>
             </div>
           </div>
         </Card>
@@ -216,25 +270,59 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
           <D3Area data={dateData} height={320} />
         </Card>
 
-        {/* Device Types */}
+        {/* Platform Breakdown */}
         <Card>
-          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Device Types</h3>
-          <D3Donut data={deviceData} height={320} />
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Platform Breakdown</h3>
+          <D3Donut data={platformData.length > 0 ? platformData : deviceData} height={320} />
         </Card>
       </div>
 
-      {/* Top Countries */}
+      {/* Hour of Day Heatmap */}
       <Card>
-        <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Top Countries</h3>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {countryData.map((c) => (
-            <div key={c.name} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">{c.value}</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">Scans by Hour of Day</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400">UTC Time</span>
         </div>
+        <D3Area data={hourData} height={240} />
       </Card>
+
+      {/* Geographic Map */}
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">Geographic Distribution</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{geoData.length} locations</span>
+        </div>
+        <GeoMap data={geoData} height={400} />
+      </Card>
+
+      {/* Geographic Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Cities */}
+        <Card>
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Top Cities</h3>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {cityData.map((c) => (
+              <div key={c.name} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{c.value}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Top Countries */}
+        <Card>
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Top Countries</h3>
+          <div className="space-y-2">
+            {countryData.map((c) => (
+              <div key={c.name} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{c.value}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
 
       {/* Recent Scans */}
       <Card>
@@ -245,8 +333,9 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date & Time</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Device</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Browser</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Returning</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -256,10 +345,19 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.location.city}, {scan.location.country}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                      {scan.deviceInfo.type}
+                      {scan.platformCategory || scan.deviceInfo.os}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.deviceInfo.browser} on {scan.deviceInfo.os}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.deviceInfo.type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {scan.isReturningVisitor ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                        Yes
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">No</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

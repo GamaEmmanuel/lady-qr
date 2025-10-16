@@ -77,7 +77,7 @@ exports.getAnalytics = (0, https_1.onRequest)(async (req, res) => {
                     os: ((_g = scan.deviceInfo) === null || _g === void 0 ? void 0 : _g.os) || 'unknown',
                     browser: ((_h = scan.deviceInfo) === null || _h === void 0 ? void 0 : _h.browser) || 'unknown',
                     version: ((_j = scan.deviceInfo) === null || _j === void 0 ? void 0 : _j.version) || '',
-                } }));
+                }, platformCategory: scan.platformCategory || 'Other', isReturningVisitor: scan.isReturningVisitor || false }));
         });
         // Calculate basic analytics
         const totalScans = scans.length;
@@ -90,11 +90,26 @@ exports.getAnalytics = (0, https_1.onRequest)(async (req, res) => {
             acc[country] = (acc[country] || 0) + 1;
             return acc;
         }, {});
+        // Aggregate city stats (top 10)
+        const cityStats = enrichedRecentScans.reduce((acc, scan) => {
+            var _a, _b;
+            const city = ((_a = scan.location) === null || _a === void 0 ? void 0 : _a.city) || 'Unknown';
+            const country = ((_b = scan.location) === null || _b === void 0 ? void 0 : _b.country) || 'Unknown';
+            const cityKey = `${city}, ${country}`;
+            acc[cityKey] = (acc[cityKey] || 0) + 1;
+            return acc;
+        }, {});
         // Aggregate device stats by type
         const deviceStats = enrichedRecentScans.reduce((acc, scan) => {
             var _a;
             const type = ((_a = scan.deviceInfo) === null || _a === void 0 ? void 0 : _a.type) || 'unknown';
             acc[type] = (acc[type] || 0) + 1;
+            return acc;
+        }, {});
+        // Aggregate platform stats (iOS, Android, etc.)
+        const platformStats = enrichedRecentScans.reduce((acc, scan) => {
+            const platform = scan.platformCategory || 'Other';
+            acc[platform] = (acc[platform] || 0) + 1;
             return acc;
         }, {});
         // Aggregate date stats (YYYY-MM-DD)
@@ -105,20 +120,47 @@ exports.getAnalytics = (0, https_1.onRequest)(async (req, res) => {
             acc[dateKey] = (acc[dateKey] || 0) + 1;
             return acc;
         }, {});
+        // Aggregate hour-of-day stats (0-23)
+        const hourStats = scans.reduce((acc, scan) => {
+            if (!scan.scannedAt)
+                return acc;
+            try {
+                const hour = new Date(scan.scannedAt).getUTCHours();
+                if (!isNaN(hour) && hour >= 0 && hour <= 23) {
+                    acc[hour] = (acc[hour] || 0) + 1;
+                }
+            }
+            catch (err) {
+                // Skip invalid dates
+            }
+            return acc;
+        }, {});
+        // Calculate return visitor rate (handle missing field gracefully)
+        const returningVisitors = scans.filter((scan) => scan.isReturningVisitor === true).length;
+        const returnVisitorRate = totalScans > 0 ? (returningVisitors / totalScans) * 100 : 0;
         const analytics = {
             totalScans,
             uniqueScans: uniqueIPs,
             recentScans: enrichedRecentScans,
             countryStats,
+            cityStats,
             deviceStats,
+            platformStats,
             dateStats,
+            hourStats,
+            returnVisitorRate,
+            returningVisitors,
             lastScannedAt: ((_a = sortedScans[0]) === null || _a === void 0 ? void 0 : _a.scannedAt) || null
         };
         res.json(analytics);
     }
     catch (error) {
         console.error('Analytics error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        res.status(500).json({
+            error: 'Internal server error',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 //# sourceMappingURL=analytics.js.map
