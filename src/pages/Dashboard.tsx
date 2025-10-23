@@ -8,7 +8,6 @@ import { downloadQRCode } from '../utils/downloadQR';
 import { generateShortUrl } from '../utils/qrTracking';
 import ConfirmDialog from '../components/ConfirmDialog';
 import {
-  PlusIcon,
   QrCodeIcon,
   ChartBarIcon,
   EyeIcon,
@@ -270,27 +269,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
-              <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
-                Quick Actions
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Create new QR codes or manage existing ones
-              </p>
-            </div>
-            <Link
-              to="/create"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create New QR Code
-            </Link>
-          </div>
         </div>
 
         {/* QR Codes Archive */}

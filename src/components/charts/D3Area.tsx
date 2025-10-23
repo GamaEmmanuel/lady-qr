@@ -35,7 +35,7 @@ const D3Area: React.FC<D3AreaProps> = ({ data, height = 280, color = '#0d9488', 
       svg.attr('width', width).attr('height', height);
       svg.selectAll('*').remove();
 
-      const margin = { top: 12, right: 12, bottom: 28, left: 40 };
+      const margin = { top: 12, right: 12, bottom: 60, left: 40 };
       const innerWidth = width - margin.left - margin.right;
       const innerHeight = height - margin.top - margin.bottom;
 
@@ -87,7 +87,11 @@ const D3Area: React.FC<D3AreaProps> = ({ data, height = 280, color = '#0d9488', 
         .call(d3.axisBottom(x).ticks(width < 500 ? 4 : 8).tickSizeOuter(0))
         .selectAll('text')
         .attr('fill', '#6b7280')
-        .style('font-size', '12px');
+        .style('font-size', '12px')
+        .style('text-anchor', 'end')
+        .attr('dx', '-0.5em')
+        .attr('dy', '0.15em')
+        .attr('transform', 'rotate(-45)');
 
       g.append('g')
         .call(d3.axisLeft(y).ticks(5).tickSizeOuter(0))

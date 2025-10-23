@@ -1,16 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useQRAnalytics } from '../hooks/useQRAnalytics';
 import {
-  ChartBarIcon,
-  GlobeAmericasIcon,
-  DevicePhoneMobileIcon,
   CalendarIcon,
   EyeIcon,
   UsersIcon
 } from '@heroicons/react/24/outline';
 import D3Area from './charts/D3Area';
 import D3Donut from './charts/D3Donut';
-import GeoMap from './charts/GeoMap';
 
 interface QRAnalyticsProps {
   qrCodeId: string;
@@ -20,40 +16,7 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
   const { analytics, loading, error } = useQRAnalytics(qrCodeId);
 
   // Modern: simple time range control for charts and deltas
-  const [range, setRange] = React.useState<'7d' | '30d' | '90d'>('30d');
-
-  // Prepare geographic data for map (must be called before any conditional returns)
-  const geoData = useMemo(() => {
-    if (!analytics) return [];
-
-    const locationMap = new Map<string, { lat?: number; lng?: number; count: number; city: string; country: string }>();
-
-    analytics.recentScans.forEach(scan => {
-      if (scan.location?.lat && scan.location?.lng) {
-        const key = `${scan.location.lat.toFixed(2)},${scan.location.lng.toFixed(2)}`;
-        const existing = locationMap.get(key);
-        if (existing) {
-          existing.count++;
-        } else {
-          locationMap.set(key, {
-            lat: scan.location.lat,
-            lng: scan.location.lng,
-            count: 1,
-            city: scan.location.city,
-            country: scan.location.country,
-          });
-        }
-      }
-    });
-
-    return Array.from(locationMap.values()).filter(d => d.lat && d.lng) as Array<{
-      lat: number;
-      lng: number;
-      count: number;
-      city: string;
-      country: string;
-    }>;
-  }, [analytics]);
+  const [range, setRange] = React.useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   if (loading) {
     return (
@@ -91,7 +54,7 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
   }
 
   // Helpers for range and deltas
-  const rangeDays = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+  const rangeDays = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : null;
 
   const buildSeries = (start: Date, end: Date) => {
     const series: { x: Date; y: number }[] = [];
@@ -110,12 +73,30 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
 
   const endCurrent = new Date();
   const startCurrent = new Date();
-  startCurrent.setDate(endCurrent.getDate() - (rangeDays - 1));
+
+  if (rangeDays === null) {
+    // All time - get the earliest scan date
+    const allDates = Object.keys(analytics.dateStats);
+    if (allDates.length > 0) {
+      const earliestDate = allDates.sort()[0];
+      startCurrent.setTime(new Date(earliestDate).getTime());
+    } else {
+      startCurrent.setDate(endCurrent.getDate() - 29); // Default to 30 days if no data
+    }
+  } else {
+    startCurrent.setDate(endCurrent.getDate() - (rangeDays - 1));
+  }
 
   const endPrevious = new Date(startCurrent);
   endPrevious.setDate(startCurrent.getDate() - 1);
   const startPrevious = new Date(endPrevious);
-  startPrevious.setDate(endPrevious.getDate() - (rangeDays - 1));
+  if (rangeDays !== null) {
+    startPrevious.setDate(endPrevious.getDate() - (rangeDays - 1));
+  } else {
+    // For "all time", use the same period length as current for comparison
+    const currentPeriodDays = Math.ceil((endCurrent.getTime() - startCurrent.getTime()) / (24 * 60 * 60 * 1000));
+    startPrevious.setDate(endPrevious.getDate() - (currentPeriodDays - 1));
+  }
 
   const dateData = buildSeries(startCurrent, endCurrent);
   const previousDateData = buildSeries(startPrevious, endPrevious);
@@ -124,6 +105,24 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
   const currentTotal = sumSeries(dateData);
   const previousTotal = sumSeries(previousDateData);
   const deltaPct = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : null;
+
+  // Filter scans for the current range
+  const rangeStartTime = startCurrent.getTime();
+  const rangeEndTime = endCurrent.getTime();
+  const scansInRange = analytics.recentScans.filter(scan => {
+    const scanTime = new Date(scan.scannedAt).getTime();
+    return scanTime >= rangeStartTime && scanTime <= rangeEndTime;
+  });
+
+  // Calculate metrics for the selected range
+  const uniqueScansInRange = new Set(scansInRange.map(s => s.fingerprint)).size;
+  const returningInRange = scansInRange.filter(s => s.isReturningVisitor).length;
+  const returnRateInRange = scansInRange.length > 0 ? (returningInRange / scansInRange.length) * 100 : 0;
+  const lastScanInRange = scansInRange.length > 0
+    ? scansInRange.reduce((latest, scan) =>
+        new Date(scan.scannedAt) > new Date(latest.scannedAt) ? scan : latest
+      ).scannedAt
+    : null;
 
   // Prepare chart data
   const deviceData = Object.entries(analytics.deviceStats).map(([device, count]) => ({
@@ -158,7 +157,7 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
     y: analytics.hourStats?.[i] || 0
   }));
 
-  const RangeButton: React.FC<{ value: '7d' | '30d' | '90d'; label: string }> = ({ value, label }) => (
+  const RangeButton: React.FC<{ value: '7d' | '30d' | '90d' | 'all'; label: string }> = ({ value, label }) => (
     <button
       onClick={() => setRange(value)}
       className={`px-3 py-1.5 text-sm rounded-md transition-colors border ${
@@ -177,71 +176,70 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
     </div>
   );
 
+  const StatCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+    <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 ${className || ''}`}>
+      {children}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header controls */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">Analytics</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Insights for this QR over the last {rangeDays} days</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Insights for this QR {rangeDays ? `over the last ${rangeDays} days` : 'for all time'}
+          </p>
         </div>
         <div className="inline-flex items-center gap-2 bg-gray-50 dark:bg-gray-900 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
           <RangeButton value="7d" label="7d" />
           <RangeButton value="30d" label="30d" />
           <RangeButton value="90d" label="90d" />
+          <RangeButton value="all" label="All" />
         </div>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/40 flex items-center justify-center">
-                <EyeIcon className="h-6 w-6 text-primary-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Scans</p>
-                <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{currentTotal.toLocaleString()}</p>
-                {deltaPct !== null && (
-                  <p className={`text-xs mt-1 ${deltaPct >= 0 ? 'text-success-600' : 'text-error-600'}`}>
-                    {deltaPct >= 0 ? '+' : ''}{deltaPct.toFixed(0)}% vs prev {rangeDays}d
-                  </p>
-                )}
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard>
+          <div className="flex items-center">
+            <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/40 flex items-center justify-center">
+              <EyeIcon className="h-6 w-6 text-primary-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Scans</p>
+              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{currentTotal.toLocaleString()}</p>
             </div>
           </div>
-          <div className="mt-4">
-            <D3Area data={dateData} height={80} />
-          </div>
-        </Card>
+        </StatCard>
 
-        <Card>
+        <StatCard>
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-success-50 dark:bg-success-900/30 flex items-center justify-center">
               <UsersIcon className="h-6 w-6 text-success-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Unique Scans</p>
-              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{analytics.uniqueScans.toLocaleString()}</p>
+              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{uniqueScansInRange.toLocaleString()}</p>
             </div>
           </div>
-        </Card>
+        </StatCard>
 
-        <Card>
+        <StatCard>
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-accent-50 dark:bg-accent-900/30 flex items-center justify-center">
               <UsersIcon className="h-6 w-6 text-accent-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Return Rate</p>
-              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{(analytics.returnVisitorRate || 0).toFixed(1)}%</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{analytics.returningVisitors || 0} returning</p>
+              <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">{returnRateInRange.toFixed(1)}%</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{returningInRange} returning</p>
             </div>
           </div>
-        </Card>
+        </StatCard>
 
-        <Card>
+        <StatCard>
           <div className="flex items-center">
             <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-warning-50 dark:bg-warning-900/30 flex items-center justify-center">
               <CalendarIcon className="h-6 w-6 text-warning-600" />
@@ -249,14 +247,14 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Scan</p>
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {analytics.lastScannedAt
-                  ? new Date(analytics.lastScannedAt).toLocaleDateString()
-                  : 'Never'
+                {lastScanInRange
+                  ? new Date(lastScanInRange).toLocaleDateString()
+                  : 'No scans'
                 }
               </p>
             </div>
           </div>
-        </Card>
+        </StatCard>
       </div>
 
       {/* Charts */}
@@ -265,7 +263,7 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">Scans Over Time</h3>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Last {rangeDays} days</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{rangeDays ? `Last ${rangeDays} days` : 'All time'}</span>
           </div>
           <D3Area data={dateData} height={320} />
         </Card>
@@ -286,13 +284,13 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
         <D3Area data={hourData} height={240} />
       </Card>
 
-      {/* Geographic Map */}
+      {/* City Distribution */}
       <Card>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">Geographic Distribution</h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{geoData.length} locations</span>
+          <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">City Distribution</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{cityData.length} cities</span>
         </div>
-        <GeoMap data={geoData} height={400} />
+        <D3Donut data={cityData} height={400} />
       </Card>
 
       {/* Geographic Breakdown */}
@@ -334,7 +332,6 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date & Time</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Device</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Returning</th>
               </tr>
             </thead>
@@ -348,7 +345,6 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
                       {scan.platformCategory || scan.deviceInfo.os}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.deviceInfo.type}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {scan.isReturningVisitor ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400">

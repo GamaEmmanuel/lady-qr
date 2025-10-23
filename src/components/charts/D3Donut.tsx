@@ -51,12 +51,32 @@ const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height 
         .attr('fill', (d: d3.PieArcDatum<DonutDatum>) => colorScale(d.data.name))
         .attr('d', arc as any);
 
+      // Add labels on each slice
+      const labelArc = d3.arc<d3.PieArcDatum<DonutDatum>>()
+        .innerRadius(radius * 0.8)
+        .outerRadius(radius * 0.8);
+
+      g
+        .selectAll('text.slice-label')
+        .data(pie(data))
+        .enter()
+        .append('text')
+        .attr('class', 'slice-label')
+        .attr('transform', (d: d3.PieArcDatum<DonutDatum>) => `translate(${labelArc.centroid(d)})`)
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.35em')
+        .attr('font-size', 14)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#ffffff')
+        .text((d: d3.PieArcDatum<DonutDatum>) => d.data.value);
+
       g
         .append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '0.35em')
-        .attr('font-size', 18)
-        .attr('fill', '#111827')
+        .attr('font-size', 32)
+        .attr('font-weight', 'bold')
+        .attr('fill', '#ffffff')
         .text(total.toLocaleString());
 
       const legend = svg.append('g').attr('transform', `translate(12,12)`);

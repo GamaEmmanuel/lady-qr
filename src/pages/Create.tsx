@@ -588,7 +588,7 @@ const Create: React.FC = () => {
                               className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                                 !canCreate || !qrData
                                   ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 border border-gray-300 dark:border-gray-600'
                               }`}
                             >
                               <ArrowDownTrayIcon className="h-5 w-5" />
@@ -600,11 +600,11 @@ const Create: React.FC = () => {
                               className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                                 !canCreate || !qrData
                                   ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                                  : 'bg-accent-600 hover:bg-accent-700 text-white'
+                                  : 'bg-success-600 hover:bg-success-700 text-white'
                               }`}
                             >
                               <PhotoIcon className="h-5 w-5" />
-                              <span>Save to Dashboard</span>
+                              <span>Save</span>
                             </button>
                           </div>
                         </div>
@@ -865,7 +865,7 @@ const Create: React.FC = () => {
                       className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                         !canCreate || !qrData
                           ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                          : 'bg-primary-600 hover:bg-primary-700 text-white'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 border border-gray-300 dark:border-gray-600'
                       }`}
                     >
                       <ArrowDownTrayIcon className="h-5 w-5" />
@@ -877,11 +877,11 @@ const Create: React.FC = () => {
                       className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                         !canCreate || !qrData
                           ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                          : 'bg-accent-600 hover:bg-accent-700 text-white'
+                          : 'bg-success-600 hover:bg-success-700 text-white'
                       }`}
                     >
                       <PhotoIcon className="h-5 w-5" />
-                      <span>Save to Dashboard</span>
+                      <span>Save</span>
                     </button>
                   </div>
                 </div>
