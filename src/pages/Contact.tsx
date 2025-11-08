@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
 
 const Contact: React.FC = () => {
   const [form, setForm] = useState({
@@ -8,24 +9,66 @@ const Contact: React.FC = () => {
     message: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setForm(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setStatusMessage(null);
 
-    const subject = encodeURIComponent(form.subject || `Support request from ${form.name || 'Customer'}`);
-    const body = encodeURIComponent(
-      `Name: ${form.name}\nEmail: ${form.email}\n\nMessage:\n${form.message}`
-    );
+    try {
+      // EmailJS configuration
+      const serviceId = 'gama-ventures';
+      const templateId = 'template_kv50v38';
+      const publicKey = 'dNgbSgz45xOHH5tbn';
 
-    window.location.href = `mailto:support@ladyqr.com?subject=${subject}&body=${body}`;
+      // Template parameters - matching EmailJS template variables
+      const templateParams = {
+        user_name: form.name,
+        user_email: form.email,
+        user_subject: form.subject || `Support request from ${form.name || 'Customer'}`,
+        user_message: form.message,
+        to_name: 'Support Team',
+      };
 
-    setTimeout(() => setSubmitting(false), 1000);
+      console.log('Sending email with params:', templateParams);
+
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        serviceId,
+        templateId,
+        templateParams,
+        publicKey
+      );
+
+      console.log('EmailJS response:', response);
+
+      setStatusMessage({
+        type: 'success',
+        text: 'Message sent successfully! We\'ll get back to you soon.'
+      });
+
+      // Reset form
+      setForm({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('EmailJS error:', error);
+      setStatusMessage({
+        type: 'error',
+        text: 'Failed to send message. Please try again later.'
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -34,12 +77,20 @@ const Contact: React.FC = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">Contact Support</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Our team is here to help. Fill out the form below or email us directly at
-            {' '}<a href="mailto:support@ladyqr.com" className="text-primary-600 hover:text-primary-700">support@ladyqr.com</a>.
+            Our team is here to help. Fill out the form below and we'll get back to you as soon as possible.
           </p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          {statusMessage && (
+            <div className={`mb-4 p-4 rounded-lg ${
+              statusMessage.type === 'success'
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
+                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300'
+            }`}>
+              {statusMessage.text}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>

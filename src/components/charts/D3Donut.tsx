@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export interface DonutDatum {
   name: string;
@@ -18,6 +19,7 @@ const defaultColors = ['#0d9488', '#f97316', '#3b82f6', '#ef4444', '#8b5cf6'];
 const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height = 300, className }) => {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { isDark } = useTheme();
 
   const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
@@ -51,7 +53,7 @@ const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height 
         .attr('fill', (d: d3.PieArcDatum<DonutDatum>) => colorScale(d.data.name))
         .attr('d', arc as any);
 
-      // Add labels on each slice
+      // Add labels on each slice (only for slices > 5% to avoid overlap)
       const labelArc = d3.arc<d3.PieArcDatum<DonutDatum>>()
         .innerRadius(radius * 0.8)
         .outerRadius(radius * 0.8);
@@ -67,8 +69,16 @@ const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height 
         .attr('dy', '0.35em')
         .attr('font-size', 14)
         .attr('font-weight', 'bold')
-        .attr('fill', '#ffffff')
-        .text((d: d3.PieArcDatum<DonutDatum>) => d.data.value);
+        .attr('fill', isDark ? '#ffffff' : '#1f2937')
+        .style('opacity', (d: d3.PieArcDatum<DonutDatum>) => {
+          const percentage = (d.data.value / total) * 100;
+          // Only show labels for slices larger than 5%
+          return percentage > 5 ? 1 : 0;
+        })
+        .text((d: d3.PieArcDatum<DonutDatum>) => {
+          const percentage = ((d.data.value / total) * 100).toFixed(1);
+          return `${percentage}%`;
+        });
 
       g
         .append('text')
@@ -76,7 +86,7 @@ const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height 
         .attr('dy', '0.35em')
         .attr('font-size', 32)
         .attr('font-weight', 'bold')
-        .attr('fill', '#ffffff')
+        .attr('fill', isDark ? '#ffffff' : '#111827')
         .text(total.toLocaleString());
 
       const legend = svg.append('g').attr('transform', `translate(12,12)`);
@@ -97,15 +107,18 @@ const D3Donut: React.FC<D3DonutProps> = ({ data, colors = defaultColors, height 
         .attr('x', 18)
         .attr('y', 10)
         .attr('font-size', 12)
-        .attr('fill', '#374151')
-        .text((d: DonutDatum) => `${d.name}`);
+        .attr('fill', isDark ? '#d1d5db' : '#374151')
+        .text((d: DonutDatum) => {
+          const percentage = ((d.value / total) * 100).toFixed(1);
+          return `${d.name} (${percentage}%)`;
+        });
     };
 
     render();
     const ro = new ResizeObserver(render);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [data, colors, height]);
+  }, [data, colors, height, isDark, total]);
 
   return (
     <div ref={containerRef} className={className}>

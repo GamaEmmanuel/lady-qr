@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export interface AreaPoint {
   x: string | Date;
@@ -16,6 +17,7 @@ interface D3AreaProps {
 const D3Area: React.FC<D3AreaProps> = ({ data, height = 280, color = '#0d9488', className }) => {
   const ref = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { isDark } = useTheme();
 
   const parsed = useMemo(() => {
     const parseTime = (v: string | Date) => (v instanceof Date ? v : new Date(v));
@@ -82,22 +84,31 @@ const D3Area: React.FC<D3AreaProps> = ({ data, height = 280, color = '#0d9488', 
       g.append('path').datum(parsed).attr('fill', `url(#${gradientId})`).attr('d', area as any);
       g.append('path').datum(parsed).attr('fill', 'none').attr('stroke', color).attr('stroke-width', 2).attr('d', line as any);
 
+      const textColor = isDark ? '#9ca3af' : '#6b7280';
+      const axisColor = isDark ? '#4b5563' : '#d1d5db';
+
       g.append('g')
         .attr('transform', `translate(0,${innerHeight})`)
         .call(d3.axisBottom(x).ticks(width < 500 ? 4 : 8).tickSizeOuter(0))
         .selectAll('text')
-        .attr('fill', '#6b7280')
+        .attr('fill', textColor)
         .style('font-size', '12px')
         .style('text-anchor', 'end')
         .attr('dx', '-0.5em')
         .attr('dy', '0.15em')
         .attr('transform', 'rotate(-45)');
 
+      g.selectAll('.domain, .tick line')
+        .attr('stroke', axisColor);
+
       g.append('g')
         .call(d3.axisLeft(y).ticks(5).tickSizeOuter(0))
         .selectAll('text')
-        .attr('fill', '#6b7280')
+        .attr('fill', textColor)
         .style('font-size', '12px');
+
+      g.selectAll('.domain, .tick line')
+        .attr('stroke', axisColor);
     };
 
     render();
@@ -105,7 +116,7 @@ const D3Area: React.FC<D3AreaProps> = ({ data, height = 280, color = '#0d9488', 
     const ro = new ResizeObserver(render);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [parsed, height, color]);
+  }, [parsed, height, color, isDark]);
 
   return (
     <div ref={containerRef} className={className}>

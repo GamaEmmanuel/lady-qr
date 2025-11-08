@@ -115,7 +115,7 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
   });
 
   // Calculate metrics for the selected range
-  const uniqueScansInRange = new Set(scansInRange.map(s => s.fingerprint)).size;
+  const uniqueScansInRange = new Set(scansInRange.map(s => s.ipAddress)).size;
   const returningInRange = scansInRange.filter(s => s.isReturningVisitor).length;
   const returnRateInRange = scansInRange.length > 0 ? (returningInRange / scansInRange.length) * 100 : 0;
   const lastScanInRange = scansInRange.length > 0
@@ -124,18 +124,39 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
       ).scannedAt
     : null;
 
-  // Prepare chart data
-  const deviceData = Object.entries(analytics.deviceStats).map(([device, count]) => ({
+  // Prepare chart data - FILTERED BY TIME RANGE
+  // Device stats from scansInRange
+  const deviceStatsFiltered = scansInRange.reduce((acc: Record<string, number>, scan) => {
+    const type = scan.deviceInfo?.type || 'unknown';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const deviceData = Object.entries(deviceStatsFiltered).map(([device, count]) => ({
     name: device.charAt(0).toUpperCase() + device.slice(1),
     value: count
   }));
 
-  const platformData = Object.entries(analytics.platformStats || {}).map(([platform, count]) => ({
+  // Platform stats from scansInRange
+  const platformStatsFiltered = scansInRange.reduce((acc: Record<string, number>, scan) => {
+    const platform = scan.platformCategory || 'Other';
+    acc[platform] = (acc[platform] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const platformData = Object.entries(platformStatsFiltered).map(([platform, count]) => ({
     name: platform,
     value: count
   }));
 
-  const countryData = Object.entries(analytics.countryStats)
+  // Country stats from scansInRange
+  const countryStatsFiltered = scansInRange.reduce((acc: Record<string, number>, scan) => {
+    const country = scan.location?.country || 'Unknown';
+    acc[country] = (acc[country] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const countryData = Object.entries(countryStatsFiltered)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5)
     .map(([country, count]) => ({
@@ -143,7 +164,16 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
       value: count
     }));
 
-  const cityData = Object.entries(analytics.cityStats || {})
+  // City stats from scansInRange
+  const cityStatsFiltered = scansInRange.reduce((acc: Record<string, number>, scan) => {
+    const city = scan.location?.city || 'Unknown';
+    const country = scan.location?.country || 'Unknown';
+    const cityKey = `${city}, ${country}`;
+    acc[cityKey] = (acc[cityKey] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const cityData = Object.entries(cityStatsFiltered)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 10)
     .map(([city, count]) => ({
@@ -151,10 +181,17 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
       value: count
     }));
 
+  // Hour stats from scansInRange
+  const hourStatsFiltered = scansInRange.reduce((acc: Record<number, number>, scan) => {
+    const hour = new Date(scan.scannedAt).getUTCHours();
+    acc[hour] = (acc[hour] || 0) + 1;
+    return acc;
+  }, {} as Record<number, number>);
+
   // Prepare hour-of-day data (0-23)
   const hourData = Array.from({ length: 24 }, (_, i) => ({
     x: new Date(2000, 0, 1, i), // Use arbitrary date, just care about hour
-    y: analytics.hourStats?.[i] || 0
+    y: hourStatsFiltered[i] || 0
   }));
 
   const RangeButton: React.FC<{ value: '7d' | '30d' | '90d' | 'all'; label: string }> = ({ value, label }) => (
@@ -324,40 +361,48 @@ const QRAnalytics: React.FC<QRAnalyticsProps> = ({ qrCodeId }) => {
 
       {/* Recent Scans */}
       <Card>
-        <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">Recent Scans</h3>
+        <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+          Recent Scans {rangeDays ? `(Last ${rangeDays} days)` : '(All time)'}
+        </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date & Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Returning</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {analytics.recentScans.slice(0, 10).map((scan) => (
-                <tr key={scan.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{new Date(scan.scannedAt).toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.location.city}, {scan.location.country}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                      {scan.platformCategory || scan.deviceInfo.os}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {scan.isReturningVisitor ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400">
-                        Yes
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">No</span>
-                    )}
-                  </td>
+          {scansInRange.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              No scans in the selected time range
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date & Time</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Returning</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {scansInRange.slice(0, 10).map((scan) => (
+                  <tr key={scan.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{new Date(scan.scannedAt).toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{scan.location.city}, {scan.location.country}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                        {scan.platformCategory || scan.deviceInfo.os}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {scan.isReturningVisitor ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                          Yes
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">No</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
     </div>

@@ -165,9 +165,6 @@ export const useQRAnalytics = (qrCodeId: string) => {
     };
 
     fetchAnalytics();
-
-    const interval = setInterval(fetchAnalytics, 30000);
-    return () => clearInterval(interval);
   }, [qrCodeId, currentUser]);
 
   const refetch = () => {

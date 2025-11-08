@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -39,8 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.stripeWebhook = exports.createStripeCheckoutSession = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firebase_functions_1 = require("firebase-functions");
-const admin = __importStar(require("firebase-admin"));
 const stripe_1 = __importDefault(require("stripe"));
+const index_1 = require("./index");
 // Force redeploy
 if (!process.env.STRIPE_SECRET_KEY) {
     console.warn('The STRIPE_SECRET_KEY environment variable is not set. The app will not work correctly in a deployed environment.');
@@ -85,7 +52,8 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
     firebase_functions_1.logger.info(`Using successUrl: ${successUrl} and cancelUrl: ${cancelUrl}`);
     try {
         firebase_functions_1.logger.info(`Fetching user document for userId: ${userId}`);
-        const userDoc = await admin.firestore().collection("users").doc(userId).get();
+        const db = (0, index_1.getMainDatabase)();
+        const userDoc = await db.collection("users").doc(userId).get();
         const user = userDoc.data();
         if (!user) {
             firebase_functions_1.logger.error("User not found in Firestore.", { userId });
@@ -157,9 +125,8 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
 });
 // Map Stripe price IDs to plan types
 const PRICE_TO_PLAN_MAP = {
-    'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic',
-    'price_1S5g0TDUi8OxbbECDFvnQnCW': 'professional',
-    'YOUR_STRIPE_BUSINESS_PRICE_ID': 'Business',
+    'price_1SPdCcDUi8OxbbECORoClMl6': 'basic', // Basic plan - $5/month
+    'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic', // Old Basic price ID (keep for legacy subscriptions)
 };
 exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
     var _a, _b;
@@ -205,7 +172,8 @@ exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
                     subscriptionId: session.subscription
                 });
                 // Find existing active subscription for this user
-                const subscriptionsRef = admin.firestore().collection('subscriptions');
+                const db = (0, index_1.getMainDatabase)();
+                const subscriptionsRef = db.collection('subscriptions');
                 const existingSubQuery = await subscriptionsRef
                     .where('userId', '==', userId)
                     .where('status', '==', 'active')
@@ -239,7 +207,7 @@ exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
                     firebase_functions_1.logger.info('Created new subscription', { subscriptionId: newSubscription.id });
                 }
                 // Also update user document for quick reference
-                const userRef = admin.firestore().collection('users').doc(userId);
+                const userRef = db.collection('users').doc(userId);
                 await userRef.update({
                     planType: planType,
                     subscriptionStatus: 'active',
@@ -253,7 +221,8 @@ exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
         case 'customer.subscription.deleted': {
             const subscription = event.data.object;
             firebase_functions_1.logger.info('Processing customer.subscription.deleted', { subscriptionId: subscription.id });
-            const subscriptionsRef = admin.firestore().collection('subscriptions');
+            const db = (0, index_1.getMainDatabase)();
+            const subscriptionsRef = db.collection('subscriptions');
             const subscriptionQuery = await subscriptionsRef
                 .where('stripeSubscriptionId', '==', subscription.id)
                 .limit(1)
@@ -267,7 +236,7 @@ exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
                 // Also update user document
                 const userId = subDoc.data().userId;
                 if (userId) {
-                    const userRef = admin.firestore().collection('users').doc(userId);
+                    const userRef = db.collection('users').doc(userId);
                     await userRef.update({
                         subscriptionStatus: 'cancelled',
                         subscriptionUpdatedAt: new Date()

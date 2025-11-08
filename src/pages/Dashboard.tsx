@@ -7,6 +7,10 @@ import { plans } from '../data/plans';
 import { downloadQRCode } from '../utils/downloadQR';
 import { generateShortUrl } from '../utils/qrTracking';
 import ConfirmDialog from '../components/ConfirmDialog';
+import QRPreview from '../components/QRPreview';
+import D3Area from '../components/charts/D3Area';
+import D3Donut from '../components/charts/D3Donut';
+import { useAggregateAnalytics } from '../hooks/useAggregateAnalytics';
 import {
   QrCodeIcon,
   ChartBarIcon,
@@ -16,7 +20,11 @@ import {
   ArrowDownTrayIcon,
   PlayIcon,
   PauseIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  XMarkIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
@@ -38,6 +46,12 @@ const Dashboard: React.FC = () => {
     isOpen: false,
     qrId: null
   });
+
+  // QR Preview modal state
+  const [previewQR, setPreviewQR] = useState<any | null>(null);
+
+  // Aggregate analytics
+  const { analytics: aggregateAnalytics, loading: analyticsLoading } = useAggregateAnalytics();
 
   // Fetch QR codes from Firestore
   React.useEffect(() => {
@@ -159,7 +173,10 @@ const Dashboard: React.FC = () => {
 
   // Button Handlers
   const handleView = (qrId: string) => {
-    navigate(`/qr/${qrId}`);
+    const qr = qrCodes.find(q => q.id === qrId);
+    if (qr) {
+      setPreviewQR(qr);
+    }
   };
 
   const handleEdit = (qrId: string) => {
@@ -448,6 +465,210 @@ const Dashboard: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {/* Aggregate Analytics Section */}
+        {!analyticsLoading && aggregateAnalytics && aggregateAnalytics.totalScans > 0 && (
+          <div className="space-y-6 mt-8">
+            {/* Section Header */}
+            <div>
+              <h2 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
+                Analytics Overview
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Performance metrics across all your QR codes
+              </p>
+            </div>
+
+            {/* Active QR Performance Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">This Week</p>
+                    <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
+                      {aggregateAnalytics.scansThisWeek.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {aggregateAnalytics.scansThisWeek >= aggregateAnalytics.scansLastWeek ? (
+                      <ArrowTrendingUpIcon className="h-8 w-8 text-success-600" />
+                    ) : (
+                      <ArrowTrendingDownIcon className="h-8 w-8 text-error-600" />
+                    )}
+                  </div>
+                </div>
+                {aggregateAnalytics.scansLastWeek > 0 && (
+                  <p className={`text-xs mt-2 ${
+                    aggregateAnalytics.scansThisWeek >= aggregateAnalytics.scansLastWeek
+                      ? 'text-success-600'
+                      : 'text-error-600'
+                  }`}>
+                    {aggregateAnalytics.scansThisWeek >= aggregateAnalytics.scansLastWeek ? '+' : ''}
+                    {(((aggregateAnalytics.scansThisWeek - aggregateAnalytics.scansLastWeek) / aggregateAnalytics.scansLastWeek) * 100).toFixed(1)}%
+                    {' '}vs last week
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg per QR</p>
+                    <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
+                      {aggregateAnalytics.averageScansPerQR.toFixed(1)}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <ChartBarIcon className="h-8 w-8 text-primary-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Scans per QR code
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Peak Hour</p>
+                    <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
+                      {aggregateAnalytics.peakHour}:00
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <ClockIcon className="h-8 w-8 text-accent-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Most active time
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Scans Today</p>
+                    <p className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
+                      {aggregateAnalytics.scansToday.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <EyeIcon className="h-8 w-8 text-warning-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Activity today
+                </p>
+              </div>
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Total Scans Over Time */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
+                    Scans Over Time
+                  </h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Last 30 days</span>
+                </div>
+                <D3Area
+                  data={Object.entries(aggregateAnalytics.dateStats)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([date, count]) => ({ x: new Date(date), y: count }))}
+                  height={280}
+                />
+              </div>
+
+              {/* OS Distribution */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  Platform Distribution
+                </h3>
+                <D3Donut
+                  data={Object.entries(aggregateAnalytics.osStats)
+                    .sort(([,a], [,b]) => b - a)
+                    .map(([os, count]) => ({
+                      name: `${os} (${count.toLocaleString()})`,
+                      value: count
+                    }))}
+                  height={280}
+                />
+              </div>
+            </div>
+
+            {/* Top Performing QR Codes & Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Top Performing QR Codes */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  Top Performing QR Codes
+                </h3>
+                <div className="space-y-3">
+                  {aggregateAnalytics.topQRCodes.slice(0, 5).map((qr, index) => (
+                    <div
+                      key={qr.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/create?edit=${qr.id}`)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {qr.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {qr.type}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          {qr.scanCount.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">scans</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Activity Feed */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  Recent Activity
+                </h3>
+                <div className="space-y-3 max-h-[320px] overflow-y-auto">
+                  {aggregateAnalytics.recentScans.slice(0, 10).map((scan) => (
+                    <div
+                      key={scan.id}
+                      className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
+                        <EyeIcon className="h-4 w-4 text-success-600 dark:text-success-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {scan.qrCodeName}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {scan.location.city}, {scan.location.country} • {scan.deviceInfo.type}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          {new Date(scan.scannedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Dialogs */}
@@ -474,6 +695,89 @@ const Dashboard: React.FC = () => {
         confirmText="Delete"
         confirmButtonClass="bg-error-600 hover:bg-error-700"
       />
+
+      {/* QR Preview Modal */}
+      {previewQR && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewQR(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white">
+                  {previewQR.name}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {getTypeName(previewQR.type)} • {previewQR.isDynamic ? 'Dynamic' : 'Static'}
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewQR(null)}
+                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="flex justify-center mb-4">
+              <QRPreview
+                data={generateShortUrl(previewQR.shortUrlId || previewQR.id)}
+                customization={previewQR.customizationOptions || {}}
+                size={300}
+              />
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Scans</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{previewQR.scanCount || 0}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Status</p>
+                  <p className={`font-semibold ${previewQR.isActive ? 'text-success-600' : 'text-gray-500'}`}>
+                    {previewQR.isActive ? 'Active' : 'Paused'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    setPreviewQR(null);
+                    handleEdit(previewQR.id);
+                  }}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium"
+                >
+                  Edit QR Code
+                </button>
+                <button
+                  onClick={() => {
+                    handleDownload(previewQR);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Download
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setPreviewQR(null);
+                  handleEdit(previewQR.id);
+                }}
+                className="w-full mt-2 px-4 py-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors font-medium text-sm"
+              >
+                View Full Details & Analytics →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

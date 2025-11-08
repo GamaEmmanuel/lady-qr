@@ -7,15 +7,15 @@ export const plans: Plan[] = [
     price: 0,
     interval: 'month',
     features: [
-      '2 static QR codes',
-      '1 dynamic QR code',
+      '1 static QR code',
+      'No dynamic QR codes',
       'No customization',
-      'PNG download',
-      'No technical support'
+      'PNG download only',
+      'No support'
     ],
     limits: {
-      staticCodes: 2,
-      dynamicCodes: 1,
+      staticCodes: 1,
+      dynamicCodes: 0,
       analytics: false,
       vectorExport: false,
       users: 1,
@@ -28,21 +28,21 @@ export const plans: Plan[] = [
   {
     id: 'basic',
     name: 'Basic',
-    price: 7,
-    priceId: 'price_1S5fztDUi8OxbbECZPInb8rQ', // Replace with your actual Stripe Price ID
+    price: 5,
+    productId: 'prod_TMLuyO6ZOw836h', // Stripe Product ID
+    priceId: 'price_1SPdCcDUi8OxbbECORoClMl6', // Stripe Price ID for $5/month
     interval: 'month',
     features: [
       'Unlimited static QR codes',
-      '10 dynamic QR codes',
+      'Unlimited dynamic QR codes',
       'Complete customization',
-      'PNG, SVG, PDF download',
-      'No tuQR branding',
-      'Priority support'
+      'Multi-format download (PNG, SVG, PDF)',
+      'Full support'
     ],
     limits: {
       staticCodes: -1, // unlimited
-      dynamicCodes: 10,
-      analytics: false,
+      dynamicCodes: -1, // unlimited
+      analytics: true,
       vectorExport: true,
       users: 1,
       apiAccess: false,
@@ -52,53 +52,22 @@ export const plans: Plan[] = [
     }
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    price: 15,
-    priceId: 'price_1S5g0TDUi8OxbbECDFvnQnCW', // Replace with your actual Stripe Price ID
-    interval: 'month',
-    features: [
-      'Unlimited static QR codes',
-      '100 dynamic QR codes',
-      'Advanced analytics',
-      'All format downloads',
-      'No tuQR branding',
-      '5 users per account',
-      'Premium support'
-    ],
-    limits: {
-      staticCodes: -1, // unlimited
-      dynamicCodes: 100,
-      analytics: true,
-      vectorExport: true,
-      users: 5,
-      apiAccess: false,
-      branding: true,
-      customization: true,
-      emailSupport: true
-    }
-  },
-  {
-    id: 'Business',
+    id: 'business',
     name: 'Business',
     price: null,
-    priceId: 'YOUR_STRIPE_BUSINESS_PRICE_ID', // Replace with your actual Stripe Price ID
     interval: 'month',
     features: [
-      'Unlimited static QR codes',
-      '1,000 dynamic QR codes',
-      'Advanced analytics',
-      'All format downloads',
-      'No tuQR branding',
-      '20 users per account',
-      'Dedicated support'
+      'Custom solutions for your needs',
+      'Dedicated account manager',
+      'Priority support',
+      'Contact us for details'
     ],
     limits: {
       staticCodes: -1, // unlimited
-      dynamicCodes: 1000,
+      dynamicCodes: -1, // unlimited
       analytics: true,
       vectorExport: true,
-      users: 20,
+      users: -1, // unlimited
       apiAccess: true,
       branding: true,
       customization: true,

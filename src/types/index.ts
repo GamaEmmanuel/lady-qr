@@ -8,7 +8,7 @@ export interface User {
 export interface Subscription {
   id: string;
   userId: string;
-  planType: 'free' | 'basic' | 'professional' | 'Business' | string;
+  planType: 'free' | 'basic' | 'business' | string;
   status: 'active' | 'payment_pending' | 'cancelled' | 'expired';
   stripeSubscriptionId?: string;
   trialEndsAt?: Date;
@@ -87,7 +87,8 @@ export interface Plan {
   id: string;
   name: string;
   price: number | null;
-  priceId?: string; // Add this line
+  productId?: string; // Stripe Product ID (prod_xxx)
+  priceId?: string; // Stripe Price ID (price_xxx) - required for checkout
   interval: 'month' | 'year';
   features: string[];
   limits: {

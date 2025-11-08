@@ -1,7 +1,7 @@
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
-import * as admin from "firebase-admin";
 import Stripe from "stripe";
+import { getMainDatabase } from './index';
 
 // Force redeploy
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -60,7 +60,8 @@ export const createStripeCheckoutSession = onCall(async (request) => {
 
   try {
     logger.info(`Fetching user document for userId: ${userId}`);
-    const userDoc = await admin.firestore().collection("users").doc(userId).get();
+    const db = getMainDatabase();
+    const userDoc = await db.collection("users").doc(userId).get();
     const user = userDoc.data();
 
     if (!user) {
@@ -145,9 +146,8 @@ export const createStripeCheckoutSession = onCall(async (request) => {
 
 // Map Stripe price IDs to plan types
 const PRICE_TO_PLAN_MAP: { [key: string]: string } = {
-  'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic',
-  'price_1S5g0TDUi8OxbbECDFvnQnCW': 'professional',
-  'YOUR_STRIPE_BUSINESS_PRICE_ID': 'Business',
+  'price_1SPdCcDUi8OxbbECORoClMl6': 'basic', // Basic plan - $5/month
+  'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic', // Old Basic price ID (keep for legacy subscriptions)
 };
 
 export const stripeWebhook = onRequest(async (request, response) => {
@@ -200,7 +200,8 @@ export const stripeWebhook = onRequest(async (request, response) => {
         });
 
         // Find existing active subscription for this user
-        const subscriptionsRef = admin.firestore().collection('subscriptions');
+        const db = getMainDatabase();
+        const subscriptionsRef = db.collection('subscriptions');
         const existingSubQuery = await subscriptionsRef
           .where('userId', '==', userId)
           .where('status', '==', 'active')
@@ -235,7 +236,7 @@ export const stripeWebhook = onRequest(async (request, response) => {
         }
 
         // Also update user document for quick reference
-        const userRef = admin.firestore().collection('users').doc(userId);
+        const userRef = db.collection('users').doc(userId);
         await userRef.update({
           planType: planType,
           subscriptionStatus: 'active',
@@ -250,7 +251,8 @@ export const stripeWebhook = onRequest(async (request, response) => {
         const subscription = event.data.object as Stripe.Subscription;
         logger.info('Processing customer.subscription.deleted', { subscriptionId: subscription.id });
 
-        const subscriptionsRef = admin.firestore().collection('subscriptions');
+        const db = getMainDatabase();
+        const subscriptionsRef = db.collection('subscriptions');
         const subscriptionQuery = await subscriptionsRef
           .where('stripeSubscriptionId', '==', subscription.id)
           .limit(1)
@@ -266,7 +268,7 @@ export const stripeWebhook = onRequest(async (request, response) => {
             // Also update user document
             const userId = subDoc.data().userId;
             if (userId) {
-              const userRef = admin.firestore().collection('users').doc(userId);
+              const userRef = db.collection('users').doc(userId);
               await userRef.update({
                 subscriptionStatus: 'cancelled',
                 subscriptionUpdatedAt: new Date()

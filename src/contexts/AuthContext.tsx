@@ -416,7 +416,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (type === 'static') {
       return plan.limits.staticCodes === -1 || qrCounts.staticCodes < plan.limits.staticCodes;
     } else {
-      return qrCounts.dynamicCodes < plan.limits.dynamicCodes;
+      return plan.limits.dynamicCodes === -1 || qrCounts.dynamicCodes < plan.limits.dynamicCodes;
     }
   };
 

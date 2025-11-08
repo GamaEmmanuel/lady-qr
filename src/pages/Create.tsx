@@ -17,7 +17,8 @@ import {
   AdjustmentsHorizontalIcon,
   EyeIcon,
   ShieldExclamationIcon,
-  XMarkIcon
+  XMarkIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline';
 
 const Create: React.FC = () => {
@@ -30,6 +31,11 @@ const Create: React.FC = () => {
   if (!currentUser) {
     return <Navigate to="/create-guest" replace />;
   }
+
+  // DEBUG: Get plan info
+  const debugPlan = subscription ? plans.find(p => p.id === subscription.planType) : null;
+  const debugCanCreateStatic = canCreateQR('static');
+  const debugCanCreateDynamic = canCreateQR('dynamic');
 
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
   const [isDynamic, setIsDynamic] = useState(false);
@@ -47,6 +53,7 @@ const Create: React.FC = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [showQRTypeInfo, setShowQRTypeInfo] = useState<'static' | 'dynamic' | null>(null);
   // Generate consistent QR ID for both preview and storage
   const [qrCodeId, setQrCodeId] = useState<string>('');
 
@@ -385,7 +392,7 @@ const Create: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6">
           {loading && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
@@ -395,24 +402,40 @@ const Create: React.FC = () => {
             </div>
           )}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">
                 {isEditing ? 'Edit QR Code' : 'Create Professional QR Code'}
               </h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
                 {isEditing ? 'View analytics and edit your QR code settings' : 'Create permanent QR codes with full customization and analytics'}
               </p>
 
+              {/* DEBUG PANEL - Remove this after debugging */}
+              <div className="mt-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 max-w-3xl mx-auto text-left">
+                <h3 className="text-sm font-bold text-yellow-900 dark:text-yellow-300 mb-2">🐛 DEBUG INFO (Remove after fixing)</h3>
+                <div className="space-y-1 text-xs font-mono text-yellow-800 dark:text-yellow-400">
+                  <div><strong>Subscription planType:</strong> {subscription?.planType || 'null'}</div>
+                  <div><strong>Subscription status:</strong> {subscription?.status || 'null'}</div>
+                  <div><strong>QR Counts:</strong> Static: {qrCounts?.staticCodes ?? 'null'}, Dynamic: {qrCounts?.dynamicCodes ?? 'null'}</div>
+                  <div><strong>Found Plan:</strong> {debugPlan ? `${debugPlan.name} (id: ${debugPlan.id})` : 'NOT FOUND'}</div>
+                  <div><strong>Plan Limits:</strong> {debugPlan ? `Static: ${debugPlan.limits.staticCodes}, Dynamic: ${debugPlan.limits.dynamicCodes}` : 'N/A'}</div>
+                  <div><strong>Can Create Static:</strong> {debugCanCreateStatic ? '✅ YES' : '❌ NO'}</div>
+                  <div><strong>Can Create Dynamic:</strong> {debugCanCreateDynamic ? '✅ YES' : '❌ NO'}</div>
+                  <div><strong>Current Mode:</strong> {isDynamic ? 'Dynamic' : 'Static'}</div>
+                  <div><strong>canCreate result:</strong> {canCreate ? '✅ YES' : '❌ NO'}</div>
+                </div>
+              </div>
+
               {/* Plan Limitations Warning */}
               {!canCreate && (
-                <div className="mt-4 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 rounded-lg p-4 max-w-2xl mx-auto">
+                <div className="mt-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 rounded-lg p-3 max-w-2xl mx-auto">
                   <div className="flex items-center space-x-3">
-                    <ShieldExclamationIcon className="h-6 w-6 text-error-600 dark:text-error-400 flex-shrink-0" />
+                    <ShieldExclamationIcon className="h-5 w-5 text-error-600 dark:text-error-400 flex-shrink-0" />
                     <div className="text-left">
                       <h3 className="text-sm font-medium text-error-800 dark:text-error-300">
                         Plan Limit Reached
                       </h3>
-                      <p className="text-sm text-error-600 dark:text-error-400 mt-1">
+                      <p className="text-sm text-error-600 dark:text-error-400 mt-0.5">
                         You've reached the limit of {isDynamic ? 'dynamic' : 'static'} QR codes for your current plan.{' '}
                         <Link to="/pricing" className="font-medium underline hover:no-underline">
                           Upgrade your plan
@@ -427,17 +450,17 @@ const Create: React.FC = () => {
 
             {/* When editing/viewing QR: Different layout */}
             {isEditing ? (
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {/* Top Section: QR Preview + Configuration */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:items-stretch">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
                   {/* QR Preview - Top Left */}
                   <div className="lg:col-span-1 flex">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 w-full flex flex-col">
-                      <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 w-full flex flex-col">
+                      <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                         <EyeIcon className="h-5 w-5 mr-2" />
                         QR Code Preview
                       </h3>
-                      <div className="flex justify-center mb-6 flex-grow items-center">
+                      <div className="flex justify-center mb-4 flex-grow items-center">
                         <QRPreview
                           data={qrData}
                           customization={customization}
@@ -456,8 +479,8 @@ const Create: React.FC = () => {
                   <div className="lg:col-span-2 flex">
                     {/* Form Fields */}
                     {selectedTypeConfig && (
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 w-full flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 w-full flex flex-col">
+                        <div className="flex items-center justify-between mb-3">
                           <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
                             Configuration
                           </h3>
@@ -471,8 +494,8 @@ const Create: React.FC = () => {
                         </div>
 
                         {/* Universal Name Field */}
-                        <div className="mb-6">
-                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <div className="mb-4">
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                             Name <span className="text-red-500 ml-1">*</span>
                           </label>
                           <input
@@ -489,7 +512,7 @@ const Create: React.FC = () => {
 
                         {/* Customization Options */}
                         {showCustomization && (
-                          <div className="mb-6">
+                          <div className="mb-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -564,12 +587,12 @@ const Create: React.FC = () => {
                           </div>
                         )}
 
-                        <div className="space-y-4 flex-grow">
+                        <div className="space-y-3 flex-grow">
                           {selectedTypeConfig.fields.map((field) => (
                             <div key={field.id}>
                               <label
                                 htmlFor={field.id}
-                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
                               >
                                 {field.label}
                                 {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -580,7 +603,7 @@ const Create: React.FC = () => {
                         </div>
 
                         {/* Download/Save Buttons - Integrated in Configuration */}
-                        <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button
                               onClick={handleDownload}
@@ -615,8 +638,8 @@ const Create: React.FC = () => {
 
                 {/* Analytics - Bottom Full Width */}
                 {editingQRId && (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
+                    <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-3">
                       QR Code Analytics
                     </h2>
                     <QRAnalytics qrCodeId={editingQRId} />
@@ -625,15 +648,15 @@ const Create: React.FC = () => {
               </div>
             ) : (
               /* When creating new QR: Original layout */
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Configuration Panel */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-5">
                 {/* QR Type Selection (only when creating new) */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h2 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
+                    <h2 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-3">
                       QR Code Type
                     </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {allowedCreateTypes.map((type) => (
                         <button
                           key={type.id}
@@ -663,76 +686,128 @@ const Create: React.FC = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                {/* Static/Dynamic Selection (only when creating new) */}
-                {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                      Code Type
-                    </h3>
-                    <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-                      <div className="text-sm text-primary-700 dark:text-primary-300">
-                        <strong>Your current plan:</strong> {currentPlan?.name} -
-                        Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} |
-                        Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
+                    {/* Static/Dynamic Selection - Integrated in same card */}
+                    {selectedTypeConfig && selectedTypeConfig.canBeDynamic && selectedTypeConfig.canBeStatic && (
+                      <div className="mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                          Code Type
+                        </h3>
+                        <div className="mb-3 p-2.5 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+                          <div className="text-sm text-primary-700 dark:text-primary-300">
+                            <strong>Your current plan:</strong> {currentPlan?.name} -
+                            Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} |
+                            Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="relative">
+                            <button
+                              onClick={() => {
+                                setIsDynamic(false);
+                                // Reset QR ID when switching types (for new QR codes)
+                                if (!isEditing) {
+                                  setQrCodeId('');
+                                }
+                                // Keep name field sticky
+                                setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
+                              }}
+                              disabled={!canCreateQR('static')}
+                              className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
+                                !isDynamic && canCreateQR('static')
+                                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                  : !canCreateQR('static')
+                                  ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
+                                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                              }`}
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <div className={`font-medium ${!canCreateQR('static') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                  Static
+                                </div>
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowQRTypeInfo(showQRTypeInfo === 'static' ? null : 'static');
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                  >
+                                    <QuestionMarkCircleIcon className="h-5 w-5" />
+                                  </button>
+                                  {showQRTypeInfo === 'static' && (
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
+                                      <div className="bg-gray-800 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg max-w-xs whitespace-normal">
+                                        Permanent QR code - content cannot be changed after creation
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                          <div className="border-8 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <button
+                              onClick={() => {
+                                setIsDynamic(true);
+                                // Reset QR ID when switching types (for new QR codes)
+                                if (!isEditing) {
+                                  setQrCodeId('');
+                                }
+                                // Keep name field sticky
+                                setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
+                              }}
+                              disabled={!canCreateQR('dynamic')}
+                              className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
+                                isDynamic && canCreateQR('dynamic')
+                                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                  : !canCreateQR('dynamic')
+                                  ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
+                                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                              }`}
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <div className={`font-medium ${!canCreateQR('dynamic') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                  Dynamic
+                                </div>
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowQRTypeInfo(showQRTypeInfo === 'dynamic' ? null : 'dynamic');
+                                    }}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                  >
+                                    <QuestionMarkCircleIcon className="h-5 w-5" />
+                                  </button>
+                                  {showQRTypeInfo === 'dynamic' && (
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
+                                      <div className="bg-gray-800 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg max-w-xs whitespace-normal">
+                                        Editable QR code - change destination URL anytime without reprinting
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                                          <div className="border-8 border-transparent border-t-gray-800 dark:border-t-gray-700"></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => {
-                          setIsDynamic(false);
-                          // Reset QR ID when switching types (for new QR codes)
-                          if (!isEditing) {
-                            setQrCodeId('');
-                          }
-                          // Keep name field sticky
-                          setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
-                        }}
-                        disabled={!canCreateQR('static')}
-                        className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                          !isDynamic && canCreateQR('static')
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : !canCreateQR('static')
-                            ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
-                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                        }`}
-                      >
-                        <div className={`font-medium ${!canCreateQR('static') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                          Static
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsDynamic(true);
-                          // Reset QR ID when switching types (for new QR codes)
-                          if (!isEditing) {
-                            setQrCodeId('');
-                          }
-                          // Keep name field sticky
-                          setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
-                        }}
-                        disabled={!canCreateQR('dynamic')}
-                        className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                          isDynamic && canCreateQR('dynamic')
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : !canCreateQR('dynamic')
-                            ? 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 opacity-50 cursor-not-allowed'
-                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                        }`}
-                      >
-                        <div className={`font-medium ${!canCreateQR('dynamic') ? 'text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                          Dynamic
-                        </div>
-                      </button>
-                    </div>
+                    )}
                   </div>
-                )}
 
                 {/* Form Fields */}
                 {selectedTypeConfig && (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
+                    <div className="flex items-center justify-between mb-3">
                       <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
                         Configuration
                       </h3>
@@ -746,8 +821,8 @@ const Create: React.FC = () => {
                     </div>
 
                     {/* Universal Name Field */}
-                    <div className="mb-6">
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="mb-4">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Name <span className="text-red-500 ml-1">*</span>
                       </label>
                       <input
@@ -764,7 +839,7 @@ const Create: React.FC = () => {
 
                     {/* Customization Options */}
                     {showCustomization && (
-                      <div className="mb-6">
+                      <div className="mb-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -839,12 +914,12 @@ const Create: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {selectedTypeConfig.fields.map((field) => (
                         <div key={field.id}>
                           <label
                             htmlFor={field.id}
-                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
                           >
                             {field.label}
                             {field.required && <span className="text-red-500 ml-1">*</span>}
@@ -857,7 +932,7 @@ const Create: React.FC = () => {
                 )}
 
                 {/* Download/Save Buttons */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       onClick={handleDownload}
@@ -890,12 +965,12 @@ const Create: React.FC = () => {
               {/* Preview Panel */}
               <div className="lg:col-span-1">
                 <div className="sticky top-8">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
+                    <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                       <EyeIcon className="h-5 w-5 mr-2" />
                       Preview
                     </h3>
-                    <div className="flex justify-center mb-6">
+                    <div className="flex justify-center mb-4">
                       <QRPreview
                         data={qrData}
                         customization={customization}

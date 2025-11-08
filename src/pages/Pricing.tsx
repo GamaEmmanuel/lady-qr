@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
@@ -63,48 +62,31 @@ const Pricing: React.FC = () => {
     }
   };
 
-  const testHelloWorld = async () => {
-    try {
-      const functions = getFunctions();
-      const helloWorld = httpsCallable(functions, 'helloWorld');
-      const response = await helloWorld();
-      console.log('Hello World Response:', response.data);
-      alert('Hello World function succeeded! Check the console.');
-    } catch (error) {
-      console.error('Hello World Error:', error);
-      alert('Hello World function failed. Check the console.');
-    }
-  };
-
-
   return (
-    <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+    <div className="bg-white dark:bg-gray-900 py-8 sm:py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <button onClick={testHelloWorld} className="mb-4 bg-yellow-500 text-black px-4 py-2 rounded">
-            Run Test Function
-          </button>
           <h2 className="text-base font-semibold leading-7 text-primary-600">Pricing</h2>
-          <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+          <p className="mt-1 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
             Plans designed for modern businesses
           </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+          <p className="mt-3 text-lg leading-7 text-gray-600 dark:text-gray-300">
             Start free and upgrade as your business grows. All plans include professional support and multiple payment methods.
           </p>
         </div>
 
         {/* Current Plan Notification */}
         {currentUser && (
-          <div className="isolate mx-auto mt-8 max-w-md">
-            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-lg p-4">
+          <div className="isolate mx-auto mt-4 max-w-md">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded-lg p-3">
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">✓</span>
+                  <div className="w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">✓</span>
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-primary-800 dark:text-primary-300">
+                  <h3 className="text-xs font-medium text-primary-800 dark:text-primary-300">
                     Current Plan
                   </h3>
                   <p className="text-sm text-primary-700 dark:text-primary-400">
@@ -117,71 +99,70 @@ const Pricing: React.FC = () => {
           </div>
         )}
 
-        <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-8">
+        <div className="isolate mx-auto mt-6 grid max-w-md grid-cols-1 gap-y-6 sm:mt-8 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-x-6">
           {plans.map((plan, index) => {
             const isCurrentPlan = plan.id === currentPlan?.id;
             return (
             <div
               key={plan.id}
-              className={`flex flex-col justify-between rounded-3xl p-8 xl:p-10 ${
-                index === 2
+              className={`flex flex-col justify-between rounded-2xl p-5 ${
+                index === 1
                   ? 'bg-primary-600 text-white ring-2 ring-primary-600'
                   : 'bg-white dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between gap-x-4">
-                  <h3 className={`text-lg font-poppins font-semibold leading-8 ${
-                    index === 2 ? 'text-white' : 'text-gray-900 dark:text-white'
+                  <h3 className={`text-lg font-poppins font-semibold leading-7 ${
+                    index === 1 ? 'text-white' : 'text-gray-900 dark:text-white'
                   }`}>
                     {plan.name}
                   </h3>
-                  {index === 2 && (
+                  {index === 1 && (
                     <p className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold leading-5 text-white">
                       Most popular
                     </p>
                   )}
                 </div>
-                <p className={`mt-4 text-sm leading-6 ${
-                  index === 2 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
+                <p className={`mt-2 text-sm leading-5 ${
+                  index === 1 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                 }`}>
-                  {plan.id === 'gratis' && 'Perfect to get started'}
-                  {plan.id === 'basico' && 'Ideal for small businesses'}
-                  {plan.id === 'profesional' && 'For growing companies'}
-                  {plan.id === 'negocios' && 'For large organizations'}
+                  {plan.id === 'free' && 'Perfect to get started'}
+                  {plan.id === 'basic' && 'Ideal for small businesses'}
+                  {plan.id === 'business' && 'For large organizations'}
                 </p>
-                <p className="mt-6 flex items-baseline gap-x-1">
+                <p className="mt-3 flex items-baseline gap-x-1">
                   <span className={`text-4xl font-poppins font-bold tracking-tight ${
-                    index === 2 ? 'text-white' : 'text-gray-900 dark:text-white'
+                    index === 1 ? 'text-white' : 'text-gray-900 dark:text-white'
                   }`}>
                     {plan.price !== null ? `$${plan.price}` : 'Contact'}
                   </span>
                   {plan.price !== null && (
                     <span className={`text-sm font-semibold leading-6 ${
-                    index === 2 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
+                    index === 1 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                   }`}>
                     USD/{plan.interval === 'month' ? 'month' : 'year'}
                   </span>
                   )}
                 </p>
-                <ul className={`mt-8 space-y-3 text-sm leading-6 ${
-                  index === 2 ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+                <ul className={`mt-4 space-y-1.5 text-sm leading-5 ${
+                  index === 1 ? 'text-white' : 'text-gray-600 dark:text-gray-300'
                 }`}>
                   {plan.features.map((feature) => {
                     const isNegativeFeature = (feature.startsWith('Sin ') || feature.startsWith('No ')) && !feature.includes('marca');
                     return (
-                    <li key={feature} className="flex gap-x-3">
+                    <li key={feature} className="flex gap-x-2">
                       {isNegativeFeature ? (
                         <XMarkIcon
-                          className={`h-6 w-5 flex-none ${
-                            index === 2 ? 'text-red-300' : 'text-red-500'
+                          className={`h-5 w-5 flex-none ${
+                            index === 1 ? 'text-red-300' : 'text-red-500'
                           }`}
                           aria-hidden="true"
                         />
                       ) : (
                         <CheckIcon
-                          className={`h-6 w-5 flex-none ${
-                            index === 2 ? 'text-white' : 'text-primary-600'
+                          className={`h-5 w-5 flex-none ${
+                            index === 1 ? 'text-white' : 'text-primary-600'
                           }`}
                           aria-hidden="true"
                         />
@@ -195,12 +176,12 @@ const Pricing: React.FC = () => {
               <button
                 onClick={() => !isCurrentPlan && handleSubscribe(plan.priceId)}
                 disabled={isLoading || isCurrentPlan}
-                className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-all duration-200 ${
+                className={`mt-5 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-all duration-200 ${
                   isLoading
                     ? 'bg-gray-400 cursor-not-allowed'
                     : isCurrentPlan
                     ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : index === 2
+                    : index === 1
                     ? 'bg-white text-primary-600 shadow-sm hover:bg-gray-50'
                     : 'bg-primary-600 text-white shadow-sm hover:bg-primary-500'
                 }`}
@@ -219,71 +200,106 @@ const Pricing: React.FC = () => {
           )})}
         </div>
 
-        {/* Payment Methods */}
-        <div className="mt-16 bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
-          <h3 className="text-xl font-poppins font-semibold text-gray-900 dark:text-white text-center mb-6">
-            Available Payment Methods
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-              <div className="text-2xl mb-2">💳</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">Cards</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Visa, Mastercard</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-              <div className="text-2xl mb-2">🏪</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">PayPal</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Digital wallet</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-              <div className="text-2xl mb-2">🏦</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">Bank Transfer</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">ACH/Wire</div>
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg">
-              <div className="text-2xl mb-2">📱</div>
-              <div className="text-sm font-medium text-gray-900 dark:text-white">Apple Pay</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Mobile payment</div>
-            </div>
-          </div>
-        </div>
-
         {/* FAQ */}
-        <div className="mt-16">
-          <h3 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white text-center mb-8">
+        <div className="mt-6">
+          <h3 className="text-xl font-poppins font-bold text-gray-900 dark:text-white text-center mb-4">
             Frequently Asked Questions
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
                 Can I change plans at any time?
               </h4>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Yes, you can upgrade or downgrade your plan at any time from your control panel.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
                 What happens to my QR codes if I cancel?
               </h4>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Static codes will continue working forever. Dynamic codes will work for an additional 30 days.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Do you offer discounts for annual payment?
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                What's the difference between static and dynamic QR codes?
               </h4>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes, by paying annually you get 2 months free on all paid plans.
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Static QR codes contain fixed data and can't be edited after creation. Dynamic QR codes can be updated anytime, and include analytics tracking.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Is support available 24/7?
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Can I customize my QR codes?
               </h4>
-              <p className="text-gray-600 dark:text-gray-400">
-                Yes, our support team is available 24/7 via email and chat for all paid plans.
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Yes! Basic and Business plans include complete customization: colors, styles, logos, and frames for your QR codes.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                What file formats can I download?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Free plan includes PNG. Basic and Business plans offer PNG, SVG, and PDF formats for high-quality prints and digital use.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Do QR codes expire?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Static QR codes never expire. Dynamic QR codes remain active as long as your subscription is valid, plus 30 days after cancellation.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Is there a free trial?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Yes! Our Free plan lets you create 1 static QR code with no credit card required. Upgrade anytime to unlock more features.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Can I track QR code scans?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Yes! Dynamic QR codes include analytics with scan counts, locations, devices, and timestamps. Available on Basic and Business plans.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Are there any setup fees?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                No! There are no setup fees, hidden costs, or long-term contracts. Pay monthly and cancel anytime.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                What payment methods do you accept?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                We accept all major credit cards, debit cards, and digital wallets through our secure payment processor, Stripe.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                Can I use QR codes for commercial purposes?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Absolutely! All plans allow commercial use. Create QR codes for marketing, products, menus, events, and more.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-1.5">
+                How do I get started?
+              </h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Simply sign up for a free account, choose your plan, and start creating QR codes immediately. No technical knowledge required!
               </p>
             </div>
           </div>
