@@ -67,9 +67,9 @@ if (app) {
     auth = getAuth(app);
     console.log('✅ Firebase Auth initialized');
 
-    // Use the main-database instead of (default)
-    db = getFirestore(app, 'main-database');
-    console.log('✅ Firebase Firestore initialized (using main-database)');
+    // Use the (default) database
+    db = getFirestore(app);
+    console.log('✅ Firebase Firestore initialized (using (default) database)');
 
     storage = getStorage(app);
     console.log('✅ Firebase Storage initialized');

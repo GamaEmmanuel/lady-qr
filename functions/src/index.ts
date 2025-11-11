@@ -1,17 +1,17 @@
 import * as admin from 'firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin (only once)
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Helper function to get Firestore instance (main-database)
+// Helper function to get Firestore instance (default database)
+// Use admin.firestore() instead of getFirestore() for better compatibility
 export const getMainDatabase = () => {
-  return getFirestore(admin.app(), 'main-database');
+  return admin.firestore();
 };
 
-console.log('✅ Firebase Admin initialized with main-database Firestore database');
+console.log('✅ Firebase Admin initialized with (default) Firestore database');
 
 // Import and export function modules
 export * from "./redirect";

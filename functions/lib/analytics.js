@@ -21,7 +21,7 @@ exports.getAnalytics = (0, https_1.onRequest)(async (req, res) => {
             res.status(400).json({ error: 'Missing qrCodeId or userId' });
             return;
         }
-        // Verify user owns this QR code (from main-database)
+        // Verify user owns this QR code (from default database)
         const db = (0, index_1.getMainDatabase)();
         let qrDoc = await db.collection('qrcodes').doc(qrCodeId).get();
         // If not found by direct document ID, try locating by shortUrlId

@@ -26,7 +26,7 @@ const FAQ: React.FC = () => {
       id: 'what-is-tuqr',
       category: 'general',
       question: 'What is tuQR?',
-      answer: 'Lady QR is the most complete platform for creating, customizing and managing QR codes. We offer 15+ different types of QR codes, advanced customization, detailed analytics and multiple payment methods for businesses worldwide.'
+      answer: 'Lady QR is the most complete platform for creating, customizing and managing QR codes. We offer 10 different types of QR codes, advanced customization, detailed analytics and multiple payment methods for businesses worldwide.'
     },
     {
       id: 'how-qr-works',
@@ -38,7 +38,7 @@ const FAQ: React.FC = () => {
       id: 'qr-types-available',
       category: 'general',
       question: 'What types of QR codes can I create?',
-      answer: 'We offer 15+ types: Website, Contact Card (vCard), Text, Email, SMS, WiFi, Social Media, GPS Location, Calendar Events, Business Page, Restaurant Menu, Crypto Wallet, PDF, Video, Images, Coupons and more. Each type is optimized for its specific use.'
+      answer: 'We offer 10 types: Website (URL), Contact Card (vCard), Text, Email, SMS, WhatsApp Message, WiFi, Social Media (Instagram, Facebook, Twitter, LinkedIn, YouTube, TikTok, Telegram), Location (GPS), and Calendar Event. Each type is optimized for its specific use.'
     },
     {
       id: 'device-compatibility',
@@ -103,6 +103,30 @@ const FAQ: React.FC = () => {
       category: 'pricing',
       question: 'What happens if I cancel my subscription?',
       answer: 'You can cancel anytime without penalties. Static QR codes will continue working forever. Dynamic codes will continue working for an additional 30 days after cancellation, giving you time to migrate or upgrade your plan.'
+    },
+    {
+      id: 'free-trial',
+      category: 'pricing',
+      question: 'Is there a free trial?',
+      answer: 'Yes! Our Free plan lets you create 1 static QR code with no credit card required. Upgrade anytime to unlock more features.'
+    },
+    {
+      id: 'setup-fees',
+      category: 'pricing',
+      question: 'Are there any setup fees?',
+      answer: 'No! There are no setup fees, hidden costs, or long-term contracts. Pay monthly and cancel anytime.'
+    },
+    {
+      id: 'commercial-use',
+      category: 'pricing',
+      question: 'Can I use QR codes for commercial purposes?',
+      answer: 'Absolutely! All plans allow commercial use. Create QR codes for marketing, products, menus, events, and more.'
+    },
+    {
+      id: 'getting-started',
+      category: 'pricing',
+      question: 'How do I get started?',
+      answer: 'Simply sign up for a free account, choose your plan, and start creating QR codes immediately. No technical knowledge required!'
     },
 
     // Features and Customization

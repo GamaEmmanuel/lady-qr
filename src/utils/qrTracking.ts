@@ -137,6 +137,39 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
       return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
     case 'social':
       return generateSocialMediaUrl(formData.platform, formData.username);
+    case 'event': {
+      // Generate iCalendar format for calendar events
+      const formatDateForICal = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+
+      const title = formData.title || 'Event';
+      const startDate = formatDateForICal(formData.startDate);
+      const endDate = formData.endDate ? formatDateForICal(formData.endDate) : startDate;
+      const location = formData.location || '';
+      const description = formData.description || '';
+
+      // Create iCalendar format
+      const ical = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Lady QR//Calendar Event//EN',
+        'BEGIN:VEVENT',
+        `SUMMARY:${title}`,
+        `DTSTART:${startDate}`,
+        `DTEND:${endDate}`,
+        location ? `LOCATION:${location}` : '',
+        description ? `DESCRIPTION:${description.replace(/\n/g, '\\n')}` : '',
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].filter(line => line !== '').join('\r\n');
+
+      // Return as data URL with proper MIME type
+      return `data:text/calendar;charset=utf-8,${encodeURIComponent(ical)}`;
+    }
     default:
       return JSON.stringify(formData);
   }

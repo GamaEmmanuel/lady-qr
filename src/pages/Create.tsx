@@ -57,6 +57,15 @@ const Create: React.FC = () => {
   // Generate consistent QR ID for both preview and storage
   const [qrCodeId, setQrCodeId] = useState<string>('');
 
+  // Initialize QR ID once when creating new QR code (not editing)
+  useEffect(() => {
+    if (!isEditing && !qrCodeId) {
+      const newId = `qr-${Date.now()}`;
+      setQrCodeId(newId);
+      console.log('🆕 Generated stable QR ID:', newId);
+    }
+  }, [isEditing, qrCodeId]);
+
   // Load existing QR code data when editing
   useEffect(() => {
     const loadQRCode = async () => {
@@ -114,27 +123,21 @@ const Create: React.FC = () => {
   const generateQRData = () => {
     if (!selectedTypeConfig) return '';
 
-    // Generate consistent QR ID for both preview and storage
-    let finalQrId = qrCodeId;
+    // Use the stable QR ID from state
+    const finalQrId = isEditing ? editingQRId! : qrCodeId;
 
-    if (isEditing) {
-      // When editing, use the existing QR ID
-      finalQrId = editingQRId!;
-      console.log('🔄 EDITING MODE: Using existing QR ID:', finalQrId);
-    } else if (!finalQrId) {
-      // When creating new, generate a consistent ID
-      finalQrId = `qr-${Date.now()}`;
-      setQrCodeId(finalQrId);
-      console.log('🆕 NEW QR: Generated ID:', finalQrId);
-    } else {
-      console.log('🔄 EXISTING ID: Using current ID:', finalQrId);
+    if (!finalQrId) {
+      console.log('⚠️ No QR ID available yet, waiting for initialization...');
+      return '';
     }
+
+    console.log('🎯 Using stable QR ID:', finalQrId);
+    console.log('📊 Is Dynamic:', isDynamic);
+    console.log('📝 Is Editing:', isEditing);
 
     // All QR codes now use short URLs for consistent tracking
     const qrData = createTrackableQRData(finalQrId);
     console.log('📱 QR Data Generated:', qrData);
-    console.log('🎯 QR ID being used:', finalQrId);
-    console.log('📊 Is Dynamic:', isDynamic);
 
     return qrData;
   };
@@ -152,10 +155,8 @@ const Create: React.FC = () => {
       [fieldId]: value
     }));
 
-    // Reset QR ID when form data changes (for new QR codes)
-    if (!isEditing && qrCodeId) {
-      setQrCodeId('');
-    }
+    // Don't reset QR ID - keep it stable!
+    // The QR ID should remain the same from creation to save
   };
 
   const handleCustomizationChange = (key: keyof QRCustomization, value: any) => {
@@ -279,17 +280,28 @@ const Create: React.FC = () => {
     try {
       setLoading(true);
 
-      // Ensure we have a consistent ID
-      let finalQrId = qrCodeId;
-      if (isEditing) {
-        finalQrId = editingQRId!;
-      } else if (!finalQrId) {
-        finalQrId = `qr-${Date.now()}`;
-        setQrCodeId(finalQrId);
+      // Use the stable QR ID that was generated on mount
+      const finalQrId = isEditing ? editingQRId! : qrCodeId;
+
+      if (!finalQrId) {
+        alert('Error: QR code ID not initialized. Please refresh and try again.');
+        return;
       }
+
+      console.log('💾 Saving QR code with ID:', finalQrId);
 
       // Prepare document data
       const destinationUrl = generateOriginalData(selectedType, formData);
+      console.log('📦 Document data being saved:', {
+        id: finalQrId,
+        userId: currentUser.uid,
+        type: selectedType,
+        isDynamic,
+        shortUrlId: finalQrId,
+        destinationUrl,
+        contentKeys: Object.keys(formData)
+      });
+
       const docData: Record<string, any> = {
         userId: currentUser.uid,
         type: selectedType,
@@ -309,7 +321,9 @@ const Create: React.FC = () => {
         docData.customizationOptions = customization;
       }
 
+      console.log('💾 Saving to Firestore collection: qrcodes, doc ID:', finalQrId);
       await setDoc(doc(db, 'qrcodes', finalQrId), docData, { merge: true });
+      console.log('✅ QR code saved successfully to Firestore!');
 
       alert('QR code saved successfully! You can find it in your Dashboard and Archive.');
     } catch (error) {
@@ -665,10 +679,8 @@ const Create: React.FC = () => {
                             setFormData((prev) => ({ name: prev?.name || '' }));
                             setIsDynamic(type.canBeDynamic && !type.canBeStatic);
 
-                            // Reset QR ID when type changes (for new QR codes)
-                            if (!isEditing) {
-                              setQrCodeId('');
-                            }
+                            // Don't reset QR ID - keep it stable across type changes!
+                            // The same QR ID is used for the entire creation session
 
                             // Keep name field sticky across type changes
                             setFormData((prev) => ({ ...prev, name: prev?.name || '' }));
@@ -679,7 +691,7 @@ const Create: React.FC = () => {
                               : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >
-                          <div className="text-2xl mb-2">{type.icon}</div>
+                          <type.icon className="w-7 h-7 mb-2 mx-auto" style={{ color: type.iconColor }} />
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {type.name}
                           </div>

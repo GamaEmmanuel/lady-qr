@@ -54,8 +54,6 @@ export type QRCodeType =
   | 'mp3'
   | 'coupon'
   | 'feedback'
-  | 'business'
-  | 'crypto'
   | 'whatsapp';
 
 export interface QRCustomization {

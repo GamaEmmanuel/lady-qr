@@ -38,17 +38,17 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMainDatabase = void 0;
 const admin = __importStar(require("firebase-admin"));
-const firestore_1 = require("firebase-admin/firestore");
 // Initialize Firebase Admin (only once)
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-// Helper function to get Firestore instance (main-database)
+// Helper function to get Firestore instance (default database)
+// Use admin.firestore() instead of getFirestore() for better compatibility
 const getMainDatabase = () => {
-    return (0, firestore_1.getFirestore)(admin.app(), 'main-database');
+    return admin.firestore();
 };
 exports.getMainDatabase = getMainDatabase;
-console.log('✅ Firebase Admin initialized with main-database Firestore database');
+console.log('✅ Firebase Admin initialized with (default) Firestore database');
 // Import and export function modules
 __exportStar(require("./redirect"), exports);
 __exportStar(require("./analytics"), exports);

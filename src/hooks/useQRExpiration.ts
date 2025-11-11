@@ -16,7 +16,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
     const newExpirationTime = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
     setExpiresAt(newExpirationTime);
     setIsExpired(false);
-    
+
     // Store in localStorage for persistence across page refreshes
     const qrDataHash = btoa(qrData || '');
     localStorage.setItem(`qr_expires_at_${qrDataHash}`, newExpirationTime.toISOString());
@@ -34,7 +34,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
 
     const qrDataHash = btoa(qrData);
     const storedExpiration = localStorage.getItem(`qr_expires_at_${qrDataHash}`);
-    
+
     if (storedExpiration) {
       const storedDate = new Date(storedExpiration);
       if (storedDate > new Date()) {
@@ -63,7 +63,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
       if (remaining <= 0) {
         setTimeRemaining(0);
         setIsExpired(true);
-        
+
         // Clean up localStorage when expired
         if (qrData) {
           const qrDataHash = btoa(qrData);
@@ -79,10 +79,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
     // Update immediately
     updateTimer();
 
-    // Update every second
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
+    // Timer updates disabled to reduce unnecessary re-renders
   }, [expiresAt, qrData]);
 
   // Cleanup expired QR codes from localStorage on component mount
@@ -90,7 +87,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
     const cleanupExpiredQRs = () => {
       const now = new Date().getTime();
       const keysToRemove: string[] = [];
-      
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('qr_expires_at_')) {
@@ -102,7 +99,7 @@ export const useQRExpiration = (qrData: string): QRExpirationState => {
           }
         }
       }
-      
+
       keysToRemove.forEach(key => localStorage.removeItem(key));
     };
 

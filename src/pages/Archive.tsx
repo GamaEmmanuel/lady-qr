@@ -100,9 +100,7 @@ const Archive: React.FC = () => {
       social: '📱',
       location: '📍',
       event: '📅',
-      business: '🏢',
-      menu: '🍽️',
-      crypto: '₿'
+      menu: '🍽️'
     };
     return icons[type] || '📄';
   };
@@ -118,9 +116,7 @@ const Archive: React.FC = () => {
       social: 'Social Media',
       location: 'Location',
       event: 'Event',
-      business: 'Business',
-      menu: 'Menu',
-      crypto: 'Crypto'
+      menu: 'Menu'
     };
     return names[type] || 'Unknown';
   };

@@ -1,10 +1,26 @@
 import { QRCodeType } from '../types';
+import { IconType } from 'react-icons';
+import {
+  TbWorld,
+  TbUser,
+  TbFileText,
+  TbMail,
+  TbMessage,
+  TbWifi,
+  TbShare3,
+  TbMapPin,
+  TbCalendar
+} from 'react-icons/tb';
+import {
+  SiWhatsapp
+} from 'react-icons/si';
 
 export interface QRTypeConfig {
   id: QRCodeType;
   name: string;
   description: string;
-  icon: string;
+  icon: IconType;
+  iconColor?: string;
   canBeDynamic: boolean;
   canBeStatic: boolean;
   fields: QRField[];
@@ -25,9 +41,10 @@ export interface QRField {
 export const qrTypes: QRTypeConfig[] = [
   {
     id: 'url',
-    name: 'Website',
+    name: 'Website (URL)',
     description: 'Link to any website',
-    icon: '🌐',
+    icon: TbWorld,
+    iconColor: '#3b82f6',
     canBeDynamic: true,
     canBeStatic: true,
     fields: [
@@ -43,9 +60,10 @@ export const qrTypes: QRTypeConfig[] = [
   },
   {
     id: 'vcard',
-    name: 'Contact Card',
+    name: 'Contact Card (vCard)',
     description: 'Personal or business contact information',
-    icon: '👤',
+    icon: TbUser,
+    iconColor: '#8b5cf6',
     canBeDynamic: true,
     canBeStatic: true,
     fields: [
@@ -63,7 +81,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'text',
     name: 'Text',
     description: 'Simple text message',
-    icon: '📝',
+    icon: TbFileText,
+    iconColor: '#6b7280',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -81,7 +100,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'email',
     name: 'Email',
     description: 'Predefined email sending',
-    icon: '📧',
+    icon: TbMail,
+    iconColor: '#ef4444',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -94,7 +114,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'sms',
     name: 'SMS',
     description: 'Text message to phone number',
-    icon: '💬',
+    icon: TbMessage,
+    iconColor: '#10b981',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -106,7 +127,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'whatsapp',
     name: 'WhatsApp Message',
     description: 'Start a WhatsApp chat with a predefined message',
-    icon: '📲',
+    icon: SiWhatsapp,
+    iconColor: '#25D366',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -118,7 +140,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'wifi',
     name: 'WiFi',
     description: 'Automatic WiFi network connection',
-    icon: '📶',
+    icon: TbWifi,
+    iconColor: '#0ea5e9',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -140,7 +163,8 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'social',
     name: 'Social Media',
     description: 'Open social media app with profile',
-    icon: '📱',
+    icon: TbShare3,
+    iconColor: '#ec4899',
     canBeDynamic: true,
     canBeStatic: true,
     fields: [
@@ -165,9 +189,10 @@ export const qrTypes: QRTypeConfig[] = [
   },
   {
     id: 'location',
-    name: 'Location',
+    name: 'Location (GPS)',
     description: 'GPS coordinates or address',
-    icon: '📍',
+    icon: TbMapPin,
+    iconColor: '#f59e0b',
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -178,58 +203,18 @@ export const qrTypes: QRTypeConfig[] = [
   },
   {
     id: 'event',
-    name: 'Event',
+    name: 'Calendar Event',
     description: 'Event information for calendar',
-    icon: '📅',
+    icon: TbCalendar,
+    iconColor: '#f97316',
     canBeDynamic: true,
-    canBeStatic: false,
+    canBeStatic: true,
     fields: [
       { id: 'title', label: 'Event title', type: 'text', required: true },
       { id: 'startDate', label: 'Start date', type: 'datetime-local', required: true },
       { id: 'endDate', label: 'End date', type: 'datetime-local' },
       { id: 'location', label: 'Location', type: 'text' },
       { id: 'description', label: 'Description', type: 'textarea' }
-    ]
-  },
-  {
-    id: 'business',
-    name: 'Business Page',
-    description: 'Complete business information',
-    icon: '🏢',
-    canBeDynamic: true,
-    canBeStatic: false,
-    fields: [
-      { id: 'businessName', label: 'Business name', type: 'text', required: true },
-      { id: 'description', label: 'Description', type: 'textarea' },
-      { id: 'address', label: 'Address', type: 'text' },
-      { id: 'phone', label: 'Phone', type: 'tel' },
-      { id: 'email', label: 'Email', type: 'email' },
-      { id: 'website', label: 'Website', type: 'url' },
-      { id: 'hours', label: 'Hours', type: 'textarea' }
-    ]
-  },
-  {
-    id: 'crypto',
-    name: 'Crypto Wallet',
-    description: 'Cryptocurrency wallet address',
-    icon: '₿',
-    canBeDynamic: false,
-    canBeStatic: true,
-    fields: [
-      {
-        id: 'cryptocurrency',
-        label: 'Cryptocurrency',
-        type: 'select',
-        required: true,
-        options: [
-          { value: 'bitcoin', label: 'Bitcoin (BTC)' },
-          { value: 'ethereum', label: 'Ethereum (ETH)' },
-          { value: 'litecoin', label: 'Litecoin (LTC)' },
-          { value: 'dogecoin', label: 'Dogecoin (DOGE)' }
-        ]
-      },
-      { id: 'address', label: 'Wallet address', type: 'text', required: true },
-      { id: 'amount', label: 'Amount (optional)', type: 'number' }
     ]
   }
 ];

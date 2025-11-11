@@ -124,9 +124,7 @@ const Dashboard: React.FC = () => {
       social: '📱',
       location: '📍',
       event: '📅',
-      business: '🏢',
-      menu: '🍽️',
-      crypto: '₿'
+      menu: '🍽️'
     };
     return icons[type] || '📄';
   };
@@ -142,9 +140,7 @@ const Dashboard: React.FC = () => {
       social: 'Redes Sociales',
       location: 'Ubicación',
       event: 'Evento',
-      business: 'Negocio',
-      menu: 'Menú',
-      crypto: 'Cripto'
+      menu: 'Menú'
     };
     return names[type] || 'Desconocido';
   };
@@ -600,11 +596,11 @@ const Dashboard: React.FC = () => {
             {/* Top Performing QR Codes & Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Performing QR Codes */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Top Performing QR Codes
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-3 flex-1">
                   {aggregateAnalytics.topQRCodes.slice(0, 5).map((qr, index) => (
                     <div
                       key={qr.id}
@@ -638,12 +634,12 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Recent Activity Feed */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
                   Recent Activity
                 </h3>
-                <div className="space-y-3 max-h-[320px] overflow-y-auto">
-                  {aggregateAnalytics.recentScans.slice(0, 10).map((scan) => (
+                <div className="space-y-3 flex-1">
+                  {aggregateAnalytics.recentScans.slice(0, 5).map((scan) => (
                     <div
                       key={scan.id}
                       className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700"

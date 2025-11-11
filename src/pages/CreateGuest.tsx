@@ -277,7 +277,7 @@ const CreateGuest: React.FC = () => {
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <div className="text-2xl mb-2">{type.icon}</div>
+                    <type.icon className="w-7 h-7 mb-2 mx-auto" style={{ color: type.iconColor }} />
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {type.name}
                     </div>

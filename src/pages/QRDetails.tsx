@@ -127,9 +127,7 @@ const QRDetails: React.FC = () => {
       social: '📱',
       location: '📍',
       event: '📅',
-      business: '🏢',
-      menu: '🍽️',
-      crypto: '₿'
+      menu: '🍽️'
     };
     return icons[type] || '📄';
   };

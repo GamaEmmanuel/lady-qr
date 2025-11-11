@@ -19,6 +19,9 @@ import CreateGuest from './pages/CreateGuest';
 import AuthComplete from './pages/AuthComplete';
 import Archive from './pages/Archive';
 import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Cookies from './pages/Cookies';
 
 function App() {
   return (
@@ -44,6 +47,9 @@ function App() {
                 <Route path="/auth/complete" element={<AuthComplete />} />
                 <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/cookies" element={<Cookies />} />
               </Routes>
             </main>
             <Footer />

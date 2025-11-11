@@ -24,7 +24,7 @@ const Header: React.FC = () => {
     { name: 'Home', href: '/' },
     { name: 'Create QR', href: currentUser ? '/create' : '/create-guest' },
     { name: 'Pricing', href: '/pricing' },
-    { name: 'Features', href: '/features' },
+    { name: 'FAQ', href: '/faq' },
   ];
 
   // Navigation for logged-in users (header tabs)

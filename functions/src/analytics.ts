@@ -22,7 +22,7 @@ export const getAnalytics = onRequest(async (req, res) => {
       return;
     }
 
-    // Verify user owns this QR code (from main-database)
+    // Verify user owns this QR code (from default database)
     const db = getMainDatabase();
     let qrDoc = await db.collection('qrcodes').doc(qrCodeId).get();
 

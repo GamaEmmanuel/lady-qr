@@ -215,9 +215,7 @@ export const useAggregateAnalytics = () => {
 
     fetchAggregateAnalytics();
 
-    // Refresh every 2 minutes
-    const interval = setInterval(fetchAggregateAnalytics, 120000);
-    return () => clearInterval(interval);
+    // Auto-refresh disabled - user can manually refresh if needed
   }, [currentUser]);
 
   return { analytics, loading, error };

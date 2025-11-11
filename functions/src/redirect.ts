@@ -174,6 +174,39 @@ function generateDestinationUrl(type: string, content: any): string {
       return `BEGIN:VCARD\nVERSION:3.0\nFN:${content.firstName || ''} ${content.lastName || ''}\nORG:${content.company || ''}\nTITLE:${content.jobTitle || ''}\nEMAIL:${content.email || ''}\nTEL:${content.phone || ''}\nURL:${content.website || ''}\nEND:VCARD`;
     case 'social':
       return generateSocialMediaUrl(content.platform, content.username);
+    case 'event': {
+      // Generate iCalendar format for calendar events
+      const formatDateForICal = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+
+      const title = content.title || 'Event';
+      const startDate = formatDateForICal(content.startDate);
+      const endDate = content.endDate ? formatDateForICal(content.endDate) : startDate;
+      const location = content.location || '';
+      const description = content.description || '';
+
+      // Create iCalendar format
+      const ical = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Lady QR//Calendar Event//EN',
+        'BEGIN:VEVENT',
+        `SUMMARY:${title}`,
+        `DTSTART:${startDate}`,
+        `DTEND:${endDate}`,
+        location ? `LOCATION:${location}` : '',
+        description ? `DESCRIPTION:${description.replace(/\n/g, '\\n')}` : '',
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].filter(line => line !== '').join('\r\n');
+
+      // Return as data URL with proper MIME type
+      return `data:text/calendar;charset=utf-8,${encodeURIComponent(ical)}`;
+    }
     default:
       return JSON.stringify(content);
   }
@@ -215,8 +248,8 @@ export const redirect = onRequest(async (req, res) => {
 
     console.log('🔄 Processing redirect for shortId:', shortId);
 
-        // Get QR code data from main-database - look for both shortUrlId and direct ID matches
-    console.log('🗄️ Connecting to main-database...');
+        // Get QR code data from (default) database - look for both shortUrlId and direct ID matches
+    console.log('🗄️ Connecting to (default) database...');
     const db = getMainDatabase();
     console.log('✅ Database connection established');
 
@@ -369,6 +402,214 @@ export const redirect = onRequest(async (req, res) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       })
     ]);
+
+    // Special handling for calendar events - serve HTML page with download
+    if (qrData.type === 'event' && qrData.content) {
+      console.log('📅 Calendar event detected - serving landing page');
+
+      const formatDateForICal = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+
+      const formatDateForDisplay = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      };
+
+      const title = qrData.content.title || 'Event';
+      const startDate = formatDateForICal(qrData.content.startDate);
+      const endDate = qrData.content.endDate ? formatDateForICal(qrData.content.endDate) : startDate;
+      const location = qrData.content.location || '';
+      const description = qrData.content.description || '';
+
+      // Create iCalendar format
+      const ical = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Lady QR//Calendar Event//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${qrDoc.id}@ladyqr.com`,
+        `SUMMARY:${title}`,
+        `DTSTART:${startDate}`,
+        `DTEND:${endDate}`,
+        location ? `LOCATION:${location}` : '',
+        description ? `DESCRIPTION:${description.replace(/\n/g, '\\n')}` : '',
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        'STATUS:CONFIRMED',
+        'SEQUENCE:0',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].filter(line => line !== '').join('\r\n');
+
+      // Create HTML page with auto-download and manual button
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add to Calendar - ${title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #1a202c;
+      font-size: 28px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .event-details {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .detail-item {
+      margin-bottom: 12px;
+      color: #4a5568;
+      font-size: 14px;
+    }
+    .detail-label {
+      font-weight: 600;
+      color: #2d3748;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: scale(1.02);
+    }
+    .button:active {
+      transform: scale(0.98);
+    }
+    .footer {
+      margin-top: 24px;
+      color: #718096;
+      font-size: 12px;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📅</div>
+    <h1>Add Event to Calendar</h1>
+
+    <div class="event-details">
+      <div class="detail-item">
+        <span class="detail-label">Event</span>
+        ${title}
+      </div>
+      ${qrData.content.startDate ? `
+      <div class="detail-item">
+        <span class="detail-label">Date & Time</span>
+        ${formatDateForDisplay(qrData.content.startDate)}
+      </div>
+      ` : ''}
+      ${location ? `
+      <div class="detail-item">
+        <span class="detail-label">Location</span>
+        ${location}
+      </div>
+      ` : ''}
+      ${description ? `
+      <div class="detail-item">
+        <span class="detail-label">Description</span>
+        ${description}
+      </div>
+      ` : ''}
+    </div>
+
+    <button class="button" onclick="downloadICS()">
+      📥 Add to My Calendar
+    </button>
+
+    <div class="footer">
+      Powered by <a href="https://lady-qr.web.app">Lady QR</a>
+    </div>
+  </div>
+
+  <script>
+    function downloadICS() {
+      const icalContent = ${JSON.stringify(ical)};
+      const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'event.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Show feedback
+      alert('Calendar file downloaded! Open it to add the event to your calendar.');
+    }
+
+    // Auto-download on page load for mobile devices
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setTimeout(() => {
+        downloadICS();
+      }, 500);
+    }
+  </script>
+</body>
+</html>
+      `;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.status(200).send(html);
+      return;
+    }
 
     // Determine where to redirect based on QR code type and data
     console.log('🎯 Determining redirect URL...');

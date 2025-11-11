@@ -29,11 +29,13 @@ const Contact: React.FC = () => {
 
       // Template parameters - matching EmailJS template variables
       const templateParams = {
+        name: form.name,
         user_name: form.name,
         user_email: form.email,
-        user_subject: form.subject || `Support request from ${form.name || 'Customer'}`,
+        user_subject: form.subject || 'Support Request',
         user_message: form.message,
         to_name: 'Support Team',
+        to_email: 'emmanuel.gama.ibarra@gmail.com', // Recipient email
       };
 
       console.log('Sending email with params:', templateParams);
@@ -60,11 +62,13 @@ const Contact: React.FC = () => {
         subject: '',
         message: ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('EmailJS error:', error);
+      const errorMessage = error?.text || error?.message || 'Failed to send message. Please try again later.';
+      console.error('Error details:', errorMessage);
       setStatusMessage({
         type: 'error',
-        text: 'Failed to send message. Please try again later.'
+        text: `Failed to send message: ${errorMessage}`
       });
     } finally {
       setSubmitting(false);
