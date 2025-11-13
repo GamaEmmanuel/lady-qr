@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { IconType } from 'react-icons';
 import {
   QrCodeIcon,
   ChartBarIcon,
@@ -16,32 +15,10 @@ import {
   SparklesIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
-import {
-  TbWorld,
-  TbUser,
-  TbFileText,
-  TbMail,
-  TbMessage,
-  TbWifi,
-  TbShare3,
-  TbMapPin,
-  TbCalendar
-} from 'react-icons/tb';
-import { SiWhatsapp } from 'react-icons/si';
+import { qrTypes as importedQrTypes } from '../data/qrTypes';
 
 const Features: React.FC = () => {
-  const qrTypes: Array<{ Icon: IconType; name: string; description: string; color: string }> = [
-    { Icon: TbWorld, name: 'Website (URL)', description: 'Links to any website', color: '#3b82f6' },
-    { Icon: TbUser, name: 'Contact Card', description: 'vCard with contact info', color: '#8b5cf6' },
-    { Icon: TbFileText, name: 'Text', description: 'Simple text messages', color: '#6b7280' },
-    { Icon: TbMail, name: 'Email', description: 'Send predefined emails', color: '#ef4444' },
-    { Icon: TbMessage, name: 'SMS', description: 'Text messages to phones', color: '#10b981' },
-    { Icon: SiWhatsapp, name: 'WhatsApp', description: 'Start WhatsApp chat', color: '#25D366' },
-    { Icon: TbWifi, name: 'WiFi', description: 'Auto network connection', color: '#0ea5e9' },
-    { Icon: TbShare3, name: 'Social Media', description: 'Social network profiles', color: '#ec4899' },
-    { Icon: TbMapPin, name: 'Location', description: 'GPS coordinates/addresses', color: '#f59e0b' },
-    { Icon: TbCalendar, name: 'Event', description: 'Calendar event details', color: '#f97316' }
-  ];
+  const qrTypes = importedQrTypes;
 
   const imageFormats = [
     { name: 'PNG', description: 'Ideal for web and social media', quality: 'High quality', transparency: 'Yes' },
@@ -216,10 +193,13 @@ const Features: React.FC = () => {
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {qrTypes.map((type, index) => {
-              const IconComponent = type.Icon;
               return (
                 <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                  <IconComponent className="w-8 h-8 mb-3" style={{ color: type.color }} />
+                  {type.iconImage ? (
+                    <img src={type.iconImage} alt={type.name} className="w-8 h-8 mb-3 object-contain" />
+                  ) : type.icon ? (
+                    <type.icon className="w-8 h-8 mb-3" style={{ color: type.iconColor }} />
+                  ) : null}
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{type.name}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{type.description}</p>
                 </div>

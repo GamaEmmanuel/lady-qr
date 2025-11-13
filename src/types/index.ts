@@ -43,7 +43,6 @@ export type QRCodeType =
   | 'email'
   | 'sms'
   | 'wifi'
-  | 'social'
   | 'pdf'
   | 'video'
   | 'location'
@@ -54,7 +53,14 @@ export type QRCodeType =
   | 'mp3'
   | 'coupon'
   | 'feedback'
-  | 'whatsapp';
+  | 'whatsapp'
+  | 'instagram'
+  | 'facebook'
+  | 'twitter'
+  | 'linkedin'
+  | 'youtube'
+  | 'tiktok'
+  | 'telegram';
 
 export interface QRCustomization {
   foregroundColor: string;

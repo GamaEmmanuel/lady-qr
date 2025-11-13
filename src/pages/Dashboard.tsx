@@ -35,6 +35,8 @@ const Dashboard: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [qrLoading, setQrLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Confirmation dialog state
   const [pauseDialog, setPauseDialog] = useState<{ isOpen: boolean; qrId: string | null; currentStatus: boolean }>({
@@ -62,7 +64,8 @@ const Dashboard: React.FC = () => {
         setQrLoading(true);
         const primaryQuery = query(
           collection(db, 'qrcodes'),
-          where('userId', '==', currentUser.uid)
+          where('userId', '==', currentUser.uid),
+          where('isActive', '==', true) // Only show active (saved) QR codes
         );
 
         const primarySnap = await getDocs(primaryQuery);
@@ -107,7 +110,7 @@ const Dashboard: React.FC = () => {
   }, [currentUser]);
 
   const stats = [
-    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
+    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon },
     { name: 'Total Scans', value: qrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0), icon: ChartBarIcon },
     { name: 'Active QRs', value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
     { name: 'Current Plan', value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
@@ -121,10 +124,17 @@ const Dashboard: React.FC = () => {
       email: '📧',
       sms: '💬',
       wifi: '📶',
-      social: '📱',
       location: '📍',
       event: '📅',
-      menu: '🍽️'
+      menu: '🍽️',
+      whatsapp: '💬',
+      instagram: '📸',
+      facebook: '👍',
+      twitter: '🐦',
+      linkedin: '💼',
+      youtube: '📺',
+      tiktok: '🎵',
+      telegram: '✈️'
     };
     return icons[type] || '📄';
   };
@@ -137,10 +147,17 @@ const Dashboard: React.FC = () => {
       email: 'Email',
       sms: 'SMS',
       wifi: 'WiFi',
-      social: 'Redes Sociales',
       location: 'Ubicación',
       event: 'Evento',
-      menu: 'Menú'
+      menu: 'Menú',
+      whatsapp: 'WhatsApp',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      twitter: 'X (Twitter)',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
+      tiktok: 'TikTok',
+      telegram: 'Telegram'
     };
     return names[type] || 'Desconocido';
   };
@@ -166,6 +183,17 @@ const Dashboard: React.FC = () => {
           return 0;
       }
     });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredQRCodes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedQRCodes = filteredQRCodes.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, sortBy]);
 
   // Button Handlers
   const handleView = (qrId: string) => {
@@ -373,7 +401,7 @@ const Dashboard: React.FC = () => {
                       No QR codes found. <Link to="/create" className="text-primary-600 hover:text-primary-700">Create your first QR code</Link>
                     </td>
                   </tr>
-                ) : filteredQRCodes.map((qr) => (
+                ) : paginatedQRCodes.map((qr) => (
                   <tr
                     key={qr.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
@@ -460,6 +488,90 @@ const Dashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {filteredQRCodes.length > itemsPerPage && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    currentPage === 1
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    currentPage === totalPages
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(endIndex, filteredQRCodes.length)}</span> of{' '}
+                    <span className="font-medium">{filteredQRCodes.length}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 text-sm font-medium ${
+                        currentPage === 1
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="sr-only">Previous</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === page
+                            ? 'z-10 bg-primary-50 dark:bg-primary-900/30 border-primary-500 text-primary-600 dark:text-primary-400'
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 text-sm font-medium ${
+                        currentPage === totalPages
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="sr-only">Next</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Aggregate Analytics Section */}
@@ -558,7 +670,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Charts Row */}
+            {/* Charts Row - Scans and Platform */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Total Scans Over Time */}
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -591,6 +703,23 @@ const Dashboard: React.FC = () => {
                   height={280}
                 />
               </div>
+            </div>
+
+            {/* City Distribution - Full Width */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                Top Cities
+              </h3>
+              <D3Donut
+                data={Object.entries(aggregateAnalytics.cityStats)
+                  .sort(([,a], [,b]) => b - a)
+                  .slice(0, 10) // Top 10 cities
+                  .map(([city, count]) => ({
+                    name: city,
+                    value: count
+                  }))}
+                height={400}
+              />
             </div>
 
             {/* Top Performing QR Codes & Recent Activity */}
@@ -633,33 +762,64 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Recent Activity Feed */}
+              {/* Recent Scans Table */}
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                  Recent Activity
+                  Recent Scans
                 </h3>
-                <div className="space-y-3 flex-1">
-                  {aggregateAnalytics.recentScans.slice(0, 5).map((scan) => (
-                    <div
-                      key={scan.id}
-                      className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
-                        <EyeIcon className="h-4 w-4 text-success-600 dark:text-success-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {scan.qrCodeName}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {scan.location.city}, {scan.location.country} • {scan.deviceInfo.type}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          {new Date(scan.scannedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto flex-1">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          QR Code
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Location
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Platform
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {aggregateAnalytics.recentScans.slice(0, 8).map((scan) => (
+                        <tr key={scan.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50">
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
+                                <EyeIcon className="h-3 w-3 text-success-600 dark:text-success-400" />
+                              </div>
+                              <div className="ml-2">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px]">
+                                  {scan.qrCodeName}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {scan.location.city}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {scan.location.country}
+                            </p>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300">
+                              {scan.platformCategory || scan.deviceInfo.os}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(scan.scannedAt).toLocaleDateString()} {new Date(scan.scannedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

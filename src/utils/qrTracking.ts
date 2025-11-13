@@ -87,20 +87,28 @@ export const generateSocialMediaUrl = (platform: string, username: string): stri
 
   switch (platform) {
     case 'instagram':
-      return `https://instagram.com/${cleanUsername}`;
+      // Universal link - opens Instagram app if installed
+      return `https://www.instagram.com/${cleanUsername}`;
     case 'facebook':
-      return `https://facebook.com/${cleanUsername}`;
+      // App link - opens Facebook app if installed
+      return `https://www.facebook.com/${cleanUsername}`;
     case 'twitter':
+      // Universal link - opens X/Twitter app if installed (twitter.com works better than x.com for app opening)
       return `https://twitter.com/${cleanUsername}`;
     case 'linkedin':
-      return `https://linkedin.com/in/${cleanUsername}`;
+      // Universal link - opens LinkedIn app if installed
+      return `https://www.linkedin.com/in/${cleanUsername}`;
     case 'youtube':
-      return `https://youtube.com/@${cleanUsername}`;
+      // Universal link - opens YouTube app if installed
+      return `https://www.youtube.com/@${cleanUsername}`;
     case 'tiktok':
-      return `https://tiktok.com/@${cleanUsername}`;
+      // Universal link - opens TikTok app if installed
+      return `https://www.tiktok.com/@${cleanUsername}`;
     case 'whatsapp':
+      // WhatsApp universal link - opens WhatsApp app if installed
       return `https://wa.me/${cleanUsername}`;
     case 'telegram':
+      // Telegram universal link - opens Telegram app if installed
       return `https://t.me/${cleanUsername}`;
     default:
       return `https://${platform}.com/${cleanUsername}`;
@@ -128,15 +136,72 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     }
     case 'wifi':
       return `WIFI:T:${formData.encryption || 'WPA'};S:${formData.ssid || ''};P:${formData.password || ''};;`;
-    case 'location':
-      if (formData.latitude && formData.longitude) {
-        return `geo:${formData.latitude},${formData.longitude}`;
+    case 'location': {
+      // Priority 1: Use Google Maps URL if provided
+      if (formData.mapsUrl) {
+        return formData.mapsUrl;
       }
-      return formData.address || '';
+      // Priority 2: Convert address to Google Maps URL
+      if (formData.address) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formData.address)}`;
+      }
+      return '';
+    }
     case 'vcard':
       return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
     case 'social':
       return generateSocialMediaUrl(formData.platform, formData.username);
+    // Individual social platform types
+    case 'instagram': {
+      // Instagram can be profile or post
+      if (formData.instagramType === 'post') {
+        return formData.instagramValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('instagram', formData.instagramValue || '');
+    }
+    case 'facebook': {
+      // Facebook can be profile or post
+      if (formData.facebookType === 'post') {
+        return formData.facebookValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('facebook', formData.facebookValue || '');
+    }
+    case 'twitter': {
+      // X/Twitter can be profile or post
+      if (formData.twitterType === 'post') {
+        return formData.twitterValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('twitter', formData.twitterValue || '');
+    }
+    case 'linkedin': {
+      // LinkedIn can be profile or post
+      if (formData.linkedinType === 'post') {
+        return formData.linkedinValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('linkedin', formData.linkedinValue || '');
+    }
+    case 'youtube': {
+      // YouTube can be either a channel or a video
+      if (formData.youtubeType === 'video') {
+        return formData.youtubeValue || '';
+      }
+      // Default to channel
+      return generateSocialMediaUrl('youtube', formData.youtubeValue || '');
+    }
+    case 'tiktok': {
+      // TikTok can be profile or video
+      if (formData.tiktokType === 'video') {
+        return formData.tiktokValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('tiktok', formData.tiktokValue || '');
+    }
+    case 'telegram':
+      return generateSocialMediaUrl('telegram', formData.username);
     case 'event': {
       // Generate iCalendar format for calendar events
       const formatDateForICal = (dateString: string) => {

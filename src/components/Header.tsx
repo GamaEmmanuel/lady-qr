@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -19,6 +19,7 @@ const Header: React.FC = () => {
   const { currentUser, logout, userData } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -37,6 +38,8 @@ const Header: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      // Redirect to home page after successful logout
+      navigate('/');
     } catch (error) {
       console.error('Error logging out:', error);
     }

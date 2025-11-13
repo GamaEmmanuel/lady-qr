@@ -1,35 +1,21 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { IconType } from 'react-icons';
 import {
   QrCodeIcon,
-  ChartBarIcon,
-  DevicePhoneMobileIcon,
-  GlobeAmericasIcon,
-  SparklesIcon,
   PhotoIcon,
   PaintBrushIcon,
   DocumentIcon,
-  EyeIcon,
-  CogIcon,
+  SparklesIcon,
   ArrowPathIcon,
   ShieldCheckIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import {
-  TbWorld,
-  TbUser,
-  TbFileText,
-  TbMail,
-  TbMessage,
-  TbWifi,
-  TbShare3,
-  TbMapPin,
-  TbCalendar
-} from 'react-icons/tb';
-import { SiWhatsapp } from 'react-icons/si';
+import { qrTypes as importedQrTypes } from '../data/qrTypes';
+import analyticsOverviewImg from '../assets/analytics-overview.png';
+import topCitiesImg from '../assets/top-cities.png';
+import topPerformingQrsImg from '../assets/top-performing-qrs.png';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
@@ -39,53 +25,7 @@ const Home: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const features = [
-    {
-      icon: QrCodeIcon,
-      title: 'Advanced Generation',
-      description: 'Create QR codes for 10 content types with complete customization.'
-    },
-    {
-      icon: ChartBarIcon,
-      title: 'Detailed Analytics',
-      description: 'Track scans, locations and devices in real time.'
-    },
-    {
-      icon: DevicePhoneMobileIcon,
-      title: 'Responsive Design',
-      description: 'Perfectly optimized for mobile, tablet and desktop.'
-    },
-    {
-      icon: GlobeAmericasIcon,
-      title: 'Global Ready',
-      description: 'Multiple payment methods and international support.'
-    },
-    {
-      icon: SparklesIcon,
-      title: 'Complete Customization',
-      description: 'Colors, shapes, logos and custom frames for your brand.'
-    }
-  ];
-
-  const stats = [
-    { name: 'QR Codes created', value: '50K+' },
-    { name: 'Active users', value: '15K+' },
-    { name: 'Countries served', value: '25+' },
-    { name: 'Total scans', value: '2M+' }
-  ];
-
-  const qrTypes: Array<{ Icon: IconType; name: string; description: string; color: string }> = [
-    { Icon: TbWorld, name: 'Website (URL)', description: 'Links to any website', color: '#3b82f6' },
-    { Icon: TbUser, name: 'Contact Card', description: 'vCard with contact info', color: '#8b5cf6' },
-    { Icon: TbFileText, name: 'Text', description: 'Simple text messages', color: '#6b7280' },
-    { Icon: TbMail, name: 'Email', description: 'Send predefined emails', color: '#ef4444' },
-    { Icon: TbMessage, name: 'SMS', description: 'Text messages to phones', color: '#10b981' },
-    { Icon: SiWhatsapp, name: 'WhatsApp', description: 'Start WhatsApp chat', color: '#25D366' },
-    { Icon: TbWifi, name: 'WiFi', description: 'Auto network connection', color: '#0ea5e9' },
-    { Icon: TbShare3, name: 'Social Media', description: 'Social network profiles', color: '#ec4899' },
-    { Icon: TbMapPin, name: 'Location', description: 'GPS coordinates/addresses', color: '#f59e0b' },
-    { Icon: TbCalendar, name: 'Event', description: 'Calendar event details', color: '#f97316' }
-  ];
+  const qrTypes = importedQrTypes;
 
   const customizationOptions = [
     {
@@ -112,15 +52,6 @@ const Home: React.FC = () => {
       description: 'Add decorative frames with custom text',
       features: ['Frame gallery', 'Editable text', 'Calls to action', 'Preset styles']
     }
-  ];
-
-  const analyticsFeatures = [
-    { icon: ChartBarIcon, title: 'Total Scans', description: 'Total number of times your code has been scanned' },
-    { icon: EyeIcon, title: 'Unique Scans', description: 'Unique users who have scanned your code' },
-    { icon: GlobeAmericasIcon, title: 'Geographic Location', description: 'Interactive map showing where scans occur' },
-    { icon: DevicePhoneMobileIcon, title: 'Devices', description: 'Types of devices used to scan' },
-    { icon: CogIcon, title: 'Activity Times', description: 'Charts of when your code is scanned most' },
-    { icon: ArrowPathIcon, title: 'Real Time', description: 'Instantly updated data' }
   ];
 
   return (
@@ -177,65 +108,118 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+      {/* Analytics Dashboard Showcase */}
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:max-w-none">
-            <div className="text-center">
-              <h2 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-                Trusted by thousands of businesses worldwide
-              </h2>
-              <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
-                Join the community of businesses already transforming their marketing with tuQR
-              </p>
+          <div className="mx-auto max-w-2xl text-center mb-8">
+            <h2 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+              Professional Analytics Dashboard
+            </h2>
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+              See exactly how your QR codes are performing with beautiful, actionable insights
+            </p>
+          </div>
+
+          {/* Analytics Overview Screenshot */}
+          <div className="mb-8">
+            <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700">
+              <img
+                src={analyticsOverviewImg}
+                alt="Analytics Overview Dashboard"
+                className="w-full h-auto"
+              />
             </div>
-            <dl className="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat) => (
-                <div key={stat.name} className="flex flex-col bg-gray-50 dark:bg-gray-800 p-8">
-                  <dt className="text-sm font-inter font-medium leading-6 text-gray-600 dark:text-gray-400">
-                    {stat.name}
-                  </dt>
-                  <dd className="order-first text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-                    {stat.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <p className="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
+              Complete analytics overview with scans over time and performance metrics
+            </p>
+          </div>
+
+          {/* Two Column Screenshots */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Top Cities */}
+            <div>
+              <div className="relative rounded-xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+                <img
+                  src={topCitiesImg}
+                  alt="Top Cities Geographic Distribution"
+                  className="w-full h-auto"
+                />
+              </div>
+              <div className="mt-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Geographic Distribution
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  See where your audience is located with interactive city and country breakdowns
+                </p>
+              </div>
+            </div>
+
+            {/* Top Performing QRs */}
+            <div>
+              <div className="relative rounded-xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-700">
+                <img
+                  src={topPerformingQrsImg}
+                  alt="Top Performing QR Codes"
+                  className="w-full h-auto"
+                />
+              </div>
+              <div className="mt-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Performance Rankings
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Track which QR codes perform best and optimize your campaigns accordingly
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA for Analytics */}
+          <div className="mt-8 text-center">
+            <Link
+              to="/register"
+              className="inline-flex items-center space-x-2 rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all duration-200"
+            >
+              <span>Get Started with Analytics</span>
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="bg-gray-50 dark:bg-gray-800 py-24 sm:py-32">
+      {/* QR Types Grid */}
+      <div className="bg-gray-50 dark:bg-gray-800 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-              Everything you need in one platform
+              {qrTypes.length} QR Code Types
             </h2>
-            <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-              Professional tools designed for modern businesses
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+              Create QR codes for any purpose with our specialized types
             </p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              {features.map((feature) => (
-                <div key={feature.title} className="flex flex-col">
-                  <dt className="flex items-center gap-x-3 text-base font-inter font-semibold leading-7 text-gray-900 dark:text-white">
-                    <feature.icon className="h-5 w-5 flex-none text-primary-600" aria-hidden="true" />
-                    {feature.title}
-                  </dt>
-                  <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600 dark:text-gray-300">
-                    <p className="flex-auto">{feature.description}</p>
-                  </dd>
+
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {qrTypes.map((type, index) => {
+              return (
+                <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  {type.iconImage ? (
+                    <img src={type.iconImage} alt={type.name} className="w-8 h-8 mb-3 object-contain" />
+                  ) : type.icon ? (
+                    <type.icon className="w-8 h-8 mb-3" style={{ color: type.iconColor }} />
+                  ) : null}
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{type.name}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{type.description}</p>
                 </div>
-              ))}
-            </dl>
+              );
+            })}
           </div>
         </div>
       </div>
 
       {/* Static vs Dynamic Comparison */}
-      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
@@ -338,35 +322,8 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* QR Types Grid */}
-      <div className="bg-gray-50 dark:bg-gray-800 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              10 QR Code Types
-            </h3>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Create QR codes for any purpose with our specialized types
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {qrTypes.map((type, index) => {
-              const IconComponent = type.Icon;
-              return (
-                <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                  <IconComponent className="w-8 h-8 mb-3" style={{ color: type.color }} />
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{type.name}</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{type.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* Customization Options */}
-      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
@@ -401,38 +358,8 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Analytics Features */}
-      <div className="bg-gray-50 dark:bg-gray-800 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Advanced Analytics
-            </h3>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Gain valuable insights on how people interact with your QR codes
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {analyticsFeatures.map((feature, index) => (
-              <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <feature.icon className="h-8 w-8 text-primary-600 mb-4" />
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-700">
-            <p className="text-sm text-primary-700 dark:text-primary-300 text-center">
-              <strong>Note:</strong> Analytics are available only for dynamic QR codes on paid plans.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Security & Reliability */}
-      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
             <div className="text-center mb-8">

@@ -4,22 +4,29 @@ import {
   TbWorld,
   TbUser,
   TbFileText,
-  TbMail,
   TbMessage,
   TbWifi,
-  TbShare3,
-  TbMapPin,
   TbCalendar
 } from 'react-icons/tb';
-import {
-  SiWhatsapp
-} from 'react-icons/si';
+
+// Import logos
+import facebookLogo from '../assets/facebook-logo.png';
+import instagramLogo from '../assets/instagram-logo.jpeg';
+import linkedinLogo from '../assets/linkedin-logo.png';
+import telegramLogo from '../assets/telegram-logo.png';
+import tiktokLogo from '../assets/tiktok-logo.png';
+import whatsappLogo from '../assets/whatsapp-logo.jpeg';
+import xLogo from '../assets/x-logo.png';
+import youtubeLogo from '../assets/youtube-logo.png';
+import googlemapsLogo from '../assets/googlemaps-logo.png';
+import mailLogo from '../assets/mail-logo.png';
 
 export interface QRTypeConfig {
   id: QRCodeType;
   name: string;
   description: string;
-  icon: IconType;
+  icon?: IconType;
+  iconImage?: string;
   iconColor?: string;
   canBeDynamic: boolean;
   canBeStatic: boolean;
@@ -29,13 +36,17 @@ export interface QRTypeConfig {
 export interface QRField {
   id: string;
   label: string;
-  type: 'text' | 'email' | 'url' | 'textarea' | 'select' | 'file' | 'number' | 'tel' | 'date' | 'datetime-local';
+  type: 'text' | 'email' | 'url' | 'textarea' | 'select' | 'radio' | 'file' | 'number' | 'tel' | 'date' | 'datetime-local';
   required?: boolean;
   placeholder?: string;
   maxLength?: number;
   options?: Array<{ value: string; label: string }>;
   validation?: RegExp;
   multiple?: boolean;
+  conditionalLabel?: Record<string, string>; // Dynamic labels based on other field values
+  conditionalPlaceholder?: Record<string, string>; // Dynamic placeholders based on other field values
+  conditionalType?: Record<string, 'text' | 'url'>; // Dynamic input type based on other field values
+  dependsOn?: string; // Field ID this field depends on
 }
 
 export const qrTypes: QRTypeConfig[] = [
@@ -100,8 +111,7 @@ export const qrTypes: QRTypeConfig[] = [
     id: 'email',
     name: 'Email',
     description: 'Predefined email sending',
-    icon: TbMail,
-    iconColor: '#ef4444',
+    iconImage: mailLogo,
     canBeDynamic: false,
     canBeStatic: true,
     fields: [
@@ -125,15 +135,265 @@ export const qrTypes: QRTypeConfig[] = [
   },
   {
     id: 'whatsapp',
-    name: 'WhatsApp Message',
-    description: 'Start a WhatsApp chat with a predefined message',
-    icon: SiWhatsapp,
-    iconColor: '#25D366',
-    canBeDynamic: false,
+    name: 'WhatsApp',
+    description: 'Link to WhatsApp profile or chat',
+    iconImage: whatsappLogo,
+    canBeDynamic: true,
     canBeStatic: true,
     fields: [
       { id: 'phone', label: 'Phone number (with country code)', type: 'tel', required: true, placeholder: 'e.g., 14155552671' },
-      { id: 'message', label: 'Message', type: 'textarea', placeholder: 'Hello! I found you via QR.' }
+      { id: 'message', label: 'Pre-filled Message (optional)', type: 'textarea', placeholder: 'Hello! I found you via QR.' }
+    ]
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    description: 'Link to Instagram profile or post',
+    iconImage: instagramLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'instagramType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'profile', label: 'Profile' },
+          { value: 'post', label: 'Post/Reel Link' }
+        ]
+      },
+      {
+        id: 'instagramValue',
+        label: 'Username',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., username or @username',
+        dependsOn: 'instagramType',
+        conditionalLabel: {
+          profile: 'Username',
+          post: 'Post/Reel URL'
+        },
+        conditionalPlaceholder: {
+          profile: 'e.g., username or @username',
+          post: 'e.g., https://www.instagram.com/p/...'
+        },
+        conditionalType: {
+          profile: 'text',
+          post: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    description: 'Link to Facebook profile or post',
+    iconImage: facebookLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'facebookType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'profile', label: 'Profile/Page' },
+          { value: 'post', label: 'Post/Video Link' }
+        ]
+      },
+      {
+        id: 'facebookValue',
+        label: 'Username/Page',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., username or page name',
+        dependsOn: 'facebookType',
+        conditionalLabel: {
+          profile: 'Username/Page',
+          post: 'Post/Video URL'
+        },
+        conditionalPlaceholder: {
+          profile: 'e.g., username or page name',
+          post: 'e.g., https://www.facebook.com/...'
+        },
+        conditionalType: {
+          profile: 'text',
+          post: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'twitter',
+    name: 'X (Twitter)',
+    description: 'Link to X/Twitter profile or post',
+    iconImage: xLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'twitterType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'profile', label: 'Profile' },
+          { value: 'post', label: 'Post/Tweet Link' }
+        ]
+      },
+      {
+        id: 'twitterValue',
+        label: 'Username',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., username or @username',
+        dependsOn: 'twitterType',
+        conditionalLabel: {
+          profile: 'Username',
+          post: 'Post/Tweet URL'
+        },
+        conditionalPlaceholder: {
+          profile: 'e.g., username or @username',
+          post: 'e.g., https://twitter.com/.../status/...'
+        },
+        conditionalType: {
+          profile: 'text',
+          post: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    description: 'Link to LinkedIn profile or post',
+    iconImage: linkedinLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'linkedinType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'profile', label: 'Profile/Company' },
+          { value: 'post', label: 'Post Link' }
+        ]
+      },
+      {
+        id: 'linkedinValue',
+        label: 'Username/Profile',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., john-doe or company-name',
+        dependsOn: 'linkedinType',
+        conditionalLabel: {
+          profile: 'Username/Profile',
+          post: 'Post URL'
+        },
+        conditionalPlaceholder: {
+          profile: 'e.g., john-doe or company-name',
+          post: 'e.g., https://www.linkedin.com/posts/...'
+        },
+        conditionalType: {
+          profile: 'text',
+          post: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    description: 'Link to YouTube channel or video',
+    iconImage: youtubeLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'youtubeType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'channel', label: 'Channel/Handle' },
+          { value: 'video', label: 'Video Link' }
+        ]
+      },
+      {
+        id: 'youtubeValue',
+        label: 'Channel Handle',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., @channelname or channel ID',
+        dependsOn: 'youtubeType',
+        conditionalLabel: {
+          channel: 'Channel Handle',
+          video: 'Video URL'
+        },
+        conditionalPlaceholder: {
+          channel: 'e.g., @channelname or channel ID',
+          video: 'e.g., https://www.youtube.com/watch?v=...'
+        },
+        conditionalType: {
+          channel: 'text',
+          video: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    description: 'Link to TikTok profile or video',
+    iconImage: tiktokLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      {
+        id: 'tiktokType',
+        label: 'Link Type',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'profile', label: 'Profile' },
+          { value: 'video', label: 'Video Link' }
+        ]
+      },
+      {
+        id: 'tiktokValue',
+        label: 'Username',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g., @username',
+        dependsOn: 'tiktokType',
+        conditionalLabel: {
+          profile: 'Username',
+          video: 'Video URL'
+        },
+        conditionalPlaceholder: {
+          profile: 'e.g., @username',
+          video: 'e.g., https://www.tiktok.com/@user/video/...'
+        },
+        conditionalType: {
+          profile: 'text',
+          video: 'url'
+        }
+      }
+    ]
+  },
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    description: 'Link to Telegram profile or channel',
+    iconImage: telegramLogo,
+    canBeDynamic: true,
+    canBeStatic: true,
+    fields: [
+      { id: 'username', label: 'Telegram Username/Channel', type: 'text', required: true, placeholder: 'e.g., username or channel name' }
     ]
   },
   {
@@ -160,45 +420,25 @@ export const qrTypes: QRTypeConfig[] = [
     ]
   },
   {
-    id: 'social',
-    name: 'Social Media',
-    description: 'Open social media app with profile',
-    icon: TbShare3,
-    iconColor: '#ec4899',
+    id: 'location',
+    name: 'Location (Maps)',
+    description: 'Address or Google Maps link',
+    iconImage: googlemapsLogo,
     canBeDynamic: true,
     canBeStatic: true,
     fields: [
       {
-        id: 'platform',
-        label: 'Social Media Platform',
-        type: 'select',
-        required: true,
-        options: [
-          { value: 'instagram', label: 'Instagram' },
-          { value: 'facebook', label: 'Facebook' },
-          { value: 'twitter', label: 'Twitter/X' },
-          { value: 'linkedin', label: 'LinkedIn' },
-          { value: 'youtube', label: 'YouTube' },
-          { value: 'tiktok', label: 'TikTok' },
-          { value: 'whatsapp', label: 'WhatsApp' },
-          { value: 'telegram', label: 'Telegram' }
-        ]
+        id: 'address',
+        label: 'Address',
+        type: 'text',
+        placeholder: 'e.g., 123 Main St, New York, NY 10001'
       },
-      { id: 'username', label: 'Username/Handle', type: 'text', required: true, placeholder: 'e.g., @username or username' }
-    ]
-  },
-  {
-    id: 'location',
-    name: 'Location (GPS)',
-    description: 'GPS coordinates or address',
-    icon: TbMapPin,
-    iconColor: '#f59e0b',
-    canBeDynamic: false,
-    canBeStatic: true,
-    fields: [
-      { id: 'address', label: 'Address', type: 'text' },
-      { id: 'latitude', label: 'Latitude', type: 'number' },
-      { id: 'longitude', label: 'Longitude', type: 'number' }
+      {
+        id: 'mapsUrl',
+        label: 'Google Maps URL (optional)',
+        type: 'url',
+        placeholder: 'e.g., https://maps.app.goo.gl/...'
+      }
     ]
   },
   {

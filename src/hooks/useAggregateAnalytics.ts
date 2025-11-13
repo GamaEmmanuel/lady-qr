@@ -11,6 +11,8 @@ export interface AggregateAnalytics {
   averageScansPerQR: number;
   osStats: Record<string, number>;
   dateStats: Record<string, number>;
+  cityStats: Record<string, number>;
+  countryStats: Record<string, number>;
   topQRCodes: Array<{
     id: string;
     name: string;
@@ -30,6 +32,7 @@ export interface AggregateAnalytics {
       type: string;
       os: string;
     };
+    platformCategory?: string;
   }>;
   peakHour: number;
 }
@@ -70,6 +73,8 @@ export const useAggregateAnalytics = () => {
             averageScansPerQR: 0,
             osStats: {},
             dateStats: {},
+            cityStats: {},
+            countryStats: {},
             topQRCodes: [],
             recentScans: [],
             peakHour: 0,
@@ -159,6 +164,21 @@ export const useAggregateAnalytics = () => {
 
         const topQRCodes = qrCodeScanCounts.slice(0, 10);
 
+        // City and Country stats
+        const cityStats = allScans.reduce((acc: Record<string, number>, scan) => {
+          const city = scan.location?.city || 'Unknown';
+          const country = scan.location?.country || 'Unknown';
+          const cityKey = `${city}, ${country}`;
+          acc[cityKey] = (acc[cityKey] || 0) + 1;
+          return acc;
+        }, {});
+
+        const countryStats = allScans.reduce((acc: Record<string, number>, scan) => {
+          const country = scan.location?.country || 'Unknown';
+          acc[country] = (acc[country] || 0) + 1;
+          return acc;
+        }, {});
+
         // Recent scans (last 20)
         const sortedScans = allScans
           .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime())
@@ -178,7 +198,8 @@ export const useAggregateAnalytics = () => {
             deviceInfo: {
               type: scan.deviceInfo?.type || 'unknown',
               os: scan.deviceInfo?.os || 'unknown'
-            }
+            },
+            platformCategory: scan.platformCategory || 'Other'
           };
         });
 
@@ -201,6 +222,8 @@ export const useAggregateAnalytics = () => {
           averageScansPerQR,
           osStats,
           dateStats,
+          cityStats,
+          countryStats,
           topQRCodes,
           recentScans,
           peakHour,

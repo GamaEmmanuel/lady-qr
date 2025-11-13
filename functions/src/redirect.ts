@@ -132,20 +132,28 @@ function generateSocialMediaUrl(platform: string, username: string): string {
 
   switch (platform) {
     case 'instagram':
-      return `https://instagram.com/${cleanUsername}`;
+      // Universal link - opens Instagram app if installed
+      return `https://www.instagram.com/${cleanUsername}`;
     case 'facebook':
-      return `https://facebook.com/${cleanUsername}`;
+      // App link - opens Facebook app if installed
+      return `https://www.facebook.com/${cleanUsername}`;
     case 'twitter':
+      // Universal link - opens X/Twitter app if installed (twitter.com works better than x.com for app opening)
       return `https://twitter.com/${cleanUsername}`;
     case 'linkedin':
-      return `https://linkedin.com/in/${cleanUsername}`;
+      // Universal link - opens LinkedIn app if installed
+      return `https://www.linkedin.com/in/${cleanUsername}`;
     case 'youtube':
-      return `https://youtube.com/@${cleanUsername}`;
+      // Universal link - opens YouTube app if installed
+      return `https://www.youtube.com/@${cleanUsername}`;
     case 'tiktok':
-      return `https://tiktok.com/@${cleanUsername}`;
+      // Universal link - opens TikTok app if installed
+      return `https://www.tiktok.com/@${cleanUsername}`;
     case 'whatsapp':
+      // WhatsApp universal link - opens WhatsApp app if installed
       return `https://wa.me/${cleanUsername}`;
     case 'telegram':
+      // Telegram universal link - opens Telegram app if installed
       return `https://t.me/${cleanUsername}`;
     default:
       return `https://${platform}.com/${cleanUsername}`;
@@ -165,15 +173,80 @@ function generateDestinationUrl(type: string, content: any): string {
       return `sms:${content.phone}${content.message ? `?body=${encodeURIComponent(content.message)}` : ''}`;
     case 'wifi':
       return `WIFI:T:${content.encryption || 'WPA'};S:${content.ssid || ''};P:${content.password || ''};;`;
-    case 'location':
-      if (content.latitude && content.longitude) {
-        return `geo:${content.latitude},${content.longitude}`;
+    case 'location': {
+      // Priority 1: Use Google Maps URL if provided
+      if (content.mapsUrl) {
+        return content.mapsUrl;
       }
-      return content.address || '';
+      // Priority 2: Convert address to Google Maps URL
+      if (content.address) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(content.address)}`;
+      }
+      return '';
+    }
     case 'vcard':
       return `BEGIN:VCARD\nVERSION:3.0\nFN:${content.firstName || ''} ${content.lastName || ''}\nORG:${content.company || ''}\nTITLE:${content.jobTitle || ''}\nEMAIL:${content.email || ''}\nTEL:${content.phone || ''}\nURL:${content.website || ''}\nEND:VCARD`;
     case 'social':
       return generateSocialMediaUrl(content.platform, content.username);
+    // Individual social platform types
+    case 'instagram': {
+      // Instagram can be profile or post
+      if (content.instagramType === 'post') {
+        return content.instagramValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('instagram', content.instagramValue || '');
+    }
+    case 'facebook': {
+      // Facebook can be profile or post
+      if (content.facebookType === 'post') {
+        return content.facebookValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('facebook', content.facebookValue || '');
+    }
+    case 'twitter': {
+      // X/Twitter can be profile or post
+      if (content.twitterType === 'post') {
+        return content.twitterValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('twitter', content.twitterValue || '');
+    }
+    case 'linkedin': {
+      // LinkedIn can be profile or post
+      if (content.linkedinType === 'post') {
+        return content.linkedinValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('linkedin', content.linkedinValue || '');
+    }
+    case 'youtube': {
+      // YouTube can be either a channel or a video
+      if (content.youtubeType === 'video') {
+        return content.youtubeValue || '';
+      }
+      // Default to channel
+      return generateSocialMediaUrl('youtube', content.youtubeValue || '');
+    }
+    case 'tiktok': {
+      // TikTok can be profile or video
+      if (content.tiktokType === 'video') {
+        return content.tiktokValue || '';
+      }
+      // Default to profile
+      return generateSocialMediaUrl('tiktok', content.tiktokValue || '');
+    }
+    case 'telegram':
+      return generateSocialMediaUrl('telegram', content.username);
+    case 'whatsapp': {
+      // WhatsApp can have phone + message or just username
+      if (content.phone) {
+        const message = content.message ? `?text=${encodeURIComponent(content.message)}` : '';
+        return `https://wa.me/${content.phone}${message}`;
+      }
+      return generateSocialMediaUrl('whatsapp', content.username || content.phone);
+    }
     case 'event': {
       // Generate iCalendar format for calendar events
       const formatDateForICal = (dateString: string) => {

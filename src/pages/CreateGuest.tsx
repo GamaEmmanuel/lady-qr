@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { qrTypes } from '../data/qrTypes';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
@@ -18,9 +19,15 @@ import {
 } from '@heroicons/react/24/outline';
 
 const CreateGuest: React.FC = () => {
+  const { currentUser } = useAuth();
+
+  // Redirect logged-in users to the authenticated create page
+  if (currentUser) {
+    return <Navigate to="/create" replace />;
+  }
+
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [showCustomization, setShowCustomization] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState<'foreground' | 'background' | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
 
@@ -31,7 +38,7 @@ const CreateGuest: React.FC = () => {
     cornerSquareStyle: 'square',
     cornerDotStyle: 'square',
     dotsStyle: 'square',
-    frameText: 'ESCANÉAME'
+    frameText: '' // No frame text by default
   });
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
@@ -178,14 +185,52 @@ const CreateGuest: React.FC = () => {
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
 
+    // Handle conditional fields
+    let actualPlaceholder = field.placeholder;
+    let actualType = field.type;
+
+    if (field.dependsOn && field.conditionalPlaceholder) {
+      const dependentValue = formData[field.dependsOn];
+      if (dependentValue && field.conditionalPlaceholder[dependentValue]) {
+        actualPlaceholder = field.conditionalPlaceholder[dependentValue];
+      }
+      if (dependentValue && field.conditionalType && field.conditionalType[dependentValue]) {
+        actualType = field.conditionalType[dependentValue];
+      }
+    }
+
     switch (field.type) {
+      case 'radio':
+        return (
+          <div className="grid grid-cols-2 gap-3">
+            {field.options?.map((option: any) => (
+              <label
+                key={option.value}
+                className="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
+              >
+                <input
+                  type="radio"
+                  name={field.id}
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                  required={field.required}
+                />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {option.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        );
       case 'textarea':
         return (
           <textarea
             id={field.id}
             value={value}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={actualPlaceholder}
             maxLength={field.maxLength}
             rows={3}
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
@@ -212,11 +257,11 @@ const CreateGuest: React.FC = () => {
       default:
         return (
           <input
-            type={field.type}
+            type={actualType}
             id={field.id}
             value={value}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder={field.placeholder}
+            placeholder={actualPlaceholder}
             maxLength={field.maxLength}
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
             required={field.required}
@@ -277,7 +322,11 @@ const CreateGuest: React.FC = () => {
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <type.icon className="w-7 h-7 mb-2 mx-auto" style={{ color: type.iconColor }} />
+                    {type.iconImage ? (
+                      <img src={type.iconImage} alt={type.name} className="w-7 h-7 mb-2 mx-auto object-contain" />
+                    ) : type.icon ? (
+                      <type.icon className="w-7 h-7 mb-2 mx-auto" style={{ color: type.iconColor }} />
+                    ) : null}
                     <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {type.name}
                     </div>
@@ -296,18 +345,9 @@ const CreateGuest: React.FC = () => {
             {/* Form Fields */}
             {selectedTypeConfig && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
-                    Configuration
-                  </h3>
-                  <button
-                    onClick={() => setShowCustomization(!showCustomization)}
-                    className="inline-flex items-center px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                  >
-                    <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
-                    Customize
-                  </button>
-                </div>
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
+                  Configuration
+                </h3>
 
                 {/* Universal Name Field */}
                 <div className="mb-6">
@@ -325,96 +365,27 @@ const CreateGuest: React.FC = () => {
                   />
                 </div>
 
-                {/* Customization Options */}
-                {showCustomization && (
-                  <div className="mb-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Foreground Color
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.foregroundColor }} />
-                          <button
-                            onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
-                            className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                          >
-                            {showColorPicker === 'foreground' ? 'Close' : 'Change'}
-                          </button>
-                        </div>
-                        {showColorPicker === 'foreground' && (
-                          <div className="mt-3">
-                            <HexColorPicker color={customization.foregroundColor} onChange={(color) => handleCustomizationChange('foregroundColor', color)} />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Background Color
-                        </label>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600" style={{ backgroundColor: customization.backgroundColor }} />
-                          <button
-                            onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
-                            className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                          >
-                            {showColorPicker === 'background' ? 'Close' : 'Change'}
-                          </button>
-                        </div>
-                        {showColorPicker === 'background' && (
-                          <div className="mt-3">
-                            <HexColorPicker color={customization.backgroundColor} onChange={(color) => handleCustomizationChange('backgroundColor', color)} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Logo Upload */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Add Logo (PNG/JPG/SVG)
-                      </label>
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/jpg,image/svg+xml"
-                          onChange={handleLogoUpload}
-                          className="text-sm text-gray-700 dark:text-gray-300"
-                        />
-                        {logoPreview && (
-                          <button
-                            onClick={removeLogo}
-                            className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                          >
-                            <XMarkIcon className="h-4 w-4 mr-1" />
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      {logoPreview && (
-                        <div className="mt-3">
-                          <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
-                            <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-4">
-                  {selectedTypeConfig.fields.map((field) => (
-                    <div key={field.id}>
-                      <label
-                        htmlFor={field.id}
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        {field.label}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                      </label>
-                      {renderField(field)}
-                    </div>
-                  ))}
+                  {selectedTypeConfig.fields.map((field) => {
+                    // Calculate conditional label
+                    let displayLabel = field.label;
+                    if (field.dependsOn && field.conditionalLabel && formData[field.dependsOn]) {
+                      displayLabel = field.conditionalLabel[formData[field.dependsOn]] || field.label;
+                    }
+
+                    return (
+                      <div key={field.id}>
+                        <label
+                          htmlFor={field.id}
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        >
+                          {displayLabel}
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                        {renderField(field)}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -455,7 +426,8 @@ const CreateGuest: React.FC = () => {
 
           {/* Preview Panel */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8">
+            <div className="sticky top-8 space-y-5">
+              {/* QR Preview */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   <EyeIcon className="h-5 w-5 mr-2" />
@@ -527,6 +499,87 @@ const CreateGuest: React.FC = () => {
                     <div>Mode: Static (Temporary)</div>
                     <div>Size: 250x250 px</div>
                     <div>Expires: 24 hours</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customization Options */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
+                  Customization
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Foreground Color
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600 flex-shrink-0" style={{ backgroundColor: customization.foregroundColor }} />
+                        <button
+                          onClick={() => setShowColorPicker(showColorPicker === 'foreground' ? null : 'foreground')}
+                          className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        >
+                          {showColorPicker === 'foreground' ? 'Close' : 'Change'}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Background Color
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-10 h-10 rounded border border-gray-200 dark:border-gray-600 flex-shrink-0" style={{ backgroundColor: customization.backgroundColor }} />
+                        <button
+                          onClick={() => setShowColorPicker(showColorPicker === 'background' ? null : 'background')}
+                          className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        >
+                          {showColorPicker === 'background' ? 'Close' : 'Change'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Color Pickers */}
+                  {showColorPicker === 'foreground' && (
+                    <div className="mt-3">
+                      <HexColorPicker color={customization.foregroundColor} onChange={(color) => handleCustomizationChange('foregroundColor', color)} />
+                    </div>
+                  )}
+                  {showColorPicker === 'background' && (
+                    <div className="mt-3">
+                      <HexColorPicker color={customization.backgroundColor} onChange={(color) => handleCustomizationChange('backgroundColor', color)} />
+                    </div>
+                  )}
+
+                  {/* Logo Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Add Logo (PNG/JPG/SVG)
+                    </label>
+                    <div className="flex flex-col space-y-2">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                        onChange={handleLogoUpload}
+                        className="text-sm text-gray-700 dark:text-gray-300"
+                      />
+                      {logoPreview && (
+                        <div className="flex items-center space-x-3">
+                          <div className="w-16 h-16 rounded overflow-hidden border border-gray-200 dark:border-gray-600">
+                            <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                          </div>
+                          <button
+                            onClick={removeLogo}
+                            className="inline-flex items-center px-2 py-1 text-xs rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          >
+                            <XMarkIcon className="h-4 w-4 mr-1" />
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -46,7 +46,8 @@ const Archive: React.FC = () => {
         setQrLoading(true);
         const primaryQuery = query(
           collection(db, 'qrcodes'),
-          where('userId', '==', currentUser.uid)
+          where('userId', '==', currentUser.uid),
+          where('isActive', '==', true) // Only show active (saved) QR codes
         );
 
         const primarySnap = await getDocs(primaryQuery);
@@ -97,10 +98,17 @@ const Archive: React.FC = () => {
       email: '📧',
       sms: '💬',
       wifi: '📶',
-      social: '📱',
       location: '📍',
       event: '📅',
-      menu: '🍽️'
+      menu: '🍽️',
+      whatsapp: '💬',
+      instagram: '📸',
+      facebook: '👍',
+      twitter: '🐦',
+      linkedin: '💼',
+      youtube: '📺',
+      tiktok: '🎵',
+      telegram: '✈️'
     };
     return icons[type] || '📄';
   };
@@ -113,10 +121,17 @@ const Archive: React.FC = () => {
       email: 'Email',
       sms: 'SMS',
       wifi: 'WiFi',
-      social: 'Social Media',
       location: 'Location',
       event: 'Event',
-      menu: 'Menu'
+      menu: 'Menu',
+      whatsapp: 'WhatsApp',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      twitter: 'X (Twitter)',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
+      tiktok: 'TikTok',
+      telegram: 'Telegram'
     };
     return names[type] || 'Unknown';
   };
