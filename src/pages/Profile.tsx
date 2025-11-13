@@ -4,7 +4,6 @@ import { plans } from '../data/plans';
 import {
   UserCircleIcon,
   CreditCardIcon,
-  BellIcon,
   ShieldCheckIcon,
   KeyIcon,
   TrashIcon,
@@ -65,14 +64,6 @@ const Profile: React.FC = () => {
     });
     setIsEditing(false);
     setMessage(null);
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
   };
 
   return (
@@ -162,15 +153,6 @@ const Profile: React.FC = () => {
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Registration date
-                  </label>
-                  <p className="text-gray-900 dark:text-white">
-                    {userData?.createdAt ? formatDate(userData.createdAt) : 'Not available'}
-                  </p>
-                </div>
-
                 {isEditing && (
                   <div className="flex space-x-3 pt-4">
                     <button
@@ -215,21 +197,6 @@ const Profile: React.FC = () => {
                   </div>
                   <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
                     Change
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <BellIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Two-factor authentication</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Add an extra layer of security
-                      </p>
-                    </div>
-                  </div>
-                  <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                    Set up
                   </button>
                 </div>
               </div>
@@ -310,26 +277,6 @@ const Profile: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white mb-4">
-                Quick Stats
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">QR Codes created:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Total scans:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">1,247</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Last scan:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">2 hours ago</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

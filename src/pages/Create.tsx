@@ -7,8 +7,10 @@ import { qrTypes } from '../data/qrTypes';
 import { plans } from '../data/plans';
 import { QRCodeType, QRCustomization } from '../types';
 import { createTrackableQRData, generateOriginalData } from '../utils/qrTracking';
+import { downloadQRCode } from '../utils/downloadQR';
 import QRPreview from '../components/QRPreview';
 import QRAnalytics from '../components/QRAnalytics';
+import DownloadModal, { DownloadOptions } from '../components/DownloadModal';
 import { HexColorPicker } from 'react-colorful';
 import QRCode from 'qrcode';
 import {
@@ -53,6 +55,10 @@ const Create: React.FC = () => {
   // Track saved state to compare against current state
   const [savedFormData, setSavedFormData] = useState<Record<string, any> | null>(null);
   const [savedCustomization, setSavedCustomization] = useState<QRCustomization | null>(null);
+
+  // Download modal state
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Check if user can create this type of QR code and has customization access
   const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
@@ -218,7 +224,7 @@ const Create: React.FC = () => {
     handleCustomizationChange('logoUrl', undefined);
   };
 
-  const handleDownload = () => {
+  const handleDownloadClick = () => {
     if (!canCreate) {
       alert('Has alcanzado el límite de códigos QR para tu plan actual.');
       return;
@@ -229,57 +235,33 @@ const Create: React.FC = () => {
       return;
     }
 
-    // Generate QR code and download as PNG
-    const canvas = document.createElement('canvas');
-    const size = 512; // Higher resolution for download
+    setDownloadModalOpen(true);
+  };
 
-    QRCode.toCanvas(canvas, qrData, {
-      width: size,
-      margin: 2,
-      color: {
-        dark: hasCustomization ? customization.foregroundColor : '#000000',
-        light: hasCustomization ? customization.backgroundColor : '#ffffff'
-      },
-      errorCorrectionLevel: hasCustomization && customization.logoUrl ? 'H' : 'M'
-    }).then(() => {
-      // If there's a logo and customization is available, add it
-      if (hasCustomization && customization.logoUrl) {
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          downloadCanvas(canvas); // Proceed without logo if context cannot be created
-          return;
-        }
-        const logo = new Image();
-        logo.crossOrigin = 'anonymous';
-        logo.onload = () => {
-          const logoSize = size * 0.15;
-          const logoX = (size - logoSize) / 2;
-          const logoY = (size - logoSize) / 2;
+  const handleDownloadConfirm = async (options: DownloadOptions) => {
+    if (!qrData) return;
 
-          // Draw white background circle for logo
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, logoSize / 2 + 6, 0, 2 * Math.PI);
-          ctx.fill();
+    try {
+      setIsDownloading(true);
 
-          // Draw logo
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, logoSize / 2, 0, 2 * Math.PI);
-          ctx.clip();
-          ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
-          ctx.restore();
+      await downloadQRCode({
+        data: qrData,
+        filename: formData.name || 'qr-code',
+        format: options.format,
+        size: options.size,
+        foregroundColor: hasCustomization ? customization.foregroundColor : '#000000',
+        backgroundColor: hasCustomization ? customization.backgroundColor : '#ffffff',
+        logoUrl: hasCustomization ? customization.logoUrl : undefined
+      });
 
-          downloadCanvas(canvas);
-        };
-        logo.src = customization.logoUrl;
-      } else {
-        downloadCanvas(canvas);
-      }
-    }).catch((error) => {
-      console.error('Error generating QR code:', error);
-      alert('Error generating QR code. Please try again.');
-    });
+      // Close modal after successful download
+      setDownloadModalOpen(false);
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+      alert('Error downloading QR code. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   // Save QR to Firestore - only creates document on explicit save
@@ -357,21 +339,6 @@ const Create: React.FC = () => {
     }
   };
 
-  const downloadCanvas = (canvas: HTMLCanvasElement) => {
-    // Convert canvas to blob and download
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `qr-code-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
-    }, 'image/png', 1.0);
-  };
 
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
@@ -705,7 +672,7 @@ const Create: React.FC = () => {
                         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button
-                              onClick={handleDownload}
+                              onClick={handleDownloadClick}
                               disabled={!canCreate || !qrData}
                               className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                                 !canCreate || !qrData
@@ -714,7 +681,7 @@ const Create: React.FC = () => {
                               }`}
                             >
                               <ArrowDownTrayIcon className="h-5 w-5" />
-                              <span>Download PNG</span>
+                              <span>Download QR</span>
                             </button>
                             <button
                               onClick={handleSave}
@@ -946,7 +913,7 @@ const Create: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
-                      onClick={handleDownload}
+                      onClick={handleDownloadClick}
                       disabled={!canCreate || !qrData}
                       className={`flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
                         !canCreate || !qrData
@@ -955,7 +922,7 @@ const Create: React.FC = () => {
                       }`}
                     >
                       <ArrowDownTrayIcon className="h-5 w-5" />
-                      <span>Download PNG</span>
+                      <span>Download QR</span>
                     </button>
                     <button
                       onClick={handleSave}
@@ -1100,7 +1067,15 @@ const Create: React.FC = () => {
             </div>
             )}
           </div>
-        </div>
+
+        {/* Download Modal */}
+        <DownloadModal
+          isOpen={downloadModalOpen}
+          onClose={() => setDownloadModalOpen(false)}
+          onDownload={handleDownloadConfirm}
+          isLoading={isDownloading}
+        />
+      </div>
   );
 };
 

@@ -6,6 +6,7 @@ import { db } from '../config/firebase';
 import { downloadQRCode } from '../utils/downloadQR';
 import { generateShortUrl } from '../utils/qrTracking';
 import ConfirmDialog from '../components/ConfirmDialog';
+import DownloadModal, { DownloadOptions } from '../components/DownloadModal';
 import {
   QrCodeIcon,
   EyeIcon,
@@ -36,6 +37,13 @@ const Archive: React.FC = () => {
     isOpen: false,
     qrId: null
   });
+
+  // Download modal state
+  const [downloadModal, setDownloadModal] = useState<{ isOpen: boolean; qr: any | null }>({
+    isOpen: false,
+    qr: null
+  });
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Fetch QR codes from Firestore
   React.useEffect(() => {
@@ -167,19 +175,35 @@ const Archive: React.FC = () => {
     navigate(`/create?edit=${qrId}`);
   };
 
-  const handleDownload = async (qr: any) => {
+  const handleDownloadClick = (qr: any) => {
+    setDownloadModal({ isOpen: true, qr });
+  };
+
+  const handleDownloadConfirm = async (options: DownloadOptions) => {
+    if (!downloadModal.qr) return;
+
     try {
+      setIsDownloading(true);
+      const qr = downloadModal.qr;
       const qrData = generateShortUrl(qr.shortUrlId || qr.id);
+
       await downloadQRCode({
         data: qrData,
         filename: qr.name || 'qr-code',
+        format: options.format,
+        size: options.size,
         foregroundColor: qr.customizationOptions?.foregroundColor,
         backgroundColor: qr.customizationOptions?.backgroundColor,
         logoUrl: qr.customizationOptions?.logoUrl
       });
+
+      // Close modal after successful download
+      setDownloadModal({ isOpen: false, qr: null });
     } catch (error) {
       console.error('Error downloading QR code:', error);
       alert('Error downloading QR code. Please try again.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -454,7 +478,7 @@ const Archive: React.FC = () => {
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDownload(qr)}
+                          onClick={() => handleDownloadClick(qr)}
                           className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           title="Download"
                         >
@@ -511,6 +535,14 @@ const Archive: React.FC = () => {
         message="This action cannot be undone. The QR code and all its analytics data will be permanently deleted."
         confirmText="Delete"
         confirmButtonClass="bg-error-600 hover:bg-error-700"
+      />
+
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={downloadModal.isOpen}
+        onClose={() => setDownloadModal({ isOpen: false, qr: null })}
+        onDownload={handleDownloadConfirm}
+        isLoading={isDownloading}
       />
     </div>
   );

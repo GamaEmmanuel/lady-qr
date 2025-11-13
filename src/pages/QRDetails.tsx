@@ -7,6 +7,8 @@ import { QRCode as QRCodeType } from '../types';
 import QRPreview from '../components/QRPreview';
 import QRAnalytics from '../components/QRAnalytics';
 import { generateShortUrl } from '../utils/qrTracking';
+import { downloadQRCode } from '../utils/downloadQR';
+import DownloadModal, { DownloadOptions } from '../components/DownloadModal';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -26,6 +28,10 @@ const QRDetails: React.FC = () => {
   const [qrCode, setQrCode] = useState<QRCodeType | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>('overview');
+
+  // Download modal state
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     const fetchQRCode = async () => {
@@ -90,6 +96,33 @@ const QRDetails: React.FC = () => {
     } catch (error) {
       console.error('Error deleting QR code:', error);
       alert('Error deleting QR code');
+    }
+  };
+
+  const handleDownload = async (options: DownloadOptions) => {
+    if (!qrCode) return;
+
+    try {
+      setIsDownloading(true);
+      const qrData = generateShortUrl(qrCode.shortUrlId || qrCode.id);
+
+      await downloadQRCode({
+        data: qrData,
+        filename: qrCode.name || 'qr-code',
+        format: options.format,
+        size: options.size,
+        foregroundColor: qrCode.customizationOptions?.foregroundColor,
+        backgroundColor: qrCode.customizationOptions?.backgroundColor,
+        logoUrl: qrCode.customizationOptions?.logoUrl
+      });
+
+      // Close modal after successful download
+      setDownloadModalOpen(false);
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+      alert('Error downloading QR code. Please try again.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -262,9 +295,12 @@ const QRDetails: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <button className="w-full flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md transition-colors">
+                  <button
+                    onClick={() => setDownloadModalOpen(true)}
+                    className="w-full flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md transition-colors"
+                  >
                     <ArrowDownTrayIcon className="h-5 w-5" />
-                    <span>Download PNG</span>
+                    <span>Download QR</span>
                   </button>
 
                   <button className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md transition-colors">
@@ -360,6 +396,14 @@ const QRDetails: React.FC = () => {
           <QRAnalytics qrCodeId={id!} />
         )}
       </div>
+
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={downloadModalOpen}
+        onClose={() => setDownloadModalOpen(false)}
+        onDownload={handleDownload}
+        isLoading={isDownloading}
+      />
     </div>
   );
 };

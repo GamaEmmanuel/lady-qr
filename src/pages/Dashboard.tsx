@@ -7,6 +7,7 @@ import { plans } from '../data/plans';
 import { downloadQRCode } from '../utils/downloadQR';
 import { generateShortUrl } from '../utils/qrTracking';
 import ConfirmDialog from '../components/ConfirmDialog';
+import DownloadModal, { DownloadOptions } from '../components/DownloadModal';
 import QRPreview from '../components/QRPreview';
 import D3Area from '../components/charts/D3Area';
 import D3Donut from '../components/charts/D3Donut';
@@ -48,6 +49,13 @@ const Dashboard: React.FC = () => {
     isOpen: false,
     qrId: null
   });
+
+  // Download modal state
+  const [downloadModal, setDownloadModal] = useState<{ isOpen: boolean; qr: any | null }>({
+    isOpen: false,
+    qr: null
+  });
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // QR Preview modal state
   const [previewQR, setPreviewQR] = useState<any | null>(null);
@@ -207,19 +215,35 @@ const Dashboard: React.FC = () => {
     navigate(`/create?edit=${qrId}`);
   };
 
-  const handleDownload = async (qr: any) => {
+  const handleDownloadClick = (qr: any) => {
+    setDownloadModal({ isOpen: true, qr });
+  };
+
+  const handleDownloadConfirm = async (options: DownloadOptions) => {
+    if (!downloadModal.qr) return;
+
     try {
+      setIsDownloading(true);
+      const qr = downloadModal.qr;
       const qrData = generateShortUrl(qr.shortUrlId || qr.id);
+
       await downloadQRCode({
         data: qrData,
         filename: qr.name || 'qr-code',
+        format: options.format,
+        size: options.size,
         foregroundColor: qr.customizationOptions?.foregroundColor,
         backgroundColor: qr.customizationOptions?.backgroundColor,
         logoUrl: qr.customizationOptions?.logoUrl
       });
+
+      // Close modal after successful download
+      setDownloadModal({ isOpen: false, qr: null });
     } catch (error) {
       console.error('Error downloading QR code:', error);
       alert('Error downloading QR code. Please try again.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -457,7 +481,7 @@ const Dashboard: React.FC = () => {
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDownload(qr)}
+                          onClick={() => handleDownloadClick(qr)}
                           className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           title="Download"
                         >
@@ -852,6 +876,14 @@ const Dashboard: React.FC = () => {
         confirmButtonClass="bg-error-600 hover:bg-error-700"
       />
 
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={downloadModal.isOpen}
+        onClose={() => setDownloadModal({ isOpen: false, qr: null })}
+        onDownload={handleDownloadConfirm}
+        isLoading={isDownloading}
+      />
+
       {/* QR Preview Modal */}
       {previewQR && (
         <div
@@ -913,7 +945,7 @@ const Dashboard: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    handleDownload(previewQR);
+                    handleDownloadClick(previewQR);
                   }}
                   className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
                 >
