@@ -18,3 +18,4 @@ export * from "./redirect";
 export * from "./analytics";
 export * from "./stripe";
 export * from "./test";
+export * from "./downgrade";

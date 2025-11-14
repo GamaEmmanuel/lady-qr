@@ -12,7 +12,7 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, limit, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, Subscription } from '../types';
 import { plans } from '../data/plans';
@@ -45,14 +45,29 @@ const getUserQRCounts = async (userId: string) => {
     let staticCodes = 0;
     let dynamicCodes = 0;
 
+    // Debug logging
+    console.log(`[QR Counts] Found ${docs.length} QR codes for user ${userId}`);
+
     docs.forEach((d) => {
       const data = d.data() as any;
-      if (data.isDynamic) {
+
+      // Only count active QR codes (isActive === true or undefined for backward compatibility)
+      // Skip counting if isActive is explicitly false
+      if (data.isActive === false) {
+        console.log(`[QR Counts] Skipping inactive QR: ${d.id}`);
+        return;
+      }
+
+      if (data.isDynamic === true) {
         dynamicCodes++;
+        console.log(`[QR Counts] Counting dynamic QR: ${d.id}`);
       } else {
         staticCodes++;
+        console.log(`[QR Counts] Counting static QR: ${d.id}, isDynamic: ${data.isDynamic}`);
       }
     });
+
+    console.log(`[QR Counts] Final counts - Static: ${staticCodes}, Dynamic: ${dynamicCodes}`);
 
     return {
       staticCodes,
@@ -71,7 +86,7 @@ interface AuthContextType {
   currentUser: FirebaseUser | null;
   userData: User | null;
   subscription: Subscription | null;
-  qrCounts: { staticCodes: number; dynamicCodes: number } | null;
+  qrCounts: { staticCodes: number; dynamicCodes: number };
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
@@ -83,6 +98,7 @@ interface AuthContextType {
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   canCreateQR: (type: 'static' | 'dynamic') => boolean;
   subscribeToPlan: (planId: string) => Promise<void>;
+  refreshQRCounts: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,7 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [qrCounts, setQrCounts] = useState<{ staticCodes: number; dynamicCodes: number } | null>(null);
+  // Initialize with default counts to prevent false "limit reached" errors
+  const [qrCounts, setQrCounts] = useState<{ staticCodes: number; dynamicCodes: number }>({ staticCodes: 0, dynamicCodes: 0 });
   const [loading, setLoading] = useState(true);
 
   // Action code settings for passwordless authentication
@@ -408,15 +425,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const canCreateQR = (type: 'static' | 'dynamic'): boolean => {
-    if (!subscription || !qrCounts) return false;
-
-    const plan = plans.find(p => p.id === subscription.planType);
+    // If no subscription, default to free plan
+    const planType = subscription?.planType || 'free';
+    const plan = plans.find(p => p.id === planType);
     if (!plan) return false;
 
     if (type === 'static') {
       return plan.limits.staticCodes === -1 || qrCounts.staticCodes < plan.limits.staticCodes;
     } else {
       return plan.limits.dynamicCodes === -1 || qrCounts.dynamicCodes < plan.limits.dynamicCodes;
+    }
+  };
+
+  // Function to refresh QR counts (call after creating/deleting QR codes)
+  const refreshQRCounts = async () => {
+    if (!currentUser) return;
+
+    try {
+      console.log('[Auth] Refreshing QR counts...');
+      const counts = await getUserQRCounts(currentUser.uid);
+      setQrCounts(counts);
+      console.log('[Auth] QR counts refreshed:', counts);
+    } catch (error) {
+      console.error('Failed to refresh QR counts:', error);
     }
   };
 
@@ -460,10 +491,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (!subscriptionSnapshot.empty) {
             const subscriptionDoc = subscriptionSnapshot.docs[0];
+            const rawPlanType = subscriptionDoc.data().planType;
+
+            // Check if planType is valid
+            const isValidPlanType = rawPlanType && plans.find(p => p.id === rawPlanType);
+            const planType = isValidPlanType ? rawPlanType : 'free';
+
+            // If planType was invalid, fix it in the database
+            if (!isValidPlanType) {
+              console.warn('[Auth] Invalid planType detected, updating to "free"');
+              await updateDoc(subscriptionDoc.ref, {
+                planType: 'free',
+                updatedAt: new Date()
+              });
+              await setDoc(doc(db, 'users', user.uid), {
+                planType: 'free',
+                subscriptionStatus: 'active',
+                subscriptionUpdatedAt: new Date()
+              }, { merge: true });
+            }
+
             const subscriptionData: Subscription = {
               id: subscriptionDoc.id,
-              userId: user.uid, // Add this line
-              planType: subscriptionDoc.data().planType,
+              userId: user.uid,
+              planType: planType,
               status: subscriptionDoc.data().status,
               cancelAtPeriodEnd: subscriptionDoc.data().cancelAtPeriodEnd,
               createdAt: subscriptionDoc.data().createdAt,
@@ -512,7 +563,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentUser(null);
         setUserData(null);
         setSubscription(null);
-        setQrCounts(null);
+        setQrCounts({ staticCodes: 0, dynamicCodes: 0 });
       }
       setLoading(false);
     });
@@ -535,7 +586,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateUserProfile,
     canCreateQR,
-    subscribeToPlan
+    subscribeToPlan,
+    refreshQRCounts
   };
 
   return (

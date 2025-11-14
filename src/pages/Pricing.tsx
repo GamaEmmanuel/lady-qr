@@ -1,25 +1,88 @@
-import React, { useState } from 'react';
-import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
+import { CheckIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { plans } from '../data/plans';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import getStripe from '../utils/stripe';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 const Pricing: React.FC = () => {
   const { currentUser, subscription } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+  const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
+  const [pendingPriceId, setPendingPriceId] = useState<string | undefined>(undefined);
 
-  const handleSubscribe = async (priceId: string | undefined) => {
+  // Debug logging for subscription
+  console.log('[Pricing] Subscription data:', subscription);
+  console.log('[Pricing] Plan type:', subscription?.planType);
+
+  // Find current plan, default to free if not found
+  const currentPlan = subscription
+    ? (plans.find(p => p.id === subscription.planType) || plans[0])
+    : plans[0];
+
+  console.log('[Pricing] Current plan:', currentPlan);
+
+  // Auto-fix invalid subscription data
+  useEffect(() => {
+    const fixInvalidSubscription = async () => {
+      if (!currentUser || !subscription) return;
+
+      // If planType is missing or invalid, fix it
+      if (!subscription.planType || !plans.find(p => p.id === subscription.planType)) {
+        console.warn('[Pricing] Invalid or missing planType, fixing to "free"');
+
+        try {
+          // Find the subscription document
+          const subscriptionsRef = collection(db, 'subscriptions');
+          const q = query(subscriptionsRef, where('userId', '==', currentUser.uid), where('status', '==', 'active'));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const subDoc = querySnapshot.docs[0];
+            await updateDoc(subDoc.ref, {
+              planType: 'free',
+              updatedAt: new Date()
+            });
+            console.log('[Pricing] Successfully updated subscription to free plan');
+
+            // Also update user document
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+              planType: 'free',
+              subscriptionStatus: 'active',
+              subscriptionUpdatedAt: new Date()
+            });
+
+            // Reload the page to refresh data
+            setTimeout(() => window.location.reload(), 1000);
+          }
+        } catch (error) {
+          console.error('[Pricing] Failed to fix subscription:', error);
+        }
+      }
+    };
+
+    fixInvalidSubscription();
+  }, [currentUser, subscription]);
+
+  const handleSubscribe = async (priceId: string | undefined, planId: string) => {
     console.log(`[Subscription] Initiating subscription process for priceId: ${priceId}`);
     if (!currentUser) {
       console.log('[Subscription] User not logged in. Redirecting to register.');
       window.location.href = '/register';
       return;
     }
-    if (!priceId) {
+    if (!priceId && planId !== 'free') {
       console.warn('[Subscription] No priceId provided. Aborting.');
       alert('This plan is not available for online purchase. Please contact us.');
+      return;
+    }
+
+    // Check if user is downgrading from basic to free
+    if (currentPlan?.id === 'basic' && planId === 'free') {
+      setPendingPriceId(priceId);
+      setShowDowngradeWarning(true);
       return;
     }
 
@@ -27,6 +90,19 @@ const Pricing: React.FC = () => {
     console.log('[Subscription] Loading state set to true.');
 
     try {
+      // Handle downgrade to free plan (no Stripe needed)
+      if (planId === 'free') {
+        console.log('[Subscription] Downgrading to free plan...');
+        const functions = getFunctions();
+        const downgradeToPlan = httpsCallable(functions, 'downgradeToPlan');
+
+        await downgradeToPlan({ planId: 'free' });
+        console.log('[Subscription] Successfully downgraded to free plan');
+        alert('Successfully downgraded to free plan. Your most recent QR code has been kept active.');
+        window.location.reload();
+        return;
+      }
+
       console.log('[Subscription] Creating Stripe checkout session...');
       const functions = getFunctions();
       // The cloud function name should be the same as the exported function name in the backend
@@ -62,6 +138,11 @@ const Pricing: React.FC = () => {
     }
   };
 
+  const handleDowngradeConfirm = () => {
+    setShowDowngradeWarning(false);
+    handleSubscribe(pendingPriceId, 'free');
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 py-8 sm:py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -90,8 +171,8 @@ const Pricing: React.FC = () => {
                     Current Plan
                   </h3>
                   <p className="text-sm text-primary-700 dark:text-primary-400">
-                    You are currently subscribed to the <strong>{currentPlan?.name}</strong> plan
-                    {currentPlan?.price && ` ($${currentPlan.price}/month)`}
+                    You are currently subscribed to the <strong>{currentPlan?.name || 'Free'}</strong> plan
+                    {currentPlan?.price && currentPlan.price > 0 && ` ($${currentPlan.price}/month)`}
                   </p>
                 </div>
               </div>
@@ -174,7 +255,7 @@ const Pricing: React.FC = () => {
                 </ul>
               </div>
               <button
-                onClick={() => !isCurrentPlan && handleSubscribe(plan.priceId)}
+                onClick={() => !isCurrentPlan && handleSubscribe(plan.priceId, plan.id)}
                 disabled={isLoading || isCurrentPlan}
                 className={`mt-5 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 transition-all duration-200 ${
                   isLoading
@@ -189,7 +270,7 @@ const Pricing: React.FC = () => {
                 {isCurrentPlan
                   ? 'Current Plan'
                   : plan.id === 'free'
-                  ? 'Start free'
+                  ? currentPlan?.id === 'basic' ? 'Downgrade to Free' : 'Start free'
                   : plan.price === null
                   ? 'Contact Sales'
                   : isLoading
@@ -199,6 +280,48 @@ const Pricing: React.FC = () => {
             </div>
           )})}
         </div>
+
+        {/* Downgrade Warning Modal */}
+        {showDowngradeWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <ExclamationTriangleIcon className="h-8 w-8 text-warning-600" />
+                <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
+                  Downgrade Warning
+                </h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                You are about to downgrade from the <strong>Basic</strong> plan to the <strong>Free</strong> plan.
+              </p>
+              <div className="bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 rounded-lg p-4 mb-6">
+                <p className="text-sm text-warning-800 dark:text-warning-300">
+                  <strong>Important:</strong> The free plan only allows 1 static QR code. If you proceed:
+                </p>
+                <ul className="mt-2 text-sm text-warning-700 dark:text-warning-400 list-disc list-inside space-y-1">
+                  <li>Only your most recently created QR code will remain active</li>
+                  <li>All other QR codes will be permanently deleted</li>
+                  <li>This action cannot be undone</li>
+                </ul>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDowngradeWarning(false)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDowngradeConfirm}
+                  disabled={isLoading}
+                  className="flex-1 bg-warning-600 hover:bg-warning-700 text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? 'Processing...' : 'Proceed with Downgrade'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

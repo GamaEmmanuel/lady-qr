@@ -24,7 +24,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Create: React.FC = () => {
-  const { currentUser, subscription, qrCounts, canCreateQR } = useAuth();
+  const { currentUser, subscription, qrCounts, canCreateQR, refreshQRCounts } = useAuth();
   const [searchParams] = useSearchParams();
   const editingQRId = searchParams.get('edit');
   const isEditing = !!editingQRId;
@@ -35,7 +35,12 @@ const Create: React.FC = () => {
   }
 
   const [selectedType, setSelectedType] = useState<QRCodeType>('url');
-  const [isDynamic, setIsDynamic] = useState(true); // Default to dynamic
+  // Default to static for free users, dynamic for paid users
+  const [isDynamic, setIsDynamic] = useState(() => {
+    const planType = subscription?.planType || 'free';
+    // Default to static if user can't create dynamic QR codes
+    return planType !== 'free';
+  });
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [customization, setCustomization] = useState<QRCustomization>({
     foregroundColor: '#000000',
@@ -61,7 +66,10 @@ const Create: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Check if user can create this type of QR code and has customization access
-  const currentPlan = subscription ? plans.find(p => p.id === subscription.planType) : plans[0];
+  // Default to free plan if subscription doesn't exist or planType is invalid
+  const currentPlan = subscription
+    ? (plans.find(p => p.id === subscription.planType) || plans[0])
+    : plans[0];
   const hasCustomization = currentPlan?.limits.customization ?? false;
 
   // Compute if there are unsaved changes by comparing current state to saved state
@@ -330,6 +338,9 @@ const Create: React.FC = () => {
       setSavedFormData({ ...formData });
       setSavedCustomization({ ...customization });
 
+      // Refresh QR counts after saving
+      await refreshQRCounts();
+
       alert('QR code saved successfully! You can find it in your Dashboard and Archive.');
     } catch (error) {
       console.error('Error saving QR code:', error);
@@ -462,11 +473,23 @@ const Create: React.FC = () => {
                         Plan Limit Reached
                       </h3>
                       <p className="text-sm text-error-600 dark:text-error-400 mt-0.5">
-                        You've reached the limit of {isDynamic ? 'dynamic' : 'static'} QR codes for your current plan.{' '}
-                        <Link to="/pricing" className="font-medium underline hover:no-underline">
-                          Upgrade your plan
-                        </Link>
-                        {' '}to create more codes.
+                        {isDynamic && currentPlan?.id === 'free' ? (
+                          <>
+                            The Free plan doesn't include dynamic QR codes. Please scroll down to the <strong>Code Type</strong> section and select <strong>Static</strong> mode, or{' '}
+                            <Link to="/pricing" className="font-medium underline hover:no-underline">
+                              upgrade your plan
+                            </Link>
+                            {' '}to create dynamic QR codes.
+                          </>
+                        ) : (
+                          <>
+                            You've reached the limit of {isDynamic ? 'dynamic' : 'static'} QR codes for your current plan.{' '}
+                            <Link to="/pricing" className="font-medium underline hover:no-underline">
+                              Upgrade your plan
+                            </Link>
+                            {' '}to create more codes.
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -763,9 +786,9 @@ const Create: React.FC = () => {
                         </h3>
                         <div className="mb-3 p-2.5 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
                           <div className="text-sm text-primary-700 dark:text-primary-300">
-                            <strong>Your current plan:</strong> {currentPlan?.name} -
-                            Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes}`} |
-                            Dynamic: {qrCounts?.dynamicCodes || 0}/{currentPlan?.limits.dynamicCodes}
+                            <strong>Your current plan:</strong> {currentPlan?.name || 'Free'} -
+                            Static: {currentPlan?.limits.staticCodes === -1 ? 'Unlimited' : `${qrCounts?.staticCodes || 0}/${currentPlan?.limits.staticCodes || 0}`} |
+                            Dynamic: {currentPlan?.limits.dynamicCodes === -1 ? 'Unlimited' : `${qrCounts?.dynamicCodes || 0}/${currentPlan?.limits.dynamicCodes || 0}`}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

@@ -10,7 +10,8 @@ export const plans: Plan[] = [
       '1 static QR code',
       'No dynamic QR codes',
       'No customization',
-      'PNG download only',
+      'No download',
+      'Advanced Analytics',
       'No support'
     ],
     limits: {
@@ -37,6 +38,7 @@ export const plans: Plan[] = [
       'Unlimited dynamic QR codes',
       'Complete customization',
       'Multi-format download (PNG, SVG, PDF)',
+      'Advanced Analytics',
       'Full support'
     ],
     limits: {

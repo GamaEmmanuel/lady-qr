@@ -23,9 +23,9 @@ const FAQ: React.FC = () => {
   const faqData: FAQItem[] = [
     // General Questions
     {
-      id: 'what-is-tuqr',
+      id: 'what-is-ladyqr',
       category: 'general',
-      question: 'What is tuQR?',
+      question: 'What is Lady QR?',
       answer: 'Lady QR is the most complete platform for creating, customizing and managing QR codes. We offer 10 different types of QR codes, advanced customization, detailed analytics and multiple payment methods for businesses worldwide.'
     },
     {
@@ -209,7 +209,7 @@ const FAQ: React.FC = () => {
     {
       id: 'regional-features',
       category: 'support',
-      question: 'What makes tuQR special for global businesses?',
+      question: 'What makes Lady QR special for global businesses?',
       answer: 'Lady QR is designed for businesses worldwide: multiple payment methods (cards, PayPal, Apple Pay), support in multiple languages, competitive pricing, compliance with international regulations, 24/7 support across time zones, and understanding of specific business needs in different markets.'
     },
     {
@@ -271,7 +271,7 @@ const FAQ: React.FC = () => {
             Frequently Asked Questions
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            Find answers to the most common questions about tuQR, QR codes and our services
+            Find answers to the most common questions about Lady QR, QR codes and our services
           </p>
         </div>
 

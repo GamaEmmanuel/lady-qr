@@ -181,7 +181,7 @@ const Home: React.FC = () => {
               to="/register"
               className="inline-flex items-center space-x-2 rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all duration-200"
             >
-              <span>Get Started with Analytics</span>
+              <span>Get Started with QR Code Analytics</span>
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
