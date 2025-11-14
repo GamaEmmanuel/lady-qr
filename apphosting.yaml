@@ -1,0 +1,62 @@
+# Firebase App Hosting configuration
+runConfig:
+  # CPU and memory settings
+  cpu: 1
+  memoryMiB: 512
+  
+  # Maximum number of instances
+  maxInstances: 10
+  minInstances: 0
+  
+  # Request concurrency per instance
+  concurrency: 80
+
+env:
+  # Node environment
+  - variable: NODE_ENV
+    value: production
+  
+  - variable: PORT
+    value: "8080"
+  
+  # Firebase Configuration
+  - variable: VITE_FIREBASE_API_KEY
+    value: AIzaSyBkW-CAlGjRClcL5-AbJRI7c3hQ5wwhWDs
+  
+  - variable: VITE_FIREBASE_AUTH_DOMAIN
+    value: lady-qr.firebaseapp.com
+  
+  - variable: VITE_FIREBASE_PROJECT_ID
+    value: lady-qr
+  
+  - variable: VITE_FIREBASE_STORAGE_BUCKET
+    value: lady-qr.firebasestorage.app
+  
+  - variable: VITE_FIREBASE_MESSAGING_SENDER_ID
+    value: "534631817946"
+  
+  - variable: VITE_FIREBASE_APP_ID
+    value: 1:534631817946:web:9d15524fa569ed13c93be3
+  
+  - variable: VITE_FIREBASE_MEASUREMENT_ID
+    value: G-WKDZZLF91G
+  
+  # Firebase Functions and Hosting URLs
+  - variable: VITE_FUNCTIONS_ORIGIN
+    value: https://us-central1-lady-qr.cloudfunctions.net
+  
+  - variable: VITE_CLOUD_FUNCTION_REDIRECT_URL
+    value: https://us-central1-lady-qr.cloudfunctions.net/redirect
+  
+  - variable: VITE_FIREBASE_HOSTING_URL
+    value: https://lady-qr.com
+  
+  - variable: VITE_PRODUCTION_URL
+    value: https://lady-qr.com
+  
+  # Stripe Configuration (add your key if you have one)
+  - variable: VITE_STRIPE_PUBLISHABLE_KEY
+    value: ""  # Add your Stripe publishable key here if needed
+
+# Build configuration is handled by Dockerfile
+
