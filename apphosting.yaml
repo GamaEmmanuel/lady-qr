@@ -12,10 +12,13 @@ runConfig:
   concurrency: 80
 
 env:
-  # Node environment
+  # Node environment (only at runtime, not during build)
+  # This allows dev dependencies like vite to be installed during build
   - variable: NODE_ENV
     value: production
-
+    availability:
+      - RUNTIME
+  
   - variable: PORT
     value: "8080"
 
