@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import SEO from '../components/SEO';
 
 const Register: React.FC = () => {
   const [fullName, setFullName] = useState('');
@@ -13,8 +15,9 @@ const Register: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
-  
+
   const { register, loginWithGoogle, currentUser } = useAuth();
+  const { t } = useTranslation();
 
   if (currentUser) {
     return <Navigate to="/dashboard" replace />;
@@ -26,19 +29,19 @@ const Register: React.FC = () => {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(t('register.errorPasswordMismatch'));
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setError(t('register.errorPasswordLength'));
       setLoading(false);
       return;
     }
 
     if (!acceptTerms) {
-      setError('Debes aceptar los términos y condiciones');
+      setError(t('register.errorTerms'));
       setLoading(false);
       return;
     }
@@ -46,7 +49,7 @@ const Register: React.FC = () => {
     try {
       await register(email, password, fullName);
     } catch (error: any) {
-      setError('Error al crear la cuenta. Intenta nuevamente.');
+      setError(t('register.errorCreateAccount'));
     } finally {
       setLoading(false);
     }
@@ -59,24 +62,32 @@ const Register: React.FC = () => {
     try {
       await loginWithGoogle();
     } catch (error: any) {
-      setError('Error al registrarse con Google');
+      setError(t('register.errorGoogle'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-poppins font-bold text-gray-900 dark:text-white">
-          Create your free account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
-            Sign in here
-          </Link>
-        </p>
+    <>
+      <SEO
+        title="Sign Up - Create Your Lady QR Account"
+        description="Create your free Lady QR account to start generating professional QR codes with analytics, custom designs, and advanced features."
+        keywords="sign up Lady QR, create account, register QR code, free QR account"
+        url="/register"
+        noindex={true}
+      />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <h2 className="mt-6 text-center text-3xl font-poppins font-bold text-gray-900 dark:text-white">
+            {t('register.title')}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            {t('register.subtitle')}{' '}
+            <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
+              {t('register.signInLink')}
+            </Link>
+          </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -90,7 +101,7 @@ const Register: React.FC = () => {
 
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Full name
+                {t('register.fullName')}
               </label>
               <div className="mt-1">
                 <input
@@ -109,7 +120,7 @@ const Register: React.FC = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email
+                {t('register.email')}
               </label>
               <div className="mt-1">
                 <input
@@ -128,7 +139,7 @@ const Register: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
+                {t('register.password')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -146,6 +157,7 @@ const Register: React.FC = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('register.hidePassword') : t('register.showPassword')}
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -158,7 +170,7 @@ const Register: React.FC = () => {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Confirm password
+                {t('register.confirmPassword')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -176,6 +188,7 @@ const Register: React.FC = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? t('register.hidePassword') : t('register.showPassword')}
                 >
                   {showConfirmPassword ? (
                     <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -196,13 +209,13 @@ const Register: React.FC = () => {
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
               />
               <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                I accept the{' '}
+                {t('register.acceptTerms')}{' '}
                 <Link to="/terms" className="text-primary-600 hover:text-primary-500">
-                  terms and conditions
+                  {t('register.terms')}
                 </Link>
-                {' '}and{' '}
+                {' '}{t('register.and')}{' '}
                 <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
-                  privacy policy
+                  {t('register.privacy')}
                 </Link>
               </label>
             </div>
@@ -213,7 +226,7 @@ const Register: React.FC = () => {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Creating account...' : 'Create account'}
+                {loading ? t('register.creatingAccount') : t('register.signUpButton')}
               </button>
             </div>
           </form>
@@ -224,7 +237,7 @@ const Register: React.FC = () => {
                 <div className="w-full border-t border-gray-300 dark:border-gray-600" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or sign up with</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">{t('register.orContinueWith')}</span>
               </div>
             </div>
 
@@ -252,13 +265,14 @@ const Register: React.FC = () => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Google
+                {t('register.googleSignUp')}
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
+import { useTranslation } from 'react-i18next';
+import SEO from '../components/SEO';
 
 const Contact: React.FC = () => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -52,7 +55,7 @@ const Contact: React.FC = () => {
 
       setStatusMessage({
         type: 'success',
-        text: 'Message sent successfully! We\'ll get back to you soon.'
+        text: t('contact.form.success')
       });
 
       // Reset form
@@ -68,7 +71,7 @@ const Contact: React.FC = () => {
       console.error('Error details:', errorMessage);
       setStatusMessage({
         type: 'error',
-        text: `Failed to send message: ${errorMessage}`
+        text: t('contact.form.error')
       });
     } finally {
       setSubmitting(false);
@@ -76,14 +79,21 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 sm:py-16">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">Contact Support</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Our team is here to help. Fill out the form below and we'll get back to you as soon as possible.
-          </p>
-        </div>
+    <>
+      <SEO
+        title="Contact Us - Lady QR Support"
+        description="Get in touch with Lady QR support team. We're here to help with questions about QR code generation, features, pricing, or any technical issues."
+        keywords="contact Lady QR, QR code support, customer support, help desk, contact form"
+        url="/contact"
+      />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 sm:py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-poppins font-bold text-gray-900 dark:text-white">{t('contact.title')}</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              {t('contact.description')}
+            </p>
+          </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           {statusMessage && (
@@ -97,7 +107,7 @@ const Contact: React.FC = () => {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('contact.form.name')}</label>
               <input
                 id="name"
                 type="text"
@@ -109,7 +119,7 @@ const Contact: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('contact.form.email')}</label>
               <input
                 id="email"
                 type="email"
@@ -122,7 +132,7 @@ const Contact: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('contact.form.subject')}</label>
               <input
                 id="subject"
                 type="text"
@@ -134,7 +144,7 @@ const Contact: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('contact.form.message')}</label>
               <textarea
                 id="message"
                 value={form.message}
@@ -156,7 +166,7 @@ const Contact: React.FC = () => {
                     : 'bg-primary-600 hover:bg-primary-700 text-white'
                 }`}
               >
-                {submitting ? 'Sending…' : 'Send message'}
+                {submitting ? t('contact.form.sending') : t('contact.form.send')}
               </button>
             </div>
           </form>
@@ -167,6 +177,7 @@ const Contact: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

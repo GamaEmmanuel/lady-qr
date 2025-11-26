@@ -3,7 +3,7 @@ import { logger } from "firebase-functions";
 import Stripe from "stripe";
 import { getMainDatabase } from './index';
 
-// Force redeploy
+// Force redeploy - updated webhook secret
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('The STRIPE_SECRET_KEY environment variable is not set. The app will not work correctly in a deployed environment.');
 }

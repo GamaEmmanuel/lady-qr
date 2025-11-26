@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { plans } from '../data/plans';
@@ -30,6 +31,7 @@ import {
 
 const Dashboard: React.FC = () => {
   const { currentUser, userData, subscription } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created');
@@ -118,10 +120,10 @@ const Dashboard: React.FC = () => {
   }, [currentUser]);
 
   const stats = [
-    { name: 'Total QR Codes', value: qrCodes.length, icon: QrCodeIcon },
-    { name: 'Total Scans', value: qrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0), icon: ChartBarIcon },
-    { name: 'Active QRs', value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
-    { name: 'Current Plan', value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
+    { name: t('dashboard.stats.totalQRCodes'), value: qrCodes.length, icon: QrCodeIcon },
+    { name: t('dashboard.stats.totalScans'), value: qrCodes.reduce((sum, qr) => sum + (qr.scanCount || 0), 0), icon: ChartBarIcon },
+    { name: t('dashboard.stats.activeQRs'), value: qrCodes.filter(qr => qr.isActive).length, icon: EyeIcon, clickable: true, navigationIcon: ArrowTopRightOnSquareIcon },
+    { name: t('dashboard.stats.currentPlan'), value: subscription?.planType ? plans.find(p => p.id === subscription.planType)?.name || 'Unknown' : 'Loading...', icon: ChartBarIcon }
   ];
 
   const getTypeIcon = (type: string) => {
@@ -356,7 +358,7 @@ const Dashboard: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name..."
+                placeholder={t('dashboard.filters.search')}
                 className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
@@ -422,7 +424,7 @@ const Dashboard: React.FC = () => {
                 ) : filteredQRCodes.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                      No QR codes found. <Link to="/create" className="text-primary-600 hover:text-primary-700">Create your first QR code</Link>
+                      {t('dashboard.empty.title')}. <Link to="/create" className="text-primary-600 hover:text-primary-700">{t('dashboard.empty.button')}</Link>
                     </td>
                   </tr>
                 ) : paginatedQRCodes.map((qr) => (
@@ -604,7 +606,7 @@ const Dashboard: React.FC = () => {
             {/* Section Header */}
             <div>
               <h2 className="text-2xl font-poppins font-bold text-gray-900 dark:text-white">
-                Analytics Overview
+                {t('dashboard.analytics.title')}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
                 Performance metrics across all your QR codes
@@ -856,13 +858,13 @@ const Dashboard: React.FC = () => {
         isOpen={pauseDialog.isOpen}
         onClose={() => setPauseDialog({ isOpen: false, qrId: null, currentStatus: false })}
         onConfirm={handlePauseConfirm}
-        title={pauseDialog.currentStatus ? 'Pause QR Code?' : 'Activate QR Code?'}
+        title={pauseDialog.currentStatus ? t('dashboard.confirmPause.title') : t('dashboard.confirmResume.title')}
         message={
           pauseDialog.currentStatus
-            ? 'This QR code will stop redirecting users when scanned. You can reactivate it at any time.'
-            : 'This QR code will start redirecting users when scanned.'
+            ? t('dashboard.confirmPause.message')
+            : t('dashboard.confirmResume.message')
         }
-        confirmText={pauseDialog.currentStatus ? 'Pause' : 'Activate'}
+        confirmText={pauseDialog.currentStatus ? t('dashboard.confirmPause.confirm') : t('dashboard.confirmResume.confirm')}
         confirmButtonClass={pauseDialog.currentStatus ? 'bg-warning-600 hover:bg-warning-700' : 'bg-success-600 hover:bg-success-700'}
       />
 
@@ -870,9 +872,9 @@ const Dashboard: React.FC = () => {
         isOpen={deleteDialog.isOpen}
         onClose={() => setDeleteDialog({ isOpen: false, qrId: null })}
         onConfirm={handleDeleteConfirm}
-        title="Delete QR Code?"
-        message="This action cannot be undone. The QR code and all its analytics data will be permanently deleted."
-        confirmText="Delete"
+        title={t('dashboard.confirmDelete.title')}
+        message={t('dashboard.confirmDelete.message')}
+        confirmText={t('dashboard.confirmDelete.confirm')}
         confirmButtonClass="bg-error-600 hover:bg-error-700"
       />
 

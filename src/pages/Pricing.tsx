@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { CheckIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { plans } from '../data/plans';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import getStripe from '../utils/stripe';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import SEO from '../components/SEO';
+import { generateProductSchema } from '../utils/seoConfig';
 
 const Pricing: React.FC = () => {
   const { currentUser, subscription } = useAuth();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
   const [pendingPriceId, setPendingPriceId] = useState<string | undefined>(undefined);
@@ -75,7 +79,7 @@ const Pricing: React.FC = () => {
     }
     if (!priceId && planId !== 'free') {
       console.warn('[Subscription] No priceId provided. Aborting.');
-      alert('This plan is not available for online purchase. Please contact us.');
+      alert(t('pricing.errorNotAvailable'));
       return;
     }
 
@@ -98,7 +102,7 @@ const Pricing: React.FC = () => {
 
         await downgradeToPlan({ planId: 'free' });
         console.log('[Subscription] Successfully downgraded to free plan');
-        alert('Successfully downgraded to free plan. Your most recent QR code has been kept active.');
+        alert(t('pricing.successDowngrade'));
         window.location.reload();
         return;
       }
@@ -143,18 +147,40 @@ const Pricing: React.FC = () => {
     handleSubscribe(pendingPriceId, 'free');
   };
 
+  // Schema for pricing page
+  const pricingSchema = {
+    '@context': 'https://schema.org',
+    '@graph': plans.filter(p => p.price !== null).map(plan =>
+      generateProductSchema(
+        `Lady QR ${plan.name} Plan`,
+        plan.price || 0,
+        plan.id === 'free' ? 'Free plan with basic QR code features' :
+        plan.id === 'basic' ? 'Professional QR code generator with analytics and unlimited dynamic QR codes' :
+        'Enterprise QR code solution with advanced features and priority support'
+      )
+    ),
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-900 py-8 sm:py-12">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary-600">Pricing</h2>
-          <p className="mt-1 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Plans designed for modern businesses
-          </p>
-          <p className="mt-3 text-lg leading-7 text-gray-600 dark:text-gray-300">
-            Start free and upgrade as your business grows. All plans include professional support and multiple payment methods.
-          </p>
-        </div>
+    <>
+      <SEO
+        title="Pricing - Lady QR Professional QR Code Generator Plans"
+        description="Choose the perfect QR code generator plan for your business. Start free with unlimited static QR codes. Upgrade for dynamic QR codes, analytics, custom branding, and more. Flexible monthly and annual pricing."
+        keywords="QR code pricing, QR generator plans, free QR code, QR code subscription, business QR codes, dynamic QR pricing"
+        url="/pricing"
+        schema={pricingSchema}
+      />
+      <div className="bg-white dark:bg-gray-900 py-8 sm:py-12">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-base font-semibold leading-7 text-primary-600">{t('pricing.title')}</h2>
+            <p className="mt-1 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+              {t('pricing.subtitle')}
+            </p>
+            <p className="mt-3 text-lg leading-7 text-gray-600 dark:text-gray-300">
+              {t('pricing.description')}
+            </p>
+          </div>
 
         {/* Current Plan Notification */}
         {currentUser && (
@@ -168,11 +194,11 @@ const Pricing: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xs font-medium text-primary-800 dark:text-primary-300">
-                    Current Plan
+                    {t('pricing.currentPlan')}
                   </h3>
                   <p className="text-sm text-primary-700 dark:text-primary-400">
-                    You are currently subscribed to the <strong>{currentPlan?.name || 'Free'}</strong> plan
-                    {currentPlan?.price && currentPlan.price > 0 && ` ($${currentPlan.price}/month)`}
+                    {t('pricing.currentPlanDesc', { plan: t(`pricing.${currentPlan?.id || 'free'}.name`) })}
+                    {currentPlan?.price && currentPlan.price > 0 && ` ($${currentPlan.price}/${t('pricing.perMonth')})`}
                   </p>
                 </div>
               </div>
@@ -197,32 +223,30 @@ const Pricing: React.FC = () => {
                   <h3 className={`text-lg font-poppins font-semibold leading-7 ${
                     index === 1 ? 'text-white' : 'text-gray-900 dark:text-white'
                   }`}>
-                    {plan.name}
+                    {t(`pricing.${plan.id}.name`)}
                   </h3>
                   {index === 1 && (
                     <p className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold leading-5 text-white">
-                      Most popular
+                      {t('pricing.mostPopular')}
                     </p>
                   )}
                 </div>
                 <p className={`mt-2 text-sm leading-5 ${
                   index === 1 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                 }`}>
-                  {plan.id === 'free' && 'Perfect to get started'}
-                  {plan.id === 'basic' && 'Ideal for small businesses'}
-                  {plan.id === 'business' && 'For large organizations'}
+                  {t(`pricing.${plan.id}.tagline`)}
                 </p>
                 <p className="mt-3 flex items-baseline gap-x-1">
                   <span className={`text-4xl font-poppins font-bold tracking-tight ${
                     index === 1 ? 'text-white' : 'text-gray-900 dark:text-white'
                   }`}>
-                    {plan.price !== null ? `$${plan.price}` : 'Contact'}
+                    {plan.price !== null ? `$${plan.price}` : t('pricing.contact')}
                   </span>
                   {plan.price !== null && (
                     <span className={`text-sm font-semibold leading-6 ${
                     index === 1 ? 'text-white/70' : 'text-gray-600 dark:text-gray-400'
                   }`}>
-                    USD/{plan.interval === 'month' ? 'month' : 'year'}
+                    USD/{plan.interval === 'month' ? t('pricing.perMonth') : t('pricing.perYear')}
                   </span>
                   )}
                 </p>
@@ -268,14 +292,14 @@ const Pricing: React.FC = () => {
                 }`}
               >
                 {isCurrentPlan
-                  ? 'Current Plan'
+                  ? t('pricing.currentPlanButton')
                   : plan.id === 'free'
-                  ? currentPlan?.id === 'basic' ? 'Downgrade to Free' : 'Start free'
+                  ? currentPlan?.id === 'basic' ? t('pricing.downgradeButton') : t('pricing.selectPlan')
                   : plan.price === null
-                  ? 'Contact Sales'
+                  ? t('pricing.contactUs')
                   : isLoading
-                  ? 'Processing...'
-                  : 'Subscribe'}
+                  ? t('pricing.selectPlan')
+                  : t('pricing.selectPlan')}
               </button>
             </div>
           )})}
@@ -288,35 +312,25 @@ const Pricing: React.FC = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <ExclamationTriangleIcon className="h-8 w-8 text-warning-600" />
                 <h3 className="text-lg font-poppins font-semibold text-gray-900 dark:text-white">
-                  Downgrade Warning
+                  {t('pricing.downgradeWarningTitle')}
                 </h3>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                You are about to downgrade from the <strong>Basic</strong> plan to the <strong>Free</strong> plan.
+                {t('pricing.downgradeWarningMessage', { count: 0 })}
               </p>
-              <div className="bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700 rounded-lg p-4 mb-6">
-                <p className="text-sm text-warning-800 dark:text-warning-300">
-                  <strong>Important:</strong> The free plan only allows 1 static QR code. If you proceed:
-                </p>
-                <ul className="mt-2 text-sm text-warning-700 dark:text-warning-400 list-disc list-inside space-y-1">
-                  <li>Only your most recently created QR code will remain active</li>
-                  <li>All other QR codes will be permanently deleted</li>
-                  <li>This action cannot be undone</li>
-                </ul>
-              </div>
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowDowngradeWarning(false)}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-md transition-colors"
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-md transition-colors"
                 >
-                  Cancel
+                  {t('pricing.downgradeCancel')}
                 </button>
                 <button
                   onClick={handleDowngradeConfirm}
                   disabled={isLoading}
                   className="flex-1 bg-warning-600 hover:bg-warning-700 text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
                 >
-                  {isLoading ? 'Processing...' : 'Proceed with Downgrade'}
+                  {t('pricing.downgradeConfirm')}
                 </button>
               </div>
             </div>
@@ -324,6 +338,7 @@ const Pricing: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

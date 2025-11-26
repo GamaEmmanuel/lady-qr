@@ -1,0 +1,359 @@
+{
+  "header": {
+    "home": "Home",
+    "createQR": "Create QR",
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "features": "Features",
+    "dashboard": "Dashboard",
+    "subscription": "Subscription",
+    "profile": "Profile",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out"
+  },
+  "home": {
+    "hero": {
+      "title": "Create",
+      "titleHighlight": "professional",
+      "titleEnd": "QR codes for your business",
+      "subtitle": "The most complete platform for generating, customizing and managing QR codes. With advanced analytics and professional features.",
+      "ctaStart": "Start Free",
+      "ctaDashboard": "Go to Dashboard",
+      "ctaTryDemo": "Try Demo",
+      "ctaCreateQR": "Create QR Code"
+    },
+    "analytics": {
+      "title": "Professional Analytics Dashboard",
+      "subtitle": "See exactly how your QR codes are performing with beautiful, actionable insights",
+      "overviewCaption": "Complete analytics overview with scans over time and performance metrics",
+      "geographicTitle": "Geographic Distribution",
+      "geographicDesc": "See where your audience is located with interactive city and country breakdowns",
+      "performanceTitle": "Performance Rankings",
+      "performanceDesc": "Track which QR codes perform best and optimize your campaigns accordingly",
+      "cta": "Get Started with QR Code Analytics"
+    },
+    "qrTypes": {
+      "title": "QR Code Types",
+      "subtitle": "Create QR codes for any purpose with our specialized types"
+    },
+    "comparison": {
+      "title": "Static vs Dynamic QR Codes",
+      "subtitle": "Understand the differences and choose the right type for your needs",
+      "static": {
+        "title": "Static QR Codes",
+        "description": "Data is encoded directly into the QR code pattern. Once created, it cannot be modified.",
+        "feature1Title": "Permanent",
+        "feature1Desc": "Works forever without relying on servers",
+        "feature2Title": "Fast",
+        "feature2Desc": "Instant scanning with no redirects",
+        "feature3Title": "Ideal for",
+        "feature3Desc": "WiFi, text, contacts, locations",
+        "limitationLabel": "Limitation:",
+        "limitation": "Cannot be edited after creation and do not include analytics."
+      },
+      "dynamic": {
+        "title": "Dynamic QR Codes",
+        "description": "They redirect through a short URL you can change at any time. Includes full analytics.",
+        "feature1Title": "Editable",
+        "feature1Desc": "Change the destination without reprinting the code",
+        "feature2Title": "Analytics",
+        "feature2Desc": "Track scans, locations, and devices",
+        "feature3Title": "Ideal for",
+        "feature3Desc": "Marketing, events, businesses, campaigns",
+        "advantageLabel": "Advantage:",
+        "advantage": "Perfect for marketing campaigns where you need flexibility and data."
+      }
+    },
+    "customization": {
+      "title": "Full Customization",
+      "subtitle": "Make your QR codes perfectly reflect your brand",
+      "colors": {
+        "title": "Custom Colors",
+        "description": "Change the QR code colors to match your brand",
+        "features": ["Foreground color", "Background color", "Linear gradients", "Contrast checking"]
+      },
+      "shapes": {
+        "title": "Shapes and Styles",
+        "description": "Customize the appearance of QR code modules",
+        "features": ["Square modules", "Rounded modules", "Circular modules", "Custom corners"]
+      },
+      "logo": {
+        "title": "Center Logo",
+        "description": "Add your logo in the center of the QR code",
+        "features": ["Image upload", "Automatic resizing", "Error correction level H", "Transparent background"]
+      },
+      "frames": {
+        "title": "Frames and Text",
+        "description": "Add decorative frames with custom text",
+        "features": ["Frame gallery", "Editable text", "Calls to action", "Preset styles"]
+      }
+    },
+    "security": {
+      "title": "Security and Reliability",
+      "subtitle": "Your information and your users' information is protected",
+      "sslTitle": "SSL Encryption",
+      "sslDesc": "All data is transmitted securely",
+      "cloudTitle": "Cloud Backup",
+      "cloudDesc": "Your codes are safely stored in Firebase",
+      "uptimeTitle": "99.9% Uptime",
+      "uptimeDesc": "Guaranteed availability for your codes"
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "subtitle": "Join thousands of businesses already using Lady QR to grow their business. Start free and upgrade when you need it.",
+      "button": "Start now",
+      "link": "View pricing"
+    }
+  },
+  "footer": {
+    "tagline": "The most complete QR code platform for businesses worldwide. Create, customize and manage your QR codes with ease.",
+    "product": "Product",
+    "company": "Company",
+    "resources": "Resources",
+    "legal": "Legal",
+    "features": "Features",
+    "pricing": "Pricing",
+    "createQR": "Create QR",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy",
+    "copyright": "© 2024 Lady QR. All rights reserved. Made with ❤️ for businesses worldwide."
+  },
+  "login": {
+    "title": "Sign in to your account",
+    "subtitle": "Or",
+    "signUpLink": "Sign up here",
+    "email": "Email address",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signInButton": "Sign in",
+    "signingIn": "Signing in...",
+    "orContinueWith": "Or continue with",
+    "googleSignIn": "Sign in with Google",
+    "passwordlessTitle": "Prefer passwordless sign-in?",
+    "passwordlessDesc": "We'll send you a magic link to sign in without a password.",
+    "sendMagicLink": "Send Magic Link",
+    "sendingLink": "Sending...",
+    "linkSent": "Check your email!",
+    "linkSentDesc": "We've sent you a sign-in link. Click the link in your email to continue.",
+    "errorInvalidCredentials": "Invalid email or password. Please try again.",
+    "errorGoogle": "Failed to sign in with Google. Please try again.",
+    "errorPasswordless": "Failed to send sign-in link. Please try again.",
+    "errorEmailRequired": "Please enter your email address first."
+  },
+  "register": {
+    "title": "Create your free account",
+    "subtitle": "Already have an account?",
+    "signInLink": "Sign in here",
+    "fullName": "Full name",
+    "email": "Email address",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "acceptTerms": "I accept the",
+    "terms": "Terms and Conditions",
+    "and": "and",
+    "privacy": "Privacy Policy",
+    "signUpButton": "Create account",
+    "creatingAccount": "Creating account...",
+    "orContinueWith": "Or continue with",
+    "googleSignUp": "Sign up with Google",
+    "errorPasswordMismatch": "Passwords do not match",
+    "errorPasswordLength": "Password must be at least 6 characters",
+    "errorTerms": "You must accept the terms and conditions",
+    "errorCreateAccount": "Error creating account. Please try again.",
+    "errorGoogle": "Error signing up with Google"
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Plans designed for modern businesses",
+    "description": "Start free and upgrade as your business grows. All plans include professional support and multiple payment methods.",
+    "currentPlan": "Current Plan",
+    "currentPlanDesc": "You are currently subscribed to the {{plan}} plan",
+    "mostPopular": "Most popular",
+    "free": {
+      "name": "Free",
+      "tagline": "Perfect to get started"
+    },
+    "basic": {
+      "name": "Basic",
+      "tagline": "Ideal for small businesses"
+    },
+    "business": {
+      "name": "Business",
+      "tagline": "For large organizations"
+    },
+    "perMonth": "month",
+    "perYear": "year",
+    "contact": "Contact",
+    "selectPlan": "Select Plan",
+    "currentPlanButton": "Current Plan",
+    "upgradeButton": "Upgrade",
+    "downgradeButton": "Downgrade",
+    "contactUs": "Contact us",
+    "downgradeWarningTitle": "Downgrade to Free Plan?",
+    "downgradeWarningMessage": "You currently have {{count}} QR codes. Downgrading to Free will deactivate all except your most recent QR code. The deactivated codes will be archived and can be reactivated if you upgrade again.",
+    "downgradeConfirm": "Yes, downgrade to Free",
+    "downgradeCancel": "Cancel",
+    "errorNotAvailable": "This plan is not available for online purchase. Please contact us.",
+    "successDowngrade": "Successfully downgraded to free plan. Your most recent QR code has been kept active."
+  },
+  "dashboard": {
+    "title": "My QR Codes",
+    "welcome": "Welcome back",
+    "stats": {
+      "totalQRCodes": "Total QR Codes",
+      "totalScans": "Total Scans",
+      "activeQRs": "Active QRs",
+      "currentPlan": "Current Plan"
+    },
+    "analytics": {
+      "title": "Analytics Overview",
+      "scansOverTime": "Scans Over Time",
+      "topPerforming": "Top Performing QR Codes",
+      "noData": "No analytics data yet",
+      "create": "Create your first QR code to start tracking"
+    },
+    "filters": {
+      "search": "Search QR codes...",
+      "sortBy": "Sort by",
+      "sortCreated": "Date Created",
+      "sortScans": "Most Scans",
+      "sortName": "Name",
+      "filterAll": "All Types",
+      "filterDynamic": "Dynamic",
+      "filterStatic": "Static"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "scans": "Scans",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "dynamic": "Dynamic",
+      "static": "Static"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "download": "Download",
+      "pause": "Pause",
+      "resume": "Resume",
+      "delete": "Delete",
+      "viewAnalytics": "View Analytics"
+    },
+    "empty": {
+      "title": "No QR codes yet",
+      "description": "Create your first QR code to get started",
+      "button": "Create QR Code"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "results": "results",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "confirmPause": {
+      "title": "Pause QR Code?",
+      "message": "This QR code will stop redirecting. You can resume it anytime.",
+      "confirm": "Yes, pause it",
+      "cancel": "Cancel"
+    },
+    "confirmResume": {
+      "title": "Resume QR Code?",
+      "message": "This QR code will start redirecting again.",
+      "confirm": "Yes, resume it",
+      "cancel": "Cancel"
+    },
+    "confirmDelete": {
+      "title": "Delete QR Code?",
+      "message": "This action cannot be undone. All analytics data will be permanently deleted.",
+      "confirm": "Yes, delete it",
+      "cancel": "Cancel"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "download": "Download",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to common questions about Lady QR",
+    "categories": {
+      "all": "All Questions",
+      "general": "General",
+      "types": "QR Types",
+      "pricing": "Pricing & Plans",
+      "technical": "Technical",
+      "customization": "Customization",
+      "analytics": "Analytics"
+    }
+  },
+  "features": {
+    "title": "Features",
+    "subtitle": "Everything you need to create professional QR codes",
+    "description": "Discover all the features that make Lady QR the most complete platform for businesses worldwide"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Have questions? We'd love to hear from you",
+    "description": "Send us a message and we'll respond as soon as possible",
+    "form": {
+      "name": "Full name",
+      "email": "Email address",
+      "subject": "Subject",
+      "message": "Your message",
+      "send": "Send Message",
+      "sending": "Sending...",
+      "success": "Message sent successfully! We'll get back to you soon.",
+      "error": "Failed to send message. Please try again.",
+      "required": "This field is required"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account settings",
+    "personalInfo": "Personal Information",
+    "subscription": "Subscription Details",
+    "security": "Security",
+    "form": {
+      "fullName": "Full name",
+      "email": "Email address",
+      "currentPlan": "Current Plan",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Changes saved successfully",
+      "error": "Failed to save changes"
+    }
+  }
+}
+

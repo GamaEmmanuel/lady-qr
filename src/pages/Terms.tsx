@@ -1,9 +1,17 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const Terms: React.FC = () => {
   return (
-    <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
-      <div className="mx-auto max-w-4xl px-6 lg:px-8">
+    <>
+      <SEO
+        title="Terms of Service - Lady QR"
+        description="Read Lady QR's terms of service and user agreement. Understand your rights and responsibilities when using our QR code generator."
+        keywords="terms of service, user agreement, terms and conditions"
+        url="/terms"
+      />
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-poppins font-bold text-gray-900 dark:text-white">
             Terms of Service
@@ -505,6 +513,7 @@ const Terms: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

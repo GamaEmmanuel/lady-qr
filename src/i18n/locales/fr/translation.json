@@ -1,0 +1,359 @@
+{
+  "header": {
+    "home": "Accueil",
+    "createQR": "Créer QR",
+    "pricing": "Tarification",
+    "faq": "FAQ",
+    "features": "Fonctionnalités",
+    "dashboard": "Tableau de bord",
+    "subscription": "Abonnement",
+    "profile": "Profil",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "signOut": "Se déconnecter"
+  },
+  "home": {
+    "hero": {
+      "title": "Créez des",
+      "titleHighlight": "professionnels",
+      "titleEnd": "codes QR pour votre entreprise",
+      "subtitle": "La plateforme la plus complète pour générer, personnaliser et gérer des codes QR. Avec des analyses avancées et des fonctionnalités professionnelles.",
+      "ctaStart": "Commencer Gratuitement",
+      "ctaDashboard": "Aller au Tableau de bord",
+      "ctaTryDemo": "Essayer la Démo",
+      "ctaCreateQR": "Créer un Code QR"
+    },
+    "analytics": {
+      "title": "Tableau de Bord d'Analyse Professionnel",
+      "subtitle": "Voyez exactement comment vos codes QR fonctionnent avec des informations belles et exploitables",
+      "overviewCaption": "Vue d'ensemble complète des analyses avec les scans au fil du temps et les métriques de performance",
+      "geographicTitle": "Distribution Géographique",
+      "geographicDesc": "Voyez où se trouve votre audience avec des répartitions interactives par ville et par pays",
+      "performanceTitle": "Classements de Performance",
+      "performanceDesc": "Suivez quels codes QR fonctionnent le mieux et optimisez vos campagnes en conséquence",
+      "cta": "Commencer avec l'Analyse de Codes QR"
+    },
+    "qrTypes": {
+      "title": "Types de Codes QR",
+      "subtitle": "Créez des codes QR pour n'importe quel usage avec nos types spécialisés"
+    },
+    "comparison": {
+      "title": "Codes QR Statiques vs Dynamiques",
+      "subtitle": "Comprenez les différences et choisissez le bon type pour vos besoins",
+      "static": {
+        "title": "Codes QR Statiques",
+        "description": "Les données sont encodées directement dans le motif du code QR. Une fois créé, il ne peut pas être modifié.",
+        "feature1Title": "Permanent",
+        "feature1Desc": "Fonctionne pour toujours sans dépendre de serveurs",
+        "feature2Title": "Rapide",
+        "feature2Desc": "Scan instantané sans redirections",
+        "feature3Title": "Idéal pour",
+        "feature3Desc": "WiFi, texte, contacts, emplacements",
+        "limitationLabel": "Limitation:",
+        "limitation": "Ne peut pas être modifié après la création et n'inclut pas d'analyses."
+      },
+      "dynamic": {
+        "title": "Codes QR Dynamiques",
+        "description": "Ils redirigent via une URL courte que vous pouvez changer à tout moment. Inclut des analyses complètes.",
+        "feature1Title": "Modifiable",
+        "feature1Desc": "Changez la destination sans réimprimer le code",
+        "feature2Title": "Analyses",
+        "feature2Desc": "Suivez les scans, les emplacements et les appareils",
+        "feature3Title": "Idéal pour",
+        "feature3Desc": "Marketing, événements, entreprises, campagnes",
+        "advantageLabel": "Avantage:",
+        "advantage": "Parfait pour les campagnes marketing où vous avez besoin de flexibilité et de données."
+      }
+    },
+    "customization": {
+      "title": "Personnalisation Complète",
+      "subtitle": "Faites en sorte que vos codes QR reflètent parfaitement votre marque",
+      "colors": {
+        "title": "Couleurs Personnalisées",
+        "description": "Changez les couleurs du code QR pour correspondre à votre marque",
+        "features": ["Couleur de premier plan", "Couleur d'arrière-plan", "Dégradés linéaires", "Vérification du contraste"]
+      },
+      "shapes": {
+        "title": "Formes et Styles",
+        "description": "Personnalisez l'apparence des modules de code QR",
+        "features": ["Modules carrés", "Modules arrondis", "Modules circulaires", "Coins personnalisés"]
+      },
+      "logo": {
+        "title": "Logo Central",
+        "description": "Ajoutez votre logo au centre du code QR",
+        "features": ["Téléchargement d'image", "Redimensionnement automatique", "Niveau de correction d'erreur H", "Arrière-plan transparent"]
+      },
+      "frames": {
+        "title": "Cadres et Texte",
+        "description": "Ajoutez des cadres décoratifs avec du texte personnalisé",
+        "features": ["Galerie de cadres", "Texte modifiable", "Appels à l'action", "Styles prédéfinis"]
+      }
+    },
+    "security": {
+      "title": "Sécurité et Fiabilité",
+      "subtitle": "Vos informations et celles de vos utilisateurs sont protégées",
+      "sslTitle": "Chiffrement SSL",
+      "sslDesc": "Toutes les données sont transmises en toute sécurité",
+      "cloudTitle": "Sauvegarde Cloud",
+      "cloudDesc": "Vos codes sont stockés en toute sécurité dans Firebase",
+      "uptimeTitle": "99,9% de Disponibilité",
+      "uptimeDesc": "Disponibilité garantie pour vos codes"
+    },
+    "cta": {
+      "title": "Prêt à commencer ?",
+      "subtitle": "Rejoignez des milliers d'entreprises qui utilisent déjà Lady QR pour développer leur activité. Commencez gratuitement et mettez à niveau quand vous en avez besoin.",
+      "button": "Commencer maintenant",
+      "link": "Voir la tarification"
+    }
+  },
+  "footer": {
+    "tagline": "La plateforme de codes QR la plus complète pour les entreprises du monde entier. Créez, personnalisez et gérez vos codes QR en toute simplicité.",
+    "product": "Produit",
+    "company": "Entreprise",
+    "resources": "Ressources",
+    "legal": "Juridique",
+    "features": "Fonctionnalités",
+    "pricing": "Tarification",
+    "createQR": "Créer QR",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "privacy": "Politique de Confidentialité",
+    "terms": "Conditions d'Utilisation",
+    "cookies": "Politique de Cookies",
+    "copyright": "© 2024 Lady QR. Tous droits réservés. Fabriqué avec ❤️ pour les entreprises du monde entier."
+  },
+  "login": {
+    "title": "Connectez-vous à votre compte",
+    "subtitle": "Ou",
+    "signUpLink": "Inscrivez-vous ici",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "signInButton": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "orContinueWith": "Ou continuer avec",
+    "googleSignIn": "Se connecter avec Google",
+    "passwordlessTitle": "Préférez-vous vous connecter sans mot de passe?",
+    "passwordlessDesc": "Nous vous enverrons un lien magique pour vous connecter sans mot de passe.",
+    "sendMagicLink": "Envoyer le Lien Magique",
+    "sendingLink": "Envoi en cours...",
+    "linkSent": "Vérifiez votre e-mail!",
+    "linkSentDesc": "Nous vous avons envoyé un lien de connexion. Cliquez sur le lien dans votre e-mail pour continuer.",
+    "errorInvalidCredentials": "E-mail ou mot de passe invalide. Veuillez réessayer.",
+    "errorGoogle": "Échec de la connexion avec Google. Veuillez réessayer.",
+    "errorPasswordless": "Échec de l'envoi du lien de connexion. Veuillez réessayer.",
+    "errorEmailRequired": "Veuillez d'abord saisir votre adresse e-mail."
+  },
+  "register": {
+    "title": "Créez votre compte gratuit",
+    "subtitle": "Vous avez déjà un compte?",
+    "signInLink": "Connectez-vous ici",
+    "fullName": "Nom complet",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "acceptTerms": "J'accepte les",
+    "terms": "Conditions Générales",
+    "and": "et la",
+    "privacy": "Politique de Confidentialité",
+    "signUpButton": "Créer un compte",
+    "creatingAccount": "Création du compte...",
+    "orContinueWith": "Ou continuer avec",
+    "googleSignUp": "S'inscrire avec Google",
+    "errorPasswordMismatch": "Les mots de passe ne correspondent pas",
+    "errorPasswordLength": "Le mot de passe doit contenir au moins 6 caractères",
+    "errorTerms": "Vous devez accepter les conditions générales",
+    "errorCreateAccount": "Erreur lors de la création du compte. Veuillez réessayer.",
+    "errorGoogle": "Erreur lors de l'inscription avec Google"
+  },
+  "pricing": {
+    "title": "Tarification",
+    "subtitle": "Plans conçus pour les entreprises modernes",
+    "description": "Commencez gratuitement et mettez à niveau au fur et à mesure que votre entreprise se développe. Tous les plans incluent un support professionnel et plusieurs méthodes de paiement.",
+    "currentPlan": "Plan Actuel",
+    "currentPlanDesc": "Vous êtes actuellement abonné au plan {{plan}}",
+    "mostPopular": "Le plus populaire",
+    "free": {
+      "name": "Gratuit",
+      "tagline": "Parfait pour commencer"
+    },
+    "basic": {
+      "name": "Basique",
+      "tagline": "Idéal pour les petites entreprises"
+    },
+    "business": {
+      "name": "Entreprise",
+      "tagline": "Pour les grandes organisations"
+    },
+    "perMonth": "mois",
+    "perYear": "an",
+    "contact": "Contact",
+    "selectPlan": "Sélectionner le Plan",
+    "currentPlanButton": "Plan Actuel",
+    "upgradeButton": "Mettre à niveau",
+    "downgradeButton": "Rétrograder",
+    "contactUs": "Contactez-nous",
+    "downgradeWarningTitle": "Rétrograder vers le Plan Gratuit?",
+    "downgradeWarningMessage": "Vous avez actuellement {{count}} codes QR. La rétrogradation vers Gratuit désactivera tous sauf votre code QR le plus récent. Les codes désactivés seront archivés et pourront être réactivés si vous mettez à niveau à nouveau.",
+    "downgradeConfirm": "Oui, rétrograder vers Gratuit",
+    "downgradeCancel": "Annuler",
+    "errorNotAvailable": "Ce plan n'est pas disponible à l'achat en ligne. Veuillez nous contacter.",
+    "successDowngrade": "Rétrogradé avec succès vers le plan gratuit. Votre code QR le plus récent a été conservé actif."
+  },
+  "dashboard": {
+    "title": "Mes Codes QR",
+    "welcome": "Bon retour",
+    "stats": {
+      "totalQRCodes": "Total des Codes QR",
+      "totalScans": "Total des Scans",
+      "activeQRs": "QRs Actifs",
+      "currentPlan": "Plan Actuel"
+    },
+    "analytics": {
+      "title": "Aperçu des Analyses",
+      "scansOverTime": "Scans au Fil du Temps",
+      "topPerforming": "Codes QR les Plus Performants",
+      "noData": "Pas encore de données d'analyse",
+      "create": "Créez votre premier code QR pour commencer le suivi"
+    },
+    "filters": {
+      "search": "Rechercher des codes QR...",
+      "sortBy": "Trier par",
+      "sortCreated": "Date de Création",
+      "sortScans": "Plus de Scans",
+      "sortName": "Nom",
+      "filterAll": "Tous les Types",
+      "filterDynamic": "Dynamique",
+      "filterStatic": "Statique"
+    },
+    "table": {
+      "name": "Nom",
+      "type": "Type",
+      "scans": "Scans",
+      "status": "Statut",
+      "created": "Créé",
+      "actions": "Actions",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "dynamic": "Dynamique",
+      "static": "Statique"
+    },
+    "actions": {
+      "view": "Voir",
+      "edit": "Modifier",
+      "download": "Télécharger",
+      "pause": "Mettre en Pause",
+      "resume": "Reprendre",
+      "delete": "Supprimer",
+      "viewAnalytics": "Voir les Analyses"
+    },
+    "empty": {
+      "title": "Pas encore de codes QR",
+      "description": "Créez votre premier code QR pour commencer",
+      "button": "Créer un Code QR"
+    },
+    "pagination": {
+      "showing": "Affichage de",
+      "to": "à",
+      "of": "sur",
+      "results": "résultats",
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "confirmPause": {
+      "title": "Mettre en Pause le Code QR?",
+      "message": "Ce code QR cessera de rediriger. Vous pourrez le reprendre à tout moment.",
+      "confirm": "Oui, le mettre en pause",
+      "cancel": "Annuler"
+    },
+    "confirmResume": {
+      "title": "Reprendre le Code QR?",
+      "message": "Ce code QR recommencera à rediriger.",
+      "confirm": "Oui, le reprendre",
+      "cancel": "Annuler"
+    },
+    "confirmDelete": {
+      "title": "Supprimer le Code QR?",
+      "message": "Cette action ne peut pas être annulée. Toutes les données d'analyse seront définitivement supprimées.",
+      "confirm": "Oui, le supprimer",
+      "cancel": "Annuler"
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "download": "Télécharger",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "actions": "Actions",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "faq": {
+    "title": "Foire Aux Questions",
+    "subtitle": "Trouvez des réponses aux questions courantes sur Lady QR",
+    "categories": {
+      "all": "Toutes les Questions",
+      "general": "Général",
+      "types": "Types de QR",
+      "pricing": "Tarification et Plans",
+      "technical": "Technique",
+      "customization": "Personnalisation",
+      "analytics": "Analyses"
+    }
+  },
+  "features": {
+    "title": "Fonctionnalités",
+    "subtitle": "Tout ce dont vous avez besoin pour créer des codes QR professionnels",
+    "description": "Découvrez toutes les fonctionnalités qui font de Lady QR la plateforme la plus complète pour les entreprises du monde entier"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Des questions? Nous aimerions vous entendre",
+    "description": "Envoyez-nous un message et nous vous répondrons dans les plus brefs délais",
+    "form": {
+      "name": "Nom complet",
+      "email": "Adresse e-mail",
+      "subject": "Sujet",
+      "message": "Votre message",
+      "send": "Envoyer le Message",
+      "sending": "Envoi en cours...",
+      "success": "Message envoyé avec succès! Nous vous répondrons bientôt.",
+      "error": "Échec de l'envoi du message. Veuillez réessayer.",
+      "required": "Ce champ est obligatoire"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Gérez les paramètres de votre compte",
+    "personalInfo": "Informations Personnelles",
+    "subscription": "Détails de l'Abonnement",
+    "security": "Sécurité",
+    "form": {
+      "fullName": "Nom complet",
+      "email": "Adresse e-mail",
+      "currentPlan": "Plan Actuel",
+      "save": "Enregistrer les Modifications",
+      "saving": "Enregistrement...",
+      "saved": "Modifications enregistrées avec succès",
+      "error": "Échec de l'enregistrement des modifications"
+    }
+  }
+}
+

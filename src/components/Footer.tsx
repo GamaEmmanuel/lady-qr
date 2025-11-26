@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { QrCodeIcon } from '@heroicons/react/24/solid';
+import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-gray-900 dark:bg-gray-950">
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
@@ -15,38 +18,37 @@ const Footer: React.FC = () => {
               </span>
             </div>
             <p className="text-sm leading-6 text-gray-300">
-              The most complete QR code platform for businesses worldwide.
-              Create, customize and manage your QR codes with ease.
+              {t('footer.tagline')}
             </p>
           </div>
           <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">Product</h3>
+                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">{t('footer.product')}</h3>
                 <ul className="mt-6 space-y-4">
                   <li>
                     <Link to="/features" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Features
+                      {t('footer.features')}
                     </Link>
                   </li>
                   <li>
                     <Link to="/pricing" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Pricing
+                      {t('footer.pricing')}
                     </Link>
                   </li>
                   <li>
                     <Link to="/create" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Create QR
+                      {t('footer.createQR')}
                     </Link>
                   </li>
                 </ul>
               </div>
               <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">Company</h3>
+                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">{t('footer.company')}</h3>
                 <ul className="mt-6 space-y-4">
                   <li>
                     <Link to="/contact" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Contact
+                      {t('footer.contact')}
                     </Link>
                   </li>
                 </ul>
@@ -54,31 +56,31 @@ const Footer: React.FC = () => {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">Resources</h3>
+                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">{t('footer.resources')}</h3>
                 <ul className="mt-6 space-y-4">
                   <li>
                     <Link to="/faq" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      FAQ
+                      {t('footer.faq')}
                     </Link>
                   </li>
                 </ul>
               </div>
               <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">Legal</h3>
+                <h3 className="text-sm font-poppins font-semibold leading-6 text-white">{t('footer.legal')}</h3>
                 <ul className="mt-6 space-y-4">
                   <li>
                     <Link to="/privacy" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Privacy Policy
+                      {t('footer.privacy')}
                     </Link>
                   </li>
                   <li>
                     <Link to="/terms" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Terms of Service
+                      {t('footer.terms')}
                     </Link>
                   </li>
                   <li>
                     <Link to="/cookies" className="text-sm leading-6 text-gray-300 hover:text-white">
-                      Cookie Policy
+                      {t('footer.cookies')}
                     </Link>
                   </li>
                 </ul>
@@ -89,7 +91,7 @@ const Footer: React.FC = () => {
         <div className="mt-16 border-t border-gray-900/10 pt-8 sm:mt-20 lg:mt-24">
           <div className="text-center">
             <p className="text-xs leading-5 text-gray-400">
-              &copy; 2024 Lady QR. All rights reserved. Made with ❤️ for businesses worldwide.
+              {t('footer.copyright')}
             </p>
           </div>
         </div>

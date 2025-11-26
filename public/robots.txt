@@ -1,0 +1,31 @@
+# Lady QR - robots.txt
+# Allow all crawlers access to all content
+
+User-agent: *
+Allow: /
+
+# Disallow crawling of specific paths
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /create
+Disallow: /checkout
+Disallow: /archive
+Disallow: /auth/
+
+# Allow important pages
+Allow: /
+Allow: /pricing
+Allow: /features
+Allow: /faq
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Sitemap location
+Sitemap: https://ladyqr.com/sitemap.xml
+
+# Crawl delay (optional)
+# Crawl-delay: 1
+

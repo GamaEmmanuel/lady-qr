@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { useTranslation } from 'react-i18next';
+import SEO from '../components/SEO';
+import { generateFAQSchema } from '../utils/seoConfig';
 
 interface FAQItem {
   id: string;
@@ -9,6 +12,7 @@ interface FAQItem {
 }
 
 const FAQ: React.FC = () => {
+  const { t } = useTranslation();
   const [openItems, setOpenItems] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
@@ -261,19 +265,35 @@ const FAQ: React.FC = () => {
     ? faqData
     : faqData.filter(item => item.category === selectedCategory);
 
+  // Generate FAQ Schema for SEO
+  const faqSchema = generateFAQSchema(
+    faqData.map(faq => ({
+      question: faq.question,
+      answer: faq.answer
+    }))
+  );
+
   return (
-    <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary-600">Support</h2>
-          <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Frequently Asked Questions
-          </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            Find answers to the most common questions about Lady QR, QR codes and our services
-          </p>
-        </div>
+    <>
+      <SEO
+        title="FAQ - Frequently Asked Questions | Lady QR"
+        description="Find answers to common questions about Lady QR's QR code generator. Learn about QR code types, features, pricing, analytics, customization, and more."
+        keywords="QR code FAQ, QR generator help, QR code questions, dynamic QR help, QR code support, how to create QR code"
+        url="/faq"
+        schema={faqSchema}
+      />
+      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          {/* Header */}
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-base font-semibold leading-7 text-primary-600">Support</h2>
+            <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+              {t('faq.title')}
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+              {t('faq.subtitle')}
+            </p>
+          </div>
 
         {/* Category Filter */}
         <div className="mt-16 sm:mt-20">
@@ -365,6 +385,7 @@ const FAQ: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

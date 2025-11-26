@@ -1,9 +1,17 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const Privacy: React.FC = () => {
   return (
-    <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
-      <div className="mx-auto max-w-4xl px-6 lg:px-8">
+    <>
+      <SEO
+        title="Privacy Policy - Lady QR"
+        description="Learn about how Lady QR collects, uses, and protects your personal information. Our commitment to data privacy and security."
+        keywords="privacy policy, data protection, GDPR, user privacy"
+        url="/privacy"
+      />
+      <div className="bg-white dark:bg-gray-900 py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-poppins font-bold text-gray-900 dark:text-white">
             Privacy Policy
@@ -354,6 +362,7 @@ const Privacy: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

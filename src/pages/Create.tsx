@@ -328,7 +328,8 @@ const Create: React.FC = () => {
       }
 
       console.log('💾 Saving to Firestore collection: qrcodes, doc ID:', finalQrId);
-      await setDoc(doc(db, 'qrcodes', finalQrId), docData);
+      // Use merge mode to preserve existing fields (like scanCount) when editing
+      await setDoc(doc(db, 'qrcodes', finalQrId), docData, { merge: true });
       console.log('✅ QR code saved successfully to Firestore!');
 
       // Lock the QR ID so it doesn't change after save

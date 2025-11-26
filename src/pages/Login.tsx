@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { EyeIcon, EyeSlashIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import SEO from '../components/SEO';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,8 +13,9 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [passwordlessLoading, setPasswordlessLoading] = useState(false);
   const [passwordlessSuccess, setPasswordlessSuccess] = useState(false);
-  
+
   const { login, loginWithGoogle, sendPasswordlessLink, currentUser } = useAuth();
+  const { t } = useTranslation();
 
   if (currentUser) {
     return <Navigate to="/dashboard" replace />;
@@ -26,7 +29,7 @@ const Login: React.FC = () => {
     try {
       await login(email, password);
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
+      setError(t('login.errorInvalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -37,7 +40,7 @@ const Login: React.FC = () => {
       setLoading(true);
       await loginWithGoogle();
     } catch (error) {
-      setError('Failed to sign in with Google. Please try again.');
+      setError(t('login.errorGoogle'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +48,7 @@ const Login: React.FC = () => {
 
   const handlePasswordlessLogin = async () => {
     if (!email) {
-      setError('Please enter your email address first.');
+      setError(t('login.errorEmailRequired'));
       return;
     }
 
@@ -55,23 +58,31 @@ const Login: React.FC = () => {
       await sendPasswordlessLink(email);
       setPasswordlessSuccess(true);
     } catch (error) {
-      setError('Failed to send sign-in link. Please try again.');
+      setError(t('login.errorPasswordless'));
     } finally {
       setPasswordlessLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Or{' '}
-          <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
-            Sign up here
-          </Link>
+    <>
+      <SEO
+        title="Login - Lady QR Account"
+        description="Sign in to your Lady QR account to manage your QR codes, view analytics, and access premium features."
+        keywords="login Lady QR, sign in, QR code account"
+        url="/login"
+        noindex={true}
+      />
+      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+            {t('login.title')}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            {t('login.subtitle')}{' '}
+            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+              {t('login.signUpLink')}
+            </Link>
         </p>
       </div>
 
@@ -89,8 +100,8 @@ const Login: React.FC = () => {
                 <div className="flex items-center">
                   <EnvelopeIcon className="h-5 w-5 mr-2" />
                   <div>
-                    <p className="font-medium">Check your email!</p>
-                    <p className="text-sm mt-1">We've sent you a sign-in link at {email}</p>
+                    <p className="font-medium">{t('login.linkSent')}</p>
+                    <p className="text-sm mt-1">{t('login.linkSentDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -98,7 +109,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email
+                {t('login.email')}
               </label>
               <div className="mt-1">
                 <input
@@ -117,7 +128,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
+                {t('login.password')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -135,6 +146,7 @@ const Login: React.FC = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -145,21 +157,13 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
             <div>
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? t('login.signingIn') : t('login.signInButton')}
               </button>
             </div>
           </form>
@@ -170,7 +174,7 @@ const Login: React.FC = () => {
                 <div className="w-full border-t border-gray-300 dark:border-gray-600" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">{t('login.orContinueWith')}</span>
               </div>
             </div>
 
@@ -181,9 +185,9 @@ const Login: React.FC = () => {
                 className="w-full inline-flex justify-center py-2 px-4 border border-primary-300 dark:border-primary-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <EnvelopeIcon className="w-5 h-5 mr-2" />
-                {passwordlessLoading ? 'Sending link...' : 'Send sign-in link'}
+                {passwordlessLoading ? t('login.sendingLink') : t('login.sendMagicLink')}
               </button>
-              
+
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
@@ -207,13 +211,14 @@ const Login: React.FC = () => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Google
+                {t('login.googleSignIn')}
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

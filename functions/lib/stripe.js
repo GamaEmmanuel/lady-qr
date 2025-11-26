@@ -8,7 +8,7 @@ const https_1 = require("firebase-functions/v2/https");
 const firebase_functions_1 = require("firebase-functions");
 const stripe_1 = __importDefault(require("stripe"));
 const index_1 = require("./index");
-// Force redeploy
+// Force redeploy - updated webhook secret
 if (!process.env.STRIPE_SECRET_KEY) {
     console.warn('The STRIPE_SECRET_KEY environment variable is not set. The app will not work correctly in a deployed environment.');
 }

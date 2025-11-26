@@ -1,14 +1,72 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
     <title>Lady QR - Professional QR Code Generator</title>
+    <meta name="title" content="Lady QR - Professional QR Code Generator" />
     <meta name="description" content="Create custom QR codes for your business with Lady QR. Professional QR code generator with analytics, customization, and multiple formats." />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&family=Merienda:wght@400&display=swap" rel="stylesheet">
+    <meta name="keywords" content="QR code generator, custom QR codes, dynamic QR codes, QR code analytics, free QR code" />
+    <meta name="author" content="Lady QR" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#9333ea" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#9333ea" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+    <!-- Fonts with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&family=Merienda:wght@400&display=swap" rel="stylesheet" />
+
+    <!-- Canonical URL (will be overridden by react-helmet) -->
+    <link rel="canonical" href="https://ladyqr.com/" />
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WKDZZLF91G"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+
+      // Set default consent to 'denied' for GDPR compliance
+      // This will be updated to 'granted' when user accepts cookies
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'wait_for_update': 500
+      });
+
+      gtag('js', new Date());
+      gtag('config', 'G-WKDZZLF91G', {
+        'anonymize_ip': true,
+        'cookie_flags': 'SameSite=None;Secure',
+        'send_page_view': false // We'll send this manually after consent
+      });
+
+      // Send initial page view (will respect consent)
+      gtag('event', 'page_view');
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   QrCodeIcon,
   ChartBarIcon,
@@ -16,8 +17,10 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { qrTypes as importedQrTypes } from '../data/qrTypes';
+import SEO from '../components/SEO';
 
 const Features: React.FC = () => {
+  const { t } = useTranslation();
   const qrTypes = importedQrTypes;
 
   const imageFormats = [
@@ -65,27 +68,34 @@ const Features: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary-600">Features</h2>
-          <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            Everything you need to create professional QR codes
-          </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            Discover all the features that make Lady QR the most complete platform for businesses worldwide
-          </p>
-        </div>
+    <>
+      <SEO
+        title="Features - Lady QR Professional QR Code Generator"
+        description="Explore all features: 20+ QR code types, custom designs with logos, real-time analytics, bulk generation, dynamic QR codes, and more. Professional QR code generator with advanced customization options."
+        keywords="QR code features, custom QR design, QR analytics, dynamic QR codes, bulk QR generator, QR code types, branded QR codes, QR code customization"
+        url="/features"
+      />
+      <div className="bg-white dark:bg-gray-900 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          {/* Header */}
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-base font-semibold leading-7 text-primary-600">{t('features.title')}</h2>
+            <p className="mt-2 text-4xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+              {t('features.subtitle')}
+            </p>
+            <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+              {t('features.description')}
+            </p>
+          </div>
 
         {/* QR Types Comparison */}
         <div className="mt-16 sm:mt-20">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="text-3xl font-poppins font-bold tracking-tight text-gray-900 dark:text-white">
-              Static vs Dynamic QR Codes
+              {t('home.comparison.title')}
             </h3>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Understand the differences and choose the right type for your needs
+              {t('home.comparison.subtitle')}
             </p>
           </div>
 
@@ -390,6 +400,7 @@ const Features: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

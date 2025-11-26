@@ -18,7 +18,7 @@ env:
     value: production
     availability:
       - RUNTIME
-  
+
   - variable: PORT
     value: "8080"
 
@@ -59,7 +59,7 @@ env:
 
   # Stripe Configuration
   - variable: VITE_STRIPE_PUBLISHABLE_KEY
-    value: pk_test_51KaNrIDUi8OxbbECzSmd2J3XiwxMYxKI0GBlxcORQKJKsMsGYSOpjQkkkNtB3TDVi1Sb8uVWORwGbmeTXaJ2KSwt00LFiXzr01
+    value: pk_live_51KaNrIDUi8OxbbECAbiz7nW80RboVbgR9rfiTRSxZJ2oIWPelOqQKF9yXgSErG1EbYQ8cgLUahllHjFowmpYwm9N00TPYKBY5a
 
 # Build configuration is handled by Dockerfile
 

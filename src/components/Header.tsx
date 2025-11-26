@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -13,26 +14,28 @@ import {
 import { QrCodeIcon } from '@heroicons/react/24/solid';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { currentUser, logout, userData } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
   const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Create QR', href: currentUser ? '/create' : '/create-guest' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'FAQ', href: '/faq' },
+    { name: t('header.home'), href: '/' },
+    { name: t('header.createQR'), href: currentUser ? '/create' : '/create-guest' },
+    { name: t('header.pricing'), href: '/pricing' },
+    { name: t('header.faq'), href: '/faq' },
   ];
 
   // Navigation for logged-in users (header tabs)
   const loggedInNavigation = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Create QR', href: '/create' },
-    { name: 'Features', href: '/features' },
+    { name: t('header.dashboard'), href: '/dashboard' },
+    { name: t('header.createQR'), href: '/create' },
+    { name: t('header.features'), href: '/features' },
   ];
 
   const handleLogout = async () => {
@@ -101,7 +104,8 @@ const Header: React.FC = () => {
           ))}
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-4">
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-2">
+          <LanguageSwitcher />
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
@@ -136,7 +140,7 @@ const Header: React.FC = () => {
                         to="/pricing"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        Subscription
+                        {t('header.subscription')}
                       </Link>
                     </Menu.Item>
                     <Menu.Item>
@@ -144,7 +148,7 @@ const Header: React.FC = () => {
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        Profile
+                        {t('header.profile')}
                       </Link>
                     </Menu.Item>
                     <Menu.Item>
@@ -153,7 +157,7 @@ const Header: React.FC = () => {
                         className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
                         <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
-                        Sign Out
+                        {t('header.signOut')}
                       </button>
                     </Menu.Item>
                   </div>
@@ -166,13 +170,13 @@ const Header: React.FC = () => {
                 to="/login"
                 className="text-sm font-inter font-medium text-gray-900 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
               >
-                Sign In
+                {t('header.signIn')}
               </Link>
               <Link
                 to="/register"
                 className="rounded-md bg-primary-600 px-4 py-2 text-sm font-inter font-medium text-white shadow-sm hover:bg-primary-700 transition-colors"
               >
-                Sign Up
+                {t('header.signUp')}
               </Link>
             </div>
           )}
@@ -223,41 +227,41 @@ const Header: React.FC = () => {
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Dashboard
+                        {t('header.dashboard')}
                       </Link>
                       <Link
                         to="/create"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Create QR
+                        {t('header.createQR')}
                       </Link>
                       <Link
                         to="/features"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Features
+                        {t('header.features')}
                       </Link>
                       <Link
                         to="/pricing"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Subscription
+                        {t('header.subscription')}
                       </Link>
                       <Link
                         to="/profile"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Profile
+                        {t('header.profile')}
                       </Link>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        Sign Out
+                        {t('header.signOut')}
                       </button>
                     </div>
                   ) : (
@@ -267,14 +271,14 @@ const Header: React.FC = () => {
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Sign In
+                        {t('header.signIn')}
                       </Link>
                       <Link
                         to="/register"
                         className="block rounded-lg px-3 py-2 text-base font-inter font-medium text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Sign Up
+                        {t('header.signUp')}
                       </Link>
                     </div>
                   )}
