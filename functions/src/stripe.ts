@@ -11,14 +11,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 // Initialize Stripe with the secret key from environment variables
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      // @ts-ignore
-      apiVersion: "2020-08-27",
+      apiVersion: "2025-08-27.basil",
     })
   : null;
 
 // v2 Cloud Function to create a checkout session
 export const createStripeCheckoutSession = onCall(async (request) => {
   logger.info("🚀 createStripeCheckoutSession function triggered");
+  logger.info("Environment check:", {
+    hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+    stripeKeyPrefix: process.env.STRIPE_SECRET_KEY?.substring(0, 7),
+  });
 
   if (!stripe) {
     logger.error("Stripe is not configured. Ensure STRIPE_SECRET_KEY is set.");
@@ -72,8 +75,29 @@ export const createStripeCheckoutSession = onCall(async (request) => {
 
     // Get or create a Stripe customer
     let customerId = user.stripeCustomerId;
+
+    // Check if we have a customer ID and verify it exists in the current Stripe mode
+    if (customerId) {
+      try {
+        logger.info(`Verifying existing Stripe customer ID: ${customerId}`);
+        await stripe.customers.retrieve(customerId);
+        logger.info(`Existing Stripe customer verified: ${customerId}`);
+      } catch (error: any) {
+        // Customer doesn't exist (likely test mode customer in live mode or vice versa)
+        if (error.code === 'resource_missing') {
+          logger.warn(`Stripe customer ${customerId} not found in current mode. Creating new customer.`, {
+            error: error.message
+          });
+          customerId = ''; // Reset to create new customer
+        } else {
+          throw error; // Re-throw other errors
+        }
+      }
+    }
+
+    // Create new customer if needed
     if (!customerId) {
-      logger.info("No Stripe customer ID found for user. Creating a new one.", { userId, email: user.email });
+      logger.info("Creating new Stripe customer.", { userId, email: user.email });
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
@@ -85,8 +109,6 @@ export const createStripeCheckoutSession = onCall(async (request) => {
       // Save the new customer ID to the user's document in Firestore
       await userDoc.ref.update({ stripeCustomerId: customerId });
       logger.info(`Stripe customer ID ${customerId} saved to user document.`);
-    } else {
-      logger.info(`Using existing Stripe customer ID: ${customerId}`);
     }
 
     logger.info("Creating Stripe checkout session with data:", { customerId, priceId, successUrl, cancelUrl });

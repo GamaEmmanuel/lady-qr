@@ -15,13 +15,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
 // Initialize Stripe with the secret key from environment variables
 const stripe = process.env.STRIPE_SECRET_KEY
     ? new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
-        // @ts-ignore
-        apiVersion: "2020-08-27",
+        apiVersion: "2025-08-27.basil",
     })
     : null;
 // v2 Cloud Function to create a checkout session
 exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
+    var _a;
     firebase_functions_1.logger.info("🚀 createStripeCheckoutSession function triggered");
+    firebase_functions_1.logger.info("Environment check:", {
+        hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+        stripeKeyPrefix: (_a = process.env.STRIPE_SECRET_KEY) === null || _a === void 0 ? void 0 : _a.substring(0, 7),
+    });
     if (!stripe) {
         firebase_functions_1.logger.error("Stripe is not configured. Ensure STRIPE_SECRET_KEY is set.");
         throw new https_1.HttpsError('internal', 'Stripe is not configured.');
@@ -62,8 +66,29 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
         firebase_functions_1.logger.info("User document found in Firestore.");
         // Get or create a Stripe customer
         let customerId = user.stripeCustomerId;
+        // Check if we have a customer ID and verify it exists in the current Stripe mode
+        if (customerId) {
+            try {
+                firebase_functions_1.logger.info(`Verifying existing Stripe customer ID: ${customerId}`);
+                await stripe.customers.retrieve(customerId);
+                firebase_functions_1.logger.info(`Existing Stripe customer verified: ${customerId}`);
+            }
+            catch (error) {
+                // Customer doesn't exist (likely test mode customer in live mode or vice versa)
+                if (error.code === 'resource_missing') {
+                    firebase_functions_1.logger.warn(`Stripe customer ${customerId} not found in current mode. Creating new customer.`, {
+                        error: error.message
+                    });
+                    customerId = ''; // Reset to create new customer
+                }
+                else {
+                    throw error; // Re-throw other errors
+                }
+            }
+        }
+        // Create new customer if needed
         if (!customerId) {
-            firebase_functions_1.logger.info("No Stripe customer ID found for user. Creating a new one.", { userId, email: user.email });
+            firebase_functions_1.logger.info("Creating new Stripe customer.", { userId, email: user.email });
             const customer = await stripe.customers.create({
                 email: user.email,
                 metadata: {
@@ -75,9 +100,6 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
             // Save the new customer ID to the user's document in Firestore
             await userDoc.ref.update({ stripeCustomerId: customerId });
             firebase_functions_1.logger.info(`Stripe customer ID ${customerId} saved to user document.`);
-        }
-        else {
-            firebase_functions_1.logger.info(`Using existing Stripe customer ID: ${customerId}`);
         }
         firebase_functions_1.logger.info("Creating Stripe checkout session with data:", { customerId, priceId, successUrl, cancelUrl });
         // Create a Stripe checkout session
