@@ -24,7 +24,7 @@ Allow: /terms
 Allow: /cookies
 
 # Sitemap location
-Sitemap: https://ladyqr.com/sitemap.xml
+Sitemap: https://lady-qr.com/sitemap.xml
 
 # Crawl delay (optional)
 # Crawl-delay: 1

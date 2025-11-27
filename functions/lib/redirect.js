@@ -501,7 +501,7 @@ exports.redirect = (0, https_1.onRequest)(async (req, res) => {
                 'CALSCALE:GREGORIAN',
                 'METHOD:PUBLISH',
                 'BEGIN:VEVENT',
-                `UID:${qrDoc.id}@ladyqr.com`,
+                `UID:${qrDoc.id}@lady-qr.com`,
                 `SUMMARY:${title}`,
                 `DTSTART:${startDate}`,
                 `DTEND:${endDate}`,

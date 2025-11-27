@@ -388,7 +388,7 @@ const Terms: React.FC = () => {
                 12.1 Informal Resolution
               </h3>
               <p className="mb-4">
-                Before filing a claim, you agree to contact us at legal@ladyqr.com to attempt to resolve the dispute informally. We will attempt to resolve disputes within 30 days.
+                Before filing a claim, you agree to contact us at legal@lady-qr.com to attempt to resolve the dispute informally. We will attempt to resolve disputes within 30 days.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -498,9 +498,9 @@ const Terms: React.FC = () => {
                 For questions about these Terms, please contact us:
               </p>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-4">
-                <p className="mb-2"><strong>Email:</strong> legal@ladyqr.com</p>
-                <p className="mb-2"><strong>Support:</strong> support@ladyqr.com</p>
-                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">ladyqr.com/contact</a></p>
+                <p className="mb-2"><strong>Email:</strong> legal@lady-qr.com</p>
+                <p className="mb-2"><strong>Support:</strong> support@lady-qr.com</p>
+                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">lady-qr.com/contact</a></p>
               </div>
             </section>
           </div>

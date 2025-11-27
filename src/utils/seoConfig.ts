@@ -2,7 +2,7 @@
 
 export const siteConfig = {
   name: 'Lady QR',
-  url: 'https://ladyqr.com',
+  url: 'https://lady-qr.com',
   description: 'Create, customize, and track professional QR codes for your business. Generate dynamic QR codes with analytics, custom designs, and multiple formats.',
   author: 'Lady QR',
   keywords: 'QR code generator, custom QR codes, dynamic QR codes, QR code analytics, free QR code, business QR codes, QR code maker, track QR codes, branded QR codes',
@@ -14,8 +14,8 @@ export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Lady QR',
-  url: 'https://ladyqr.com',
-  logo: 'https://ladyqr.com/logo.png',
+  url: 'https://lady-qr.com',
+  logo: 'https://lady-qr.com/logo.png',
   description: siteConfig.description,
   sameAs: [
     'https://twitter.com/ladyqr',
@@ -25,8 +25,8 @@ export const organizationSchema = {
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Support',
-    email: 'support@ladyqr.com',
-    url: 'https://ladyqr.com/contact',
+    email: 'support@lady-qr.com',
+    url: 'https://lady-qr.com/contact',
   },
 };
 
@@ -35,11 +35,11 @@ export const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'Lady QR',
-  url: 'https://ladyqr.com',
+  url: 'https://lady-qr.com',
   description: siteConfig.description,
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://ladyqr.com/search?q={search_term_string}',
+    target: 'https://lady-qr.com/search?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };
@@ -75,7 +75,7 @@ export const softwareApplicationSchema = {
     'Team Collaboration',
     'API Access',
   ],
-  screenshot: 'https://ladyqr.com/assets/analytics-overview.png',
+  screenshot: 'https://lady-qr.com/assets/analytics-overview.png',
 };
 
 // Homepage Breadcrumb Schema
@@ -87,7 +87,7 @@ export const homeBreadcrumbSchema = {
       '@type': 'ListItem',
       position: 1,
       name: 'Home',
-      item: 'https://ladyqr.com',
+      item: 'https://lady-qr.com',
     },
   ],
 };
@@ -121,7 +121,7 @@ export const generateProductSchema = (planName: string, price: number, descripti
     price: price.toString(),
     priceCurrency: 'USD',
     availability: 'https://schema.org/InStock',
-    url: 'https://ladyqr.com/pricing',
+    url: 'https://lady-qr.com/pricing',
   },
 });
 
@@ -150,7 +150,7 @@ export const generateArticleSchema = (
     name: 'Lady QR',
     logo: {
       '@type': 'ImageObject',
-      url: 'https://ladyqr.com/logo.png',
+      url: 'https://lady-qr.com/logo.png',
     },
   },
 });

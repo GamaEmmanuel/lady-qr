@@ -21,8 +21,8 @@ const SEO: React.FC<SEOProps> = ({
   title = 'Lady QR - Professional QR Code Generator with Analytics',
   description = 'Create, customize, and track professional QR codes for your business. Generate dynamic QR codes with analytics, custom designs, and multiple formats. Free QR code generator with advanced features.',
   keywords = 'QR code generator, custom QR codes, dynamic QR codes, QR code analytics, free QR code, business QR codes, QR code maker, track QR codes, branded QR codes',
-  image = 'https://ladyqr.com/og-image.png',
-  url = 'https://ladyqr.com',
+  image = 'https://lady-qr.com/og-image.png',
+  url = 'https://lady-qr.com',
   type = 'website',
   author = 'Lady QR',
   publishedTime,
@@ -32,7 +32,7 @@ const SEO: React.FC<SEOProps> = ({
   canonicalUrl,
   schema,
 }) => {
-  const siteUrl = 'https://ladyqr.com';
+  const siteUrl = 'https://lady-qr.com';
   const fullUrl = url.startsWith('http') ? url : `${siteUrl}${url}`;
   const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
   const canonical = canonicalUrl || fullUrl;

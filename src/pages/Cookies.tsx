@@ -317,7 +317,7 @@ const Cookies: React.FC = () => {
               <ul className="list-disc pl-6 mb-4 space-y-2">
                 <li>Deleting cookies through your browser settings</li>
                 <li>Changing your cookie preferences in your account settings</li>
-                <li>Contacting us at privacy@ladyqr.com</li>
+                <li>Contacting us at privacy@lady-qr.com</li>
               </ul>
             </section>
 
@@ -394,9 +394,9 @@ const Cookies: React.FC = () => {
                 If you have questions or concerns about our use of cookies, please contact us:
               </p>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-4">
-                <p className="mb-2"><strong>Email:</strong> privacy@ladyqr.com</p>
-                <p className="mb-2"><strong>Support:</strong> support@ladyqr.com</p>
-                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">ladyqr.com/contact</a></p>
+                <p className="mb-2"><strong>Email:</strong> privacy@lady-qr.com</p>
+                <p className="mb-2"><strong>Support:</strong> support@lady-qr.com</p>
+                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">lady-qr.com/contact</a></p>
               </div>
               <p className="mb-4">
                 We will respond to your inquiry within 30 days.

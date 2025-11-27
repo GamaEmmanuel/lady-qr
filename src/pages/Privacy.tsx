@@ -231,7 +231,7 @@ const Privacy: React.FC = () => {
                 7.3 Deletion
               </h3>
               <p className="mb-4">
-                You can delete your QR codes or close your account at any time. To request complete data deletion, contact us at support@ladyqr.com.
+                You can delete your QR codes or close your account at any time. To request complete data deletion, contact us at support@lady-qr.com.
               </p>
 
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -335,9 +335,9 @@ const Privacy: React.FC = () => {
                 If you have questions, concerns, or requests regarding this privacy policy or our data practices, please contact us:
               </p>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-4">
-                <p className="mb-2"><strong>Email:</strong> privacy@ladyqr.com</p>
-                <p className="mb-2"><strong>Support:</strong> support@ladyqr.com</p>
-                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">ladyqr.com/contact</a></p>
+                <p className="mb-2"><strong>Email:</strong> privacy@lady-qr.com</p>
+                <p className="mb-2"><strong>Support:</strong> support@lady-qr.com</p>
+                <p className="mb-2"><strong>Contact Form:</strong> <a href="/contact" className="text-primary-600 hover:text-primary-700">lady-qr.com/contact</a></p>
               </div>
               <p className="mb-4">
                 We will respond to your inquiry within 30 days.
