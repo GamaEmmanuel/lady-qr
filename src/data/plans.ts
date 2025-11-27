@@ -30,8 +30,8 @@ export const plans: Plan[] = [
     id: 'basic',
     name: 'Basic',
     price: 5,
-    productId: 'prod_TMLuyO6ZOw836h', // Stripe Product ID
-    priceId: 'price_1SPdCcDUi8OxbbECORoClMl6', // Stripe Price ID for $5/month
+    productId: 'prod_TV0RHrO2wkyeZv', // Stripe Product ID (LIVE MODE)
+    priceId: 'price_1SY0QKDUi8OxbbECPxQOzZ5r', // Stripe Price ID for $5/month (LIVE MODE)
     interval: 'month',
     features: [
       'Unlimited static QR codes',

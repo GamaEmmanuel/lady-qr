@@ -75,13 +75,25 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
             }
             catch (error) {
                 // Customer doesn't exist (likely test mode customer in live mode or vice versa)
-                if (error.code === 'resource_missing') {
-                    firebase_functions_1.logger.warn(`Stripe customer ${customerId} not found in current mode. Creating new customer.`, {
-                        error: error.message
+                // Stripe returns different error codes/types for missing resources
+                const isCustomerNotFound = error.code === 'resource_missing' ||
+                    error.type === 'StripeInvalidRequestError' ||
+                    (error.message && error.message.includes('similar object exists in test mode')) ||
+                    (error.message && error.message.includes('similar object exists in live mode'));
+                if (isCustomerNotFound) {
+                    firebase_functions_1.logger.warn(`Stripe customer ${customerId} not found or incompatible with current mode. Creating new customer.`, {
+                        errorCode: error.code,
+                        errorType: error.type,
+                        errorMessage: error.message
                     });
                     customerId = ''; // Reset to create new customer
                 }
                 else {
+                    firebase_functions_1.logger.error('Unexpected error verifying Stripe customer:', {
+                        errorCode: error.code,
+                        errorType: error.type,
+                        errorMessage: error.message
+                    });
                     throw error; // Re-throw other errors
                 }
             }
@@ -102,24 +114,69 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
             firebase_functions_1.logger.info(`Stripe customer ID ${customerId} saved to user document.`);
         }
         firebase_functions_1.logger.info("Creating Stripe checkout session with data:", { customerId, priceId, successUrl, cancelUrl });
-        // Create a Stripe checkout session
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            mode: "subscription",
-            line_items: [
-                {
-                    price: priceId,
-                    quantity: 1,
-                },
-            ],
-            customer: customerId,
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-            metadata: {
-                firebaseUID: userId,
-                planId: priceId,
+        // Create a Stripe checkout session with fallback for test/live mode mismatch
+        let session;
+        try {
+            session = await stripe.checkout.sessions.create({
+                payment_method_types: ["card"],
+                mode: "subscription",
+                line_items: [
+                    {
+                        price: priceId,
+                        quantity: 1,
+                    },
+                ],
+                customer: customerId,
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+                metadata: {
+                    firebaseUID: userId,
+                    planId: priceId,
+                }
+            });
+        }
+        catch (error) {
+            // Check if this is a test/live mode mismatch error
+            const isModeMismatch = error.message && (error.message.includes('similar object exists in test mode') ||
+                error.message.includes('similar object exists in live mode'));
+            if (isModeMismatch) {
+                firebase_functions_1.logger.warn(`Customer ${customerId} has mode mismatch. Creating new customer and retrying...`);
+                // Create a new customer
+                const newCustomer = await stripe.customers.create({
+                    email: user.email,
+                    metadata: {
+                        firebaseUID: userId,
+                    },
+                });
+                customerId = newCustomer.id;
+                firebase_functions_1.logger.info(`New Stripe customer created: ${customerId}`);
+                // Update Firestore
+                await userDoc.ref.update({ stripeCustomerId: customerId });
+                firebase_functions_1.logger.info(`Stripe customer ID ${customerId} saved to user document.`);
+                // Retry checkout session creation with new customer
+                session = await stripe.checkout.sessions.create({
+                    payment_method_types: ["card"],
+                    mode: "subscription",
+                    line_items: [
+                        {
+                            price: priceId,
+                            quantity: 1,
+                        },
+                    ],
+                    customer: customerId,
+                    success_url: successUrl,
+                    cancel_url: cancelUrl,
+                    metadata: {
+                        firebaseUID: userId,
+                        planId: priceId,
+                    }
+                });
             }
-        });
+            else {
+                // Re-throw if it's a different error
+                throw error;
+            }
+        }
         firebase_functions_1.logger.info("✅ Stripe session created successfully!", {
             sessionId: session.id,
             // Avoid logging the entire session object in production
@@ -147,7 +204,8 @@ exports.createStripeCheckoutSession = (0, https_1.onCall)(async (request) => {
 });
 // Map Stripe price IDs to plan types
 const PRICE_TO_PLAN_MAP = {
-    'price_1SPdCcDUi8OxbbECORoClMl6': 'basic', // Basic plan - $5/month
+    'price_1SY0QKDUi8OxbbECPxQOzZ5r': 'basic', // Basic plan - $5/month (LIVE MODE)
+    'price_1SPdCcDUi8OxbbECORoClMl6': 'basic', // Old test mode price (keep for legacy)
     'price_1S5fztDUi8OxbbECZPInb8rQ': 'basic', // Old Basic price ID (keep for legacy subscriptions)
 };
 exports.stripeWebhook = (0, https_1.onRequest)(async (request, response) => {
