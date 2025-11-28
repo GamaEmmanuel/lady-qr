@@ -73,12 +73,25 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={fullImage} />
+      <meta name="twitter:image:alt" content={title} />
       <meta name="twitter:creator" content="@ladyqr" />
+      <meta name="twitter:site" content="@ladyqr" />
 
       {/* Additional Meta Tags */}
       <meta name="theme-color" content="#9333ea" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+      {/* SEO Enhancement Tags */}
+      <meta name="revisit-after" content="7 days" />
+      <meta name="rating" content="general" />
+      <meta name="distribution" content="global" />
+      <meta name="language" content="English" />
+      <meta httpEquiv="content-language" content="en-US" />
+
+      {/* Alternate Languages (if you add i18n later) */}
+      <link rel="alternate" hrefLang="en" href={fullUrl} />
+      <link rel="alternate" hrefLang="x-default" href={fullUrl} />
 
       {/* Structured Data / Schema.org */}
       {schema && (
