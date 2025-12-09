@@ -686,6 +686,11 @@ exports.redirect = (0, https_1.onRequest)(async (req, res) => {
             res.status(500).send('QR Code destination not configured');
             return;
         }
+        // Fix malformed URLs - add https:// if missing protocol
+        if (redirectUrl && !redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://') && !redirectUrl.startsWith('data:') && !redirectUrl.startsWith('mailto:') && !redirectUrl.startsWith('tel:') && !redirectUrl.startsWith('sms:') && !redirectUrl.startsWith('WIFI:')) {
+            console.log('⚠️ URL missing protocol, adding https://');
+            redirectUrl = `https://${redirectUrl}`;
+        }
         console.log('✅ Final redirect URL:', redirectUrl);
         console.log('🚀 Performing redirect...');
         // Redirect to destination

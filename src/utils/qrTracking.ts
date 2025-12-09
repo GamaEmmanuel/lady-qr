@@ -116,13 +116,25 @@ export const generateSocialMediaUrl = (platform: string, username: string): stri
 };
 
 /**
+ * Ensures a URL has a proper protocol (https:// or http://)
+ */
+const ensureUrlProtocol = (url: string): string => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
+/**
  * Generate the original data content for a QR code based on its type
  * This is used to determine what the QR code should redirect to
  */
 export const generateOriginalData = (type: string, formData: Record<string, any>): string => {
   switch (type) {
     case 'url':
-      return formData.url || '';
+      return ensureUrlProtocol(formData.url || '');
     case 'text':
       return formData.text || '';
     case 'email':
@@ -139,7 +151,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'location': {
       // Priority 1: Use Google Maps URL if provided
       if (formData.mapsUrl) {
-        return formData.mapsUrl;
+        return ensureUrlProtocol(formData.mapsUrl);
       }
       // Priority 2: Convert address to Google Maps URL
       if (formData.address) {
@@ -148,14 +160,14 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
       return '';
     }
     case 'vcard':
-      return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website || ''}\nEND:VCARD`;
+      return `BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName || ''} ${formData.lastName || ''}\nORG:${formData.company || ''}\nTITLE:${formData.jobTitle || ''}\nEMAIL:${formData.email || ''}\nTEL:${formData.phone || ''}\nURL:${formData.website ? ensureUrlProtocol(formData.website) : ''}\nEND:VCARD`;
     case 'social':
       return generateSocialMediaUrl(formData.platform, formData.username);
     // Individual social platform types
     case 'instagram': {
       // Instagram can be profile or post
       if (formData.instagramType === 'post') {
-        return formData.instagramValue || '';
+        return ensureUrlProtocol(formData.instagramValue || '');
       }
       // Default to profile
       return generateSocialMediaUrl('instagram', formData.instagramValue || '');
@@ -163,7 +175,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'facebook': {
       // Facebook can be profile or post
       if (formData.facebookType === 'post') {
-        return formData.facebookValue || '';
+        return ensureUrlProtocol(formData.facebookValue || '');
       }
       // Default to profile
       return generateSocialMediaUrl('facebook', formData.facebookValue || '');
@@ -171,7 +183,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'twitter': {
       // X/Twitter can be profile or post
       if (formData.twitterType === 'post') {
-        return formData.twitterValue || '';
+        return ensureUrlProtocol(formData.twitterValue || '');
       }
       // Default to profile
       return generateSocialMediaUrl('twitter', formData.twitterValue || '');
@@ -179,7 +191,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'linkedin': {
       // LinkedIn can be profile or post
       if (formData.linkedinType === 'post') {
-        return formData.linkedinValue || '';
+        return ensureUrlProtocol(formData.linkedinValue || '');
       }
       // Default to profile
       return generateSocialMediaUrl('linkedin', formData.linkedinValue || '');
@@ -187,7 +199,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'youtube': {
       // YouTube can be either a channel or a video
       if (formData.youtubeType === 'video') {
-        return formData.youtubeValue || '';
+        return ensureUrlProtocol(formData.youtubeValue || '');
       }
       // Default to channel
       return generateSocialMediaUrl('youtube', formData.youtubeValue || '');
@@ -195,7 +207,7 @@ export const generateOriginalData = (type: string, formData: Record<string, any>
     case 'tiktok': {
       // TikTok can be profile or video
       if (formData.tiktokType === 'video') {
-        return formData.tiktokValue || '';
+        return ensureUrlProtocol(formData.tiktokValue || '');
       }
       // Default to profile
       return generateSocialMediaUrl('tiktok', formData.tiktokValue || '');

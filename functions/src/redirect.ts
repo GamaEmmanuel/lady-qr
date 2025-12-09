@@ -704,6 +704,12 @@ export const redirect = onRequest(async (req, res) => {
       return;
     }
 
+    // Fix malformed URLs - add https:// if missing protocol
+    if (redirectUrl && !redirectUrl.startsWith('http://') && !redirectUrl.startsWith('https://') && !redirectUrl.startsWith('data:') && !redirectUrl.startsWith('mailto:') && !redirectUrl.startsWith('tel:') && !redirectUrl.startsWith('sms:') && !redirectUrl.startsWith('WIFI:')) {
+      console.log('⚠️ URL missing protocol, adding https://');
+      redirectUrl = `https://${redirectUrl}`;
+    }
+
     console.log('✅ Final redirect URL:', redirectUrl);
     console.log('🚀 Performing redirect...');
 

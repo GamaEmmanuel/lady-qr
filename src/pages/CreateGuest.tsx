@@ -5,6 +5,7 @@ import { qrTypes } from '../data/qrTypes';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
 import { generateOriginalData } from '../utils/qrTracking';
+import { validateFormData, validateUrl, validateEmail, validatePhone, ValidationError, getFieldError, hasFieldError, getFieldWarning, hasFieldWarning } from '../utils/validation';
 import QRExpirationTimer from '../components/QRExpirationTimer';
 import { useQRExpiration } from '../hooks/useQRExpiration';
 import QRCode from 'qrcode';
@@ -15,7 +16,9 @@ import {
   UserPlusIcon,
   ShieldExclamationIcon,
   AdjustmentsHorizontalIcon,
-  XMarkIcon
+  XMarkIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 const CreateGuest: React.FC = () => {
@@ -30,6 +33,8 @@ const CreateGuest: React.FC = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [showColorPicker, setShowColorPicker] = useState<'foreground' | 'background' | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<ValidationError[]>([]);
 
   // Customization for guest users
   const [customization, setCustomization] = useState<QRCustomization>({
@@ -62,6 +67,64 @@ const CreateGuest: React.FC = () => {
       ...prev,
       [fieldId]: value
     }));
+
+    // Clear validation error for this field when user starts typing
+    setValidationErrors(prev => prev.filter(e => e.field !== fieldId));
+  };
+
+  // Validate a single field on blur
+  const handleFieldBlur = (fieldId: string, value: any) => {
+    const field = selectedTypeConfig?.fields.find(f => f.id === fieldId);
+    if (!field) return;
+
+    // Get the actual field type (considering conditional types)
+    let actualType = field.type;
+    if (field.dependsOn && field.conditionalType && formData[field.dependsOn]) {
+      actualType = field.conditionalType[formData[field.dependsOn]] || field.type;
+    }
+
+    // Validate based on field type
+    let error: string | undefined;
+    let fixedValue: string | undefined;
+
+    if (actualType === 'url' && value) {
+      const result = validateUrl(value, true); // autoFix = true
+      if (!result.isValid) {
+        error = result.error;
+      } else if (result.fixedValue && result.fixedValue !== value) {
+        fixedValue = result.fixedValue;
+      }
+    } else if (actualType === 'email' && value) {
+      const result = validateEmail(value);
+      if (!result.isValid) {
+        error = result.error;
+      }
+    } else if (actualType === 'tel' && value) {
+      const result = validatePhone(value);
+      if (!result.isValid) {
+        error = result.error;
+      } else if (result.fixedValue && result.fixedValue !== value) {
+        fixedValue = result.fixedValue;
+      }
+    }
+
+    // Update validation errors
+    if (error) {
+      setValidationErrors(prev => {
+        const filtered = prev.filter(e => e.field !== fieldId);
+        return [...filtered, { field: fieldId, message: error! }];
+      });
+    } else {
+      setValidationErrors(prev => prev.filter(e => e.field !== fieldId));
+
+      // Auto-fix the value if needed
+      if (fixedValue) {
+        setFormData(prev => ({
+          ...prev,
+          [fieldId]: fixedValue
+        }));
+      }
+    }
   };
 
   const handleCustomizationChange = (key: keyof QRCustomization, value: any) => {
@@ -106,6 +169,31 @@ const CreateGuest: React.FC = () => {
     if (!qrData) {
       alert('Por favor ingresa los datos del código QR primero.');
       return;
+    }
+
+    // Validate all form data before downloading
+    const validation = validateFormData(selectedType, formData, true);
+
+    // Update errors and warnings
+    setValidationErrors(validation.errors);
+    setValidationWarnings(validation.warnings || []);
+
+    if (!validation.isValid) {
+      const errorMessages = validation.errors.map(e => `• ${e.message}`).join('\n');
+      alert(`Please fix the following errors before downloading:\n\n${errorMessages}`);
+      return;
+    }
+
+    // Show warnings but allow download
+    if (validation.warnings && validation.warnings.length > 0) {
+      const warningMessages = validation.warnings.map(w => `• ${w.message}`).join('\n');
+      const proceed = window.confirm(`Warnings:\n\n${warningMessages}\n\nDo you want to continue downloading?`);
+      if (!proceed) return;
+    }
+
+    // Update form data with fixed values if available
+    if (validation.fixedData) {
+      setFormData(validation.fixedData);
     }
 
     // Generate QR code and download as PNG for guest users
@@ -184,6 +272,10 @@ const CreateGuest: React.FC = () => {
 
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
+    const fieldError = getFieldError(validationErrors, field.id);
+    const hasError = hasFieldError(validationErrors, field.id);
+    const fieldWarning = getFieldWarning(validationWarnings, field.id);
+    const hasWarning = hasFieldWarning(validationWarnings, field.id);
 
     // Handle conditional fields
     let actualPlaceholder = field.placeholder;
@@ -199,73 +291,120 @@ const CreateGuest: React.FC = () => {
       }
     }
 
+    // Base input classes with error/warning state
+    const inputBaseClasses = `block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none dark:bg-gray-700 dark:text-white ${
+      hasError
+        ? 'border-red-500 dark:border-red-500 focus:ring-red-500 focus:border-red-500'
+        : hasWarning
+        ? 'border-yellow-500 dark:border-yellow-500 focus:ring-yellow-500 focus:border-yellow-500'
+        : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500'
+    }`;
+
+    const renderError = () => {
+      if (!fieldError) return null;
+      return (
+        <div className="mt-1 flex items-center text-sm text-red-600 dark:text-red-400">
+          <ExclamationCircleIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span>{fieldError}</span>
+        </div>
+      );
+    };
+
+    const renderWarning = () => {
+      if (!fieldWarning || hasError) return null; // Don't show warning if there's an error
+      return (
+        <div className="mt-1 flex items-center text-sm text-yellow-600 dark:text-yellow-400">
+          <ExclamationTriangleIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span>{fieldWarning}</span>
+        </div>
+      );
+    };
+
     switch (field.type) {
       case 'radio':
         return (
-          <div className="grid grid-cols-2 gap-3">
-            {field.options?.map((option: any) => (
-              <label
-                key={option.value}
-                className="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
-              >
-                <input
-                  type="radio"
-                  name={field.id}
-                  value={option.value}
-                  checked={value === option.value}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  required={field.required}
-                />
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {option.label}
-                </span>
-              </label>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {field.options?.map((option: any) => (
+                <label
+                  key={option.value}
+                  className="flex items-center space-x-3 cursor-pointer p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name={field.id}
+                    value={option.value}
+                    checked={value === option.value}
+                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                    required={field.required}
+                  />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {option.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {renderError()}
+            {renderWarning()}
+          </>
         );
       case 'textarea':
         return (
-          <textarea
-            id={field.id}
-            value={value}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder={actualPlaceholder}
-            maxLength={field.maxLength}
-            rows={3}
-            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            required={field.required}
-          />
+          <>
+            <textarea
+              id={field.id}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              onBlur={(e) => handleFieldBlur(field.id, e.target.value)}
+              placeholder={actualPlaceholder}
+              maxLength={field.maxLength}
+              rows={3}
+              className={inputBaseClasses}
+              required={field.required}
+            />
+            {renderError()}
+            {renderWarning()}
+          </>
         );
       case 'select':
         return (
-          <select
-            id={field.id}
-            value={value}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            required={field.required}
-          >
-            <option value="">Selecciona una opción</option>
-            {field.options?.map((option: any) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <>
+            <select
+              id={field.id}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              className={inputBaseClasses}
+              required={field.required}
+            >
+              <option value="">Selecciona una opción</option>
+              {field.options?.map((option: any) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {renderError()}
+            {renderWarning()}
+          </>
         );
       default:
         return (
-          <input
-            type={actualType}
-            id={field.id}
-            value={value}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder={actualPlaceholder}
-            maxLength={field.maxLength}
-            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-            required={field.required}
-          />
+          <>
+            <input
+              type={actualType}
+              id={field.id}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              onBlur={(e) => handleFieldBlur(field.id, e.target.value)}
+              placeholder={actualPlaceholder}
+              maxLength={field.maxLength}
+              className={inputBaseClasses}
+              required={field.required}
+            />
+            {renderError()}
+            {renderWarning()}
+          </>
         );
     }
   };
