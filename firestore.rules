@@ -15,6 +15,18 @@ service cloud.firestore {
       // Allow authenticated users to read/write their own QR codes
       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Allow GUEST QR code creation (unauthenticated)
+      // Constraints:
+      // - Must be marked as guest code
+      // - userId must be null
+      // - Must have expiration time
+      // - Expiration must be within 25 hours (24h + buffer)
+      allow create: if request.auth == null
+        && request.resource.data.isGuest == true
+        && request.resource.data.userId == null
+        && request.resource.data.expiresAt != null
+        && request.resource.data.expiresAt <= request.time + duration.value(25, 'h');
     }
 
     // Users can read/write their own subscriptions

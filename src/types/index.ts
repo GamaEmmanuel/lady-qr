@@ -20,7 +20,7 @@ export interface Subscription {
 
 export interface QRCode {
   id: string;
-  userId: string;
+  userId: string | null; // null for guest codes
   name: string;
   type: QRCodeType;
   isDynamic: boolean; // Keep for backward compatibility
@@ -34,6 +34,13 @@ export interface QRCode {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // Guest QR code fields
+  isGuest?: boolean; // true for guest/temporary codes
+  expiresAt?: Date | null; // Expiration time for guest codes (24 hours from creation)
+  guestMetadata?: {
+    createdFromIp?: string; // For rate limiting
+    userAgent?: string;
+  };
 }
 
 export type QRCodeType =

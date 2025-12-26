@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { qrTypes } from '../data/qrTypes';
 import { QRCodeType, QRCustomization } from '../types';
 import QRPreview from '../components/QRPreview';
-import { generateOriginalData } from '../utils/qrTracking';
+import { generateOriginalData, generateShortUrl } from '../utils/qrTracking';
 import { validateFormData, validateUrl, validateEmail, validatePhone, ValidationError, getFieldError, hasFieldError, getFieldWarning, hasFieldWarning } from '../utils/validation';
 import QRExpirationTimer from '../components/QRExpirationTimer';
 import { useQRExpiration } from '../hooks/useQRExpiration';
 import QRCode from 'qrcode';
 import { HexColorPicker } from 'react-colorful';
+import { db } from '../config/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import {
   ArrowDownTrayIcon,
   EyeIcon,
@@ -18,8 +20,19 @@ import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
   ExclamationCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  LockOpenIcon
 } from '@heroicons/react/24/outline';
+
+// Generate a random short ID for the QR code
+const generateShortId = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
 
 const CreateGuest: React.FC = () => {
   const { currentUser } = useAuth();
@@ -36,6 +49,11 @@ const CreateGuest: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<ValidationError[]>([]);
 
+  // State for saved QR code
+  const [savedQRCode, setSavedQRCode] = useState<{ id: string; shortUrlId: string; expiresAt: Date } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   // Customization for guest users
   const [customization, setCustomization] = useState<QRCustomization>({
     foregroundColor: '#000000',
@@ -48,28 +66,124 @@ const CreateGuest: React.FC = () => {
 
   const selectedTypeConfig = qrTypes.find(type => type.id === selectedType);
 
-  const generateQRData = () => {
-    if (!selectedTypeConfig) return '';
-
-    // For guest users, generate temporary QR data for preview
-    // This uses the original data format since guests can't save QR codes
-    return generateOriginalData(selectedType, formData);
+  // Generate the original data for preview (before saving)
+  const generatePreviewData = () => {
+    if (!selectedTypeConfig) {
+      console.log('👁️ Preview: No type config');
+      return '';
+    }
+    const data = generateOriginalData(selectedType, formData);
+    console.log('👁️ Preview data generated:', { type: selectedType, formData, result: data });
+    return data;
   };
 
-  const qrData = generateQRData();
-  const { isExpired, timeRemaining, resetExpiration } = useQRExpiration(qrData);
+  // The QR data to display - use short URL if saved, otherwise preview data
+  const getQRDisplayData = useCallback(() => {
+    if (savedQRCode) {
+      return generateShortUrl(savedQRCode.shortUrlId);
+    }
+    return generatePreviewData();
+  }, [savedQRCode, selectedType, formData]);
+
+  const previewData = generatePreviewData();
+  const qrData = getQRDisplayData();
+  const { isExpired, timeRemaining, resetExpiration } = useQRExpiration(savedQRCode ? qrData : '');
+
+  // Debug: Log state on each render
+  console.log('🔄 Render state:', {
+    selectedType,
+    formDataKeys: Object.keys(formData),
+    formData,
+    previewData,
+    savedQRCode: !!savedQRCode,
+    shouldShowBlur: !savedQRCode && !!previewData
+  });
+
+  // Save QR code to database
+  const saveGuestQRCode = async (): Promise<{ id: string; shortUrlId: string; expiresAt: Date } | null> => {
+    console.log('💾 saveGuestQRCode called');
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+
+      const shortUrlId = generateShortId();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+      const destinationUrl = generateOriginalData(selectedType, formData);
+
+      const qrCodeData = {
+        userId: null, // Guest - no user
+        name: formData.name || `Guest QR - ${selectedTypeConfig?.name || selectedType}`,
+        type: selectedType,
+        isDynamic: false,
+        isEditable: false,
+        shortUrlId,
+        destinationUrl,
+        content: { ...formData },
+        customizationOptions: customization,
+        scanCount: 0,
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        // Guest-specific fields
+        isGuest: true,
+        expiresAt: Timestamp.fromDate(expiresAt),
+        guestMetadata: {
+          userAgent: navigator.userAgent,
+          createdAt: new Date().toISOString(),
+        },
+      };
+
+      console.log('📦 QR code data to save:', JSON.stringify(qrCodeData, null, 2));
+      console.log('🗄️ Saving to Firestore collection: qrcodes');
+
+      const docRef = await addDoc(collection(db, 'qrcodes'), qrCodeData);
+      console.log('📄 Document reference ID:', docRef.id);
+
+      const savedData = {
+        id: docRef.id,
+        shortUrlId,
+        expiresAt,
+      };
+
+      setSavedQRCode(savedData);
+      resetExpiration(); // Start the expiration timer
+
+      console.log('✅ Guest QR code saved successfully:', savedData);
+      return savedData;
+    } catch (error: any) {
+      console.error('❌ Failed to save guest QR code:', error);
+      console.error('❌ Error code:', error?.code);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      setSaveError(`Failed to create QR code: ${error?.message || 'Please try again.'}`);
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Filter QR types to only show static-compatible ones for guests
   const guestQRTypes = qrTypes;
 
   const handleFieldChange = (fieldId: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
+    console.log('📝 Field change:', fieldId, '=', value);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [fieldId]: value
+      };
+      console.log('📋 Updated formData:', newData);
+      return newData;
+    });
 
     // Clear validation error for this field when user starts typing
     setValidationErrors(prev => prev.filter(e => e.field !== fieldId));
+
+    // Reset saved QR code when form data changes (user needs to create a new one)
+    if (savedQRCode) {
+      setSavedQRCode(null);
+      setSaveError(null);
+    }
   };
 
   // Validate a single field on blur
@@ -160,14 +274,50 @@ const CreateGuest: React.FC = () => {
     }));
   };
 
-  const handleDownload = () => {
-    if (isExpired) {
-      alert('El código QR ha expirado. Genera uno nuevo o regístrate para códigos permanentes.');
+  // Create QR code (save to database and reveal)
+  const handleCreate = async () => {
+    console.log('🔓 handleCreate called', { previewData, formData });
+
+    if (!previewData) {
+      console.log('❌ No preview data - showing alert');
+      alert('Please enter the QR code data first.');
       return;
     }
 
-    if (!qrData) {
-      alert('Por favor ingresa los datos del código QR primero.');
+    // Validate all form data before creating
+    const validation = validateFormData(selectedType, formData, true);
+    setValidationErrors(validation.errors);
+    setValidationWarnings(validation.warnings || []);
+
+    if (!validation.isValid) {
+      const errorMessages = validation.errors.map(e => `• ${e.message}`).join('\n');
+      alert(`Please fix the following errors:\n\n${errorMessages}`);
+      return;
+    }
+
+    // Update form data with fixed values if available
+    if (validation.fixedData) {
+      setFormData(validation.fixedData);
+    }
+
+    // Save to database
+    const result = await saveGuestQRCode();
+    if (result) {
+      console.log('✅ QR Code created and revealed!');
+    }
+  };
+
+  const handleDownload = async () => {
+    console.log('🚀 handleDownload called', { isExpired, savedQRCode, previewData, formData });
+
+    if (isExpired && savedQRCode) {
+      alert('This QR code has expired. Create a new one or sign up for permanent codes.');
+      return;
+    }
+
+    if (!previewData) {
+      console.log('❌ No preview data - showing alert');
+      alert('Please enter the QR code data first.');
       return;
     }
 
@@ -196,11 +346,24 @@ const CreateGuest: React.FC = () => {
       setFormData(validation.fixedData);
     }
 
+    // Save to database first if not already saved
+    let qrToDownload = savedQRCode;
+    if (!savedQRCode) {
+      qrToDownload = await saveGuestQRCode();
+      if (!qrToDownload) {
+        alert('Failed to create QR code. Please try again.');
+        return;
+      }
+    }
+
+    // Use the short URL for the QR code
+    const qrDataToEncode = generateShortUrl(qrToDownload!.shortUrlId);
+
     // Generate QR code and download as PNG for guest users
     const canvas = document.createElement('canvas');
     const size = 512; // Higher resolution for download
 
-    QRCode.toCanvas(canvas, qrData, {
+    QRCode.toCanvas(canvas, qrDataToEncode, {
       width: size,
       margin: 2,
       color: {
@@ -259,14 +422,14 @@ const CreateGuest: React.FC = () => {
 
             // Show message about signing up for more features
             setTimeout(() => {
-              alert('¡Descarga completada! Regístrate gratis para códigos permanentes, personalización y más formatos de descarga.');
+              alert('Download complete! This QR code will expire in 24 hours. Sign up free for permanent codes with analytics!');
             }, 500);
           }
         }, 'image/png', 1.0);
       }
     }).catch(error => {
       console.error('Error generating QR code:', error);
-      alert('Error al generar el código QR. Intenta nuevamente.');
+      alert('Error generating QR code. Please try again.');
     });
   };
 
@@ -454,6 +617,9 @@ const CreateGuest: React.FC = () => {
                     onClick={() => {
                       setSelectedType(type.id);
                       setFormData((prev) => ({ name: prev?.name || '' }));
+                      // Reset saved QR code when type changes
+                      setSavedQRCode(null);
+                      setSaveError(null);
                     }}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                       selectedType === type.id
@@ -573,8 +739,8 @@ const CreateGuest: React.FC = () => {
                   Preview
                 </h3>
 
-                {/* Expiration Timer */}
-                {qrData && (
+                {/* Expiration Timer - only show after QR is saved */}
+                {savedQRCode && (
                   <div className="mb-6">
                     <QRExpirationTimer
                       timeRemaining={timeRemaining}
@@ -584,35 +750,100 @@ const CreateGuest: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex justify-center mb-6">
-                  <QRPreview
-                    data={qrData}
-                    customization={customization}
-                    size={250}
-                    isExpired={isExpired}
-                  />
+                {/* Save Error Message */}
+                {saveError && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+                  </div>
+                )}
+
+                {/* Saved Status */}
+                {savedQRCode && !isExpired && (
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      ✅ QR Code created! It will work for 24 hours.
+                    </p>
+                  </div>
+                )}
+
+                {/* QR Preview with blur effect for uncreated codes */}
+                <div className="flex justify-center mb-6 relative">
+                  {/* Blur overlay for uncreated QR codes */}
+                  {!savedQRCode && previewData && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg">
+                      <div className="text-center px-4">
+                        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Preview Only
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Click "Create QR Code" below to activate
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* QR Code Preview - blurred when not saved */}
+                  <div className={!savedQRCode && previewData ? 'filter blur-md' : ''}>
+                    <QRPreview
+                      data={savedQRCode ? qrData : previewData}
+                      customization={customization}
+                      size={250}
+                      isExpired={isExpired && !!savedQRCode}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  <button
-                    onClick={handleDownload}
-                    disabled={isExpired || !qrData}
-                    className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                      isExpired || !qrData
-                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                        : 'bg-primary-600 hover:bg-primary-700 text-white'
-                    }`}
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                    <span>
-                      {isExpired
-                        ? 'QR Code Expired'
-                        : !qrData
-                        ? 'Enter Data First'
-                        : 'Download QR'
-                      }
-                    </span>
-                  </button>
+                  {/* Create QR Button - only show when QR is not yet created */}
+                  {!savedQRCode && (
+                    <button
+                      onClick={handleCreate}
+                      disabled={!previewData || isSaving}
+                      className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                        !previewData || isSaving
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-primary-600 hover:bg-primary-700 text-white'
+                      }`}
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Creating QR Code...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LockOpenIcon className="h-5 w-5" />
+                          <span>
+                            {!previewData ? 'Enter Data First' : 'Create QR Code'}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Download Button - only show after QR is created */}
+                  {savedQRCode && (
+                    <button
+                      onClick={handleDownload}
+                      disabled={isExpired}
+                      className={`w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                        isExpired
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-primary-600 hover:bg-primary-700 text-white'
+                      }`}
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" />
+                      <span>{isExpired ? 'QR Code Expired' : 'Download QR Code'}</span>
+                    </button>
+                  )}
 
                   <Link
                     to="/register"
@@ -625,7 +856,11 @@ const CreateGuest: React.FC = () => {
 
                 <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
                   <p className="text-xs text-primary-700 dark:text-primary-300 text-center">
-                    💡 <strong>Tip:</strong> Sign up for permanent codes, analytics and unlimited downloads.
+                    {savedQRCode ? (
+                      <>💡 <strong>Tip:</strong> Sign up for permanent codes, analytics and unlimited downloads.</>
+                    ) : (
+                      <>🔒 <strong>Note:</strong> The QR code above is just a preview. Click "Create QR Code" to make it scannable.</>
+                    )}
                   </p>
                 </div>
 
@@ -635,9 +870,28 @@ const CreateGuest: React.FC = () => {
                   </h4>
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                     <div>Type: {selectedTypeConfig?.name}</div>
-                    <div>Mode: Static (Temporary)</div>
+                    <div className="flex items-center">
+                      <span>Status:</span>
+                      {savedQRCode ? (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          ✓ Active
+                        </span>
+                      ) : (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                          Preview
+                        </span>
+                      )}
+                    </div>
                     <div>Size: 250x250 px</div>
-                    <div>Expires: 24 hours</div>
+                    <div>Expires: {savedQRCode
+                      ? savedQRCode.expiresAt.toLocaleString()
+                      : '24 hours after creation'
+                    }</div>
+                    {savedQRCode && (
+                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        ID: {savedQRCode.shortUrlId}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

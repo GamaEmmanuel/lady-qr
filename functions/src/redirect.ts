@@ -392,12 +392,170 @@ export const redirect = onRequest(async (req, res) => {
     console.log('  - IsActive:', qrData.isActive);
     console.log('  - ShortUrlId:', qrData.shortUrlId);
     console.log('  - DestinationUrl:', qrData.destinationUrl);
+    console.log('  - IsGuest:', qrData.isGuest);
+    console.log('  - ExpiresAt:', qrData.expiresAt);
     console.log('  - Full data:', JSON.stringify(qrData, null, 2));
 
     // Check if QR code is active
     if (!qrData.isActive) {
       res.status(410).send('QR Code is inactive');
       return;
+    }
+
+    // Check if guest QR code is expired
+    if (qrData.isGuest && qrData.expiresAt) {
+      const expiresAt = qrData.expiresAt.toDate ? qrData.expiresAt.toDate() : new Date(qrData.expiresAt);
+      const now = new Date();
+
+      console.log('🕐 Checking guest QR expiration:');
+      console.log('  - Expires at:', expiresAt.toISOString());
+      console.log('  - Current time:', now.toISOString());
+      console.log('  - Is expired:', now > expiresAt);
+
+      if (now > expiresAt) {
+        console.log('❌ Guest QR code has expired');
+
+        // Return expired page with signup prompt
+        const expiredHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Expired - Lady QR</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #e53e3e;
+      font-size: 28px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .message {
+      color: #4a5568;
+      font-size: 16px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .features {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+      text-align: left;
+    }
+    .features h3 {
+      color: #2d3748;
+      font-size: 16px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      color: #4a5568;
+      font-size: 14px;
+    }
+    .feature-item::before {
+      content: "✓";
+      color: #48bb78;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin: 8px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: scale(1.02);
+    }
+    .button-secondary {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+    .footer {
+      margin-top: 24px;
+      color: #718096;
+      font-size: 12px;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⏰</div>
+    <h1>QR Code Expired</h1>
+
+    <p class="message">
+      This temporary QR code has expired after 24 hours.
+      The person who created it can generate a new one.
+    </p>
+
+    <div class="features">
+      <h3>🚀 Want permanent QR codes?</h3>
+      <div class="feature-item">QR codes that never expire</div>
+      <div class="feature-item">Track scans with detailed analytics</div>
+      <div class="feature-item">Edit destination URL anytime</div>
+      <div class="feature-item">Customize colors and add your logo</div>
+      <div class="feature-item">Download in multiple formats</div>
+    </div>
+
+    <div>
+      <a href="https://lady-qr.web.app/register" class="button">
+        Sign Up Free
+      </a>
+      <a href="https://lady-qr.web.app" class="button button-secondary">
+        Learn More
+      </a>
+    </div>
+
+    <div class="footer">
+      Powered by <a href="https://lady-qr.web.app">Lady QR</a> - Create beautiful QR codes
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        res.status(410).send(expiredHtml);
+        return;
+      }
     }
 
     // Log basic scan data

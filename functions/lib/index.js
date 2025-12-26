@@ -55,4 +55,5 @@ __exportStar(require("./analytics"), exports);
 __exportStar(require("./stripe"), exports);
 __exportStar(require("./test"), exports);
 __exportStar(require("./downgrade"), exports);
+__exportStar(require("./cleanup"), exports);
 //# sourceMappingURL=index.js.map
